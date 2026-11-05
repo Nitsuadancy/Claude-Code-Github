@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { COLLECTIONS, collectionKitchens } from '@/data/collections';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { buildActivity, unseenCount } from '@/lib/activity';
+import { allergenConflicts, conflictSentence, dishFits, kitchenFits } from '@/lib/diet';
 import { soldToday } from '@/lib/limits';
 import { groupMenu, kitchenShareMessage } from '@/lib/menu';
 import { publicName, relativeDay, withReviews } from '@/lib/reviews';
@@ -183,5 +184,32 @@ describe('menu sections', () => {
     const { message, url } = kitchenShareMessage('Susie’s Sweets', 'Mrs. Susie', 'sample_susies_sweets');
     expect(url).toBe('manna://restaurant/sample_susies_sweets');
     expect(message).toContain('Susie’s Sweets by Mrs. Susie');
+  });
+});
+
+describe('diet and allergy preferences', () => {
+  const cobbler = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_susies_sweets')!;
+  const green = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_green_bowl')!;
+  const falafel = green.menu.find((m) => m.id === 'gb_falafel')!; // vegan, dairy-free, contains sesame
+
+  it('flags allergens the customer avoids', () => {
+    expect(allergenConflicts(falafel, ['sesame', 'peanuts'])).toEqual(['sesame']);
+    expect(conflictSentence(['sesame'])).toBe('Contains sesame, which you avoid');
+    expect(conflictSentence([])).toBeNull();
+  });
+
+  it('matches dishes against every diet and allergy', () => {
+    expect(dishFits(falafel, { dietary: ['vegan'], avoid: [] })).toBe(true);
+    expect(dishFits(falafel, { dietary: ['vegan', 'halal'], avoid: [] })).toBe(false);
+    expect(dishFits(falafel, { dietary: ['vegan'], avoid: ['sesame'] })).toBe(false);
+    expect(dishFits(falafel, { dietary: [], avoid: [] })).toBe(false);
+    // Vegan dishes also count as vegetarian and dairy-free.
+    expect(dishFits(falafel, { dietary: ['vegetarian', 'dairy-free'], avoid: [] })).toBe(true);
+  });
+
+  it('finds kitchens with at least one dish that fits', () => {
+    expect(kitchenFits(green, { dietary: ['vegan'], avoid: [] })).toBe(true);
+    expect(kitchenFits(cobbler, { dietary: ['vegan'], avoid: [] })).toBe(false);
+    expect(kitchenFits(cobbler, { dietary: [], avoid: ['peanuts'] })).toBe(true);
   });
 });

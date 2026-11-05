@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { CartAllergyWarning } from '@/components/diet';
 import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { OptionSheet } from '@/components/option-sheet';
@@ -20,6 +21,7 @@ import {
   TextField,
 } from '@/components/ui';
 import { notify } from '@/lib/alert';
+import { allergenConflicts } from '@/lib/diet';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
@@ -56,6 +58,13 @@ export default function Cart() {
   }
 
   const totals = computeCartTotals(state.cart, restaurant.menu);
+  const avoid = state.user?.avoidAllergens ?? [];
+  const risky = totals.lines
+    .filter((line) => {
+      const item = restaurant.menu.find((m) => m.id === line.itemId);
+      return item ? allergenConflicts(item, avoid).length > 0 : false;
+    })
+    .map((line) => line.name);
   const now = new Date();
   const open = isOpenNow(restaurant, now);
   const slots = availableSlots(restaurant, now);
@@ -171,6 +180,8 @@ export default function Cart() {
           onChangeText={setAddress}
           textContentType="fullStreetAddress"
         />
+
+        <CartAllergyWarning names={risky} />
 
         <TextField
           label="Note for the chef (optional)"

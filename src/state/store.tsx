@@ -11,6 +11,7 @@ import {
 
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { SAMPLE_REVIEWS } from '@/data/sample-reviews';
+import type { DietProfile } from '@/lib/diet';
 import { withReviews } from '@/lib/reviews';
 import type { Restaurant, Review } from '@/types';
 
@@ -108,4 +109,12 @@ export function useReviews(restaurantId: string | undefined): Review[] {
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [state.reviews, restaurantId],
   );
+}
+
+/** The signed-in customer's diets and allergens to avoid. */
+export function useDietProfile(): DietProfile {
+  const { state } = useStore();
+  const dietary = state.user?.dietary;
+  const avoid = state.user?.avoidAllergens;
+  return useMemo(() => ({ dietary: dietary ?? [], avoid: avoid ?? [] }), [dietary, avoid]);
 }

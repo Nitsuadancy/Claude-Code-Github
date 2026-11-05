@@ -1,6 +1,7 @@
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
+import { DietPreferences } from '@/components/diet';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Eyebrow, Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
@@ -29,6 +30,7 @@ export default function Profile() {
             <Stat value={state.favoriteRestaurantIds.length} label="Favorites" />
             <Stat value={reviews} label={reviews === 1 ? 'Review' : 'Reviews'} />
           </View>
+          <DietPreferences />
           <AccountSettings showAddress />
         </ScrollView>
       </KeyboardAvoidingView>

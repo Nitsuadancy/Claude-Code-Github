@@ -4,12 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { DietProfile } from '@/lib/diet';
 import { allergenSentence, DIETARY_TAGS } from '@/lib/dietary';
 import { stockLabel } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { DietaryTag, MenuItem } from '@/types';
 
+import { DietNote } from './diet';
 import { Body, Eyebrow, GoldButton, Heading, type IconName } from './ui';
 
 const RAYS = require('@/assets/images/rays.png');
@@ -60,6 +62,7 @@ export function DishSheet({
   remaining,
   quantityInCart,
   canOrder,
+  diet,
   onAdd,
   onClose,
 }: {
@@ -68,6 +71,7 @@ export function DishSheet({
   remaining: number | null;
   quantityInCart: number;
   canOrder: boolean;
+  diet?: DietProfile;
   onAdd: () => void;
   onClose: () => void;
 }) {
@@ -105,6 +109,7 @@ export function DishSheet({
                 </View>
               ) : null}
               <StockNote remaining={remaining} />
+              {diet ? <DietNote item={item} profile={diet} /> : null}
             </View>
           </ScrollView>
           <View style={styles.footer}>

@@ -7,6 +7,7 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChefCard, VerifiedSeal } from '@/components/chef';
+import { DietNote } from '@/components/diet';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
 import { NATIVE_DRIVER } from '@/components/motion';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
@@ -31,7 +32,7 @@ import { computeCartTotals } from '@/lib/pricing';
 import { groupMenu } from '@/lib/menu';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { shareKitchen } from '@/lib/share';
-import { useRestaurant, useReviews, useStore } from '@/state/store';
+import { useDietProfile, useRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
 
@@ -46,6 +47,7 @@ export default function RestaurantDetail() {
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [scrollY] = useState(() => new Animated.Value(0));
   const reviews = useReviews(id);
+  const diet = useDietProfile();
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -204,6 +206,7 @@ export default function RestaurantDetail() {
                     <DietaryIcons tags={item.dietary} />
                   </View>
                   <StockNote remaining={item.available ? left : null} />
+                  <DietNote item={item} profile={diet} />
                 </View>
 
                 <View style={styles.thumbWrap}>
@@ -336,6 +339,7 @@ export default function RestaurantDetail() {
         remaining={openItem ? remaining(openItem) : null}
         quantityInCart={openItem ? qty(openItem.id) : 0}
         canOrder={canOrder}
+        diet={diet}
         onAdd={() => {
           if (openItem) add(openItem);
           setOpenItemId(null);

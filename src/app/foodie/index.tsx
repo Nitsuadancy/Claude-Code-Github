@@ -33,6 +33,7 @@ import {
 import { CATEGORIES } from '@/data/categories';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import { buildActivity, unseenCount } from '@/lib/activity';
+import { hasDietProfile, kitchenFits } from '@/lib/diet';
 import { confirmAction, notify } from '@/lib/alert';
 import {
   allCuisineTags,
@@ -44,7 +45,7 @@ import {
 import * as haptics from '@/lib/haptics';
 import { formatTime } from '@/lib/hours';
 import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
-import { useAllRestaurants, useStore } from '@/state/store';
+import { useAllRestaurants, useDietProfile, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
 
@@ -85,7 +86,12 @@ export default function FoodieHome() {
   const [sheet, setSheet] = useState<'sort' | 'cuisines' | null>(null);
   const now = new Date();
 
-  const results = useMemo(() => browseRestaurants(restaurants, filters, new Date()), [restaurants, filters]);
+  const diet = useDietProfile();
+  const [fitsDiet, setFitsDiet] = useState(false);
+  const results = useMemo(() => {
+    const list = browseRestaurants(restaurants, filters, new Date());
+    return fitsDiet && hasDietProfile(diet) ? list.filter((r) => kitchenFits(r, diet)) : list;
+  }, [restaurants, filters, fitsDiet, diet]);
   const featured = useMemo(() => {
     const ranked = browseRestaurants(restaurants, DEFAULT_FILTERS, new Date());
     const open = ranked.filter((r) => isOpenNow(r, new Date()));
@@ -334,6 +340,9 @@ export default function FoodieHome() {
             selected={filters.cuisines.length > 0}
             onPress={() => setSheet('cuisines')}
           />
+          {hasDietProfile(diet) ? (
+            <Chip label="Fits my diet" selected={fitsDiet} onPress={() => setFitsDiet((v) => !v)} />
+          ) : null}
           <Chip label="Open now" selected={filters.openNow} onPress={() => update({ openNow: !filters.openNow })} />
           <Chip
             label="Rated 4.5+"

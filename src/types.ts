@@ -28,6 +28,10 @@ export interface UserProfile {
   phone: string;
   role: Role | null;
   deliveryAddress: string;
+  /** Diets the customer follows; dishes that match get a "Fits your diet" tag. */
+  dietary?: DietaryTag[];
+  /** Allergens the customer avoids; dishes containing them show a warning. */
+  avoidAllergens?: Allergen[];
 }
 
 export type DietaryTag = 'vegan' | 'vegetarian' | 'gluten-free' | 'dairy-free' | 'halal' | 'spicy';
