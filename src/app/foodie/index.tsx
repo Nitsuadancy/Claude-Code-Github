@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { CoachMarks } from '@/components/coach-marks';
+import { CollectionCard } from '@/components/collection-card';
 import { DishResult, MiniKitchenCard, OrderAgainCard } from '@/components/home-rows';
 import { FadeIn } from '@/components/motion';
 import { OptionSheet } from '@/components/option-sheet';
@@ -30,6 +31,7 @@ import {
   webNoOutline,
 } from '@/components/ui';
 import { CATEGORIES } from '@/data/categories';
+import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import { confirmAction, notify } from '@/lib/alert';
 import {
   allCuisineTags,
@@ -102,6 +104,13 @@ export default function FoodieHome() {
   const favorites = useMemo(
     () => restaurants.filter((r) => r.status === 'live' && state.favoriteRestaurantIds.includes(r.id)),
     [restaurants, state.favoriteRestaurantIds],
+  );
+  const collections = useMemo(
+    () =>
+      COLLECTIONS.map((collection) => ({ collection, count: collectionKitchens(collection, restaurants).length })).filter(
+        (c) => c.count > 0,
+      ),
+    [restaurants],
   );
   const dishMatches = useMemo(() => searchDishes(restaurants, filters.query), [restaurants, filters.query]);
   const byId = (id: string) => restaurants.find((r) => r.id === id);
@@ -223,6 +232,26 @@ export default function FoodieHome() {
             style={{ marginHorizontal: -spacing.lg }}>
             {featured.map((r) => (
               <FeaturedCard key={r.id} restaurant={r} width={width * 0.68} onPress={() => open(r)} />
+            ))}
+          </ScrollView>
+        </FadeIn>
+      ) : null}
+
+      {!searching ? (
+        <FadeIn delay={100} style={{ gap: spacing.md }}>
+          <SectionHeader eyebrow="Handpicked" title="Collections" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+            style={{ marginHorizontal: -spacing.lg }}>
+            {collections.map(({ collection, count }) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                count={count}
+                onPress={() => router.push({ pathname: '/collection/[id]', params: { id: collection.id } })}
+              />
             ))}
           </ScrollView>
         </FadeIn>

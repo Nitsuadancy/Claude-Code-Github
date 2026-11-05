@@ -11,7 +11,9 @@ import {
   View,
 } from 'react-native';
 
-import { Body, Eyebrow, GoldButton, GoldRule, Heading, Logo, Screen } from '@/components/ui';
+import { AnimatedLogo } from '@/components/animated-logo';
+import { NATIVE_DRIVER } from '@/components/motion';
+import { Body, Eyebrow, GoldButton, GoldRule, Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
 import { colors, spacing } from '@/theme';
 
@@ -40,7 +42,7 @@ export default function Welcome() {
   const logoSize = Math.min(width * 0.72, height * 0.36, 320);
 
   useEffect(() => {
-    Animated.timing(fade, { toValue: 1, duration: 900, useNativeDriver: true }).start();
+    Animated.timing(fade, { toValue: 1, duration: 900, delay: 500, useNativeDriver: NATIVE_DRIVER }).start();
   }, [fade]);
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -58,10 +60,11 @@ export default function Welcome() {
 
   return (
     <Screen style={{ backgroundColor: colors.black }}>
-      <Animated.View style={[styles.logo, { opacity: fade }]}>
-        <Logo size={logoSize} />
-      </Animated.View>
+      <View style={styles.logo}>
+        <AnimatedLogo size={logoSize} />
+      </View>
 
+      <Animated.View style={{ opacity: fade }}>
       <ScrollView
         ref={scroller}
         horizontal
@@ -84,6 +87,7 @@ export default function Welcome() {
           </View>
         ))}
       </ScrollView>
+      </Animated.View>
 
       <View style={styles.footer}>
         <View style={styles.dots}>

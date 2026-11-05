@@ -82,6 +82,7 @@ export function Heading({
   return (
     <Text
       accessibilityRole="header"
+      maxFontSizeMultiplier={1.4}
       {...props}
       style={[
         styles.heading,
@@ -95,7 +96,7 @@ export function Heading({
 
 /** Small spaced-out gold caps that label a section ("TONIGHT'S TABLE"). */
 export function Eyebrow({ style, ...props }: TextProps) {
-  return <Text {...props} style={[styles.eyebrow, style]} />;
+  return <Text maxFontSizeMultiplier={1.3} {...props} style={[styles.eyebrow, style]} />;
 }
 
 export function Body({ style, muted, ...props }: TextProps & { muted?: boolean }) {
@@ -209,7 +210,9 @@ export function GoldButton({
       {icon ? (
         <MaterialCommunityIcons name={icon} size={20} color={textColor} style={{ marginRight: spacing.sm }} />
       ) : null}
-      <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
+      <Text maxFontSizeMultiplier={1.3} style={[styles.buttonText, { color: textColor }]}>
+        {title}
+      </Text>
       {chevron ? (
         <MaterialCommunityIcons name="arrow-right" size={18} color={textColor} style={{ marginLeft: spacing.sm }} />
       ) : null}

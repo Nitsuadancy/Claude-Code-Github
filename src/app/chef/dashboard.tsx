@@ -7,6 +7,7 @@ import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
 import { PrepList, WeeklyChart } from '@/components/chef-insights';
 import { OrderCard } from '@/components/order-card';
+import { RatingSummary, ReviewCard } from '@/components/reviews';
 import {
   Body,
   Eyebrow,
@@ -24,13 +25,14 @@ import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
 import { NEXT_STATUSES } from '@/state/reducer';
-import { useMyRestaurant, useStore } from '@/state/store';
+import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
 
 export default function ChefDashboard() {
   const { state, dispatch } = useStore();
   const restaurant = useMyRestaurant();
   const [showAccount, setShowAccount] = useState(false);
+  const reviews = useReviews(restaurant?.id);
 
   if (!restaurant || restaurant.status !== 'live') return <Redirect href="/chef/setup" />;
 
@@ -156,6 +158,29 @@ export default function ChefDashboard() {
         ) : null}
 
         <WeeklyChart days={week} />
+
+        <SectionHeader eyebrow="What foodies say" title="Reviews" />
+        {reviews.length ? (
+          <>
+            <RatingSummary restaurant={restaurant} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+              style={{ marginHorizontal: -spacing.lg }}>
+              {reviews.slice(0, 5).map((r) => (
+                <ReviewCard key={r.id} review={r} now={new Date()} />
+              ))}
+            </ScrollView>
+          </>
+        ) : (
+          <View style={styles.emptyCard}>
+            <MaterialCommunityIcons name="star-outline" size={22} color={colors.gold} />
+            <Body muted style={{ flex: 1, fontSize: 14 }}>
+              After each delivery, customers are invited to rate their meal. Reviews will appear here.
+            </Body>
+          </View>
+        )}
 
         <SectionHeader eyebrow="Your kitchen" title="Manage" />
         <View style={styles.list}>

@@ -56,6 +56,15 @@ buttons, use `onGold` (`#140F06`) for text.
 - `ChefCard`, `ChefAvatar`, `VerifiedSeal` (`chef.tsx`): "Meet the chef" with an italic serif story. The gold seal appears only on verified kitchens.
 - `DishSheet`, `DietaryIcons`, `StockNote` (`dish.tsx`): dish details, dietary icons and "Only 3 left today".
 - `OrderCelebration`: the logo's rays burst open around a gold check when an order is placed.
+- `AnimatedLogo`: the welcome logo. The rays bloom outward, then turn once every 90 seconds. It holds still when "reduce motion" is on.
+- `CollectionCard` and `src/data/collections.ts`: editorial collections. Each is a rule over categories and dietary tags, so new kitchens join automatically.
+- `RatingSummary`, `ReviewCard`, `RateOrderSheet` (`reviews.tsx`): reviews show only a first name and last initial.
+
+## Accessibility
+
+- Text follows the phone's text-size setting. Headings are capped at 1.4×, labels at 1.3× and the tab bar at 1.2×, so layouts never break.
+- Every tappable element has a spoken label. Touch targets are at least 44pt.
+- Gold `#CDA558` and ivory on the background both pass WCAG AA contrast.
 
 ## Motion and touch
 

@@ -106,7 +106,7 @@ export function RestaurantCard({
         </View>
         <View style={styles.metaRow}>
           <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
-          <Text style={styles.meta}>{formatRating(restaurant)}</Text>
+          <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta} numberOfLines={1}>
             {open ? `~${restaurant.prepMinutes} min` : `Opens ${formatTime(restaurant.openTime)}`}
@@ -154,7 +154,7 @@ export function FeaturedCard({
         </View>
         <View style={styles.metaRow}>
           <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
-          <Text style={styles.meta}>{formatRating(restaurant)}</Text>
+          <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta}>~{restaurant.prepMinutes} min</Text>
         </View>
@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
   metaDot: { color: colors.textFaint, fontSize: 12 },
+  noShrink: { flexShrink: 0 },
   featured: {
     height: 250,
     borderRadius: radius.lg,

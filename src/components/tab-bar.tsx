@@ -67,7 +67,9 @@ export function MannaTabBar({
                   </View>
                 ) : null}
               </View>
-              <Text style={[styles.label, { color: focused ? colors.ivory : colors.textMuted }]}>
+              <Text
+                maxFontSizeMultiplier={1.2}
+                style={[styles.label, { color: focused ? colors.ivory : colors.textMuted }]}>
                 {meta.label}
               </Text>
               <View style={[styles.indicator, focused && { backgroundColor: colors.gold }]} />

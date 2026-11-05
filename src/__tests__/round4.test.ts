@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { COLLECTIONS, collectionKitchens } from '@/data/collections';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { soldToday } from '@/lib/limits';
 import { publicName, relativeDay, withReviews } from '@/lib/reviews';
@@ -114,5 +115,18 @@ describe('scheduling', () => {
     const orders = [order({ status: 'accepted', scheduledFor: tomorrow })];
     expect(soldToday(orders, 'r1', 'x', new Date(2026, 10, 5, 13))).toBe(0);
     expect(soldToday(orders, 'r1', 'x', new Date(2026, 10, 6, 13))).toBe(2);
+  });
+});
+
+describe('collections', () => {
+  it('match kitchens by category or by dish', () => {
+    const byId = (id: string) => COLLECTIONS.find((c) => c.id === id)!;
+    const names = (id: string) => collectionKitchens(byId(id), SAMPLE_RESTAURANTS).map((r) => r.name).sort();
+    expect(names('sweet-endings')).toEqual(['Susie’s Sweets']);
+    // The Green Bowl by category; Cafe Parmesan, Momo Mania, Jackson's and Susie's by vegetarian dishes.
+    expect(names('plant-powered')).toContain('The Green Bowl');
+    expect(names('plant-powered')).toContain('Momo Mania');
+    expect(names('plant-powered')).not.toContain('Sunrise Plates');
+    for (const c of COLLECTIONS) expect(collectionKitchens(c, SAMPLE_RESTAURANTS).length).toBeGreaterThan(0);
   });
 });

@@ -19,6 +19,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Chef dashboard: today's prep list and a 7-day earnings chart
 - [x] Ratings and reviews after delivery (stars, quick compliments, note); "What neighbors say" on restaurant pages
 - [x] Schedule for later, including pre-orders from kitchens that are closed right now
+- [x] Editorial collections (Sunday Supper, Plant-Powered, Sweet Endings…), animated logo, reviews on the chef dashboard, text-size caps for accessibility
 
 ## Phase 1: Real accounts and shared data
 
