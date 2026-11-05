@@ -10,7 +10,7 @@ export default function ChefLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: colors.white },
+        contentStyle: { backgroundColor: colors.bg },
         animation: 'slide_from_right',
       }}
     />

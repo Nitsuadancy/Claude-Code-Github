@@ -4,7 +4,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 
 import { OrderCard } from '@/components/order-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
-import { Body, GoldButton, Heading, Screen } from '@/components/ui';
+import { Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
 import { colors, spacing } from '@/theme';
 
@@ -18,16 +18,26 @@ export default function Orders() {
         data={orders}
         keyExtractor={(o) => o.id}
         contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}
-        ListHeaderComponent={<Heading style={{ marginBottom: spacing.sm }}>Your Orders</Heading>}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Eyebrow>Your table</Eyebrow>
+            <Heading>Orders</Heading>
+          </View>
+        }
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         renderItem={({ item }) => <OrderCard order={item} title={item.restaurantName} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <MaterialCommunityIcons name="receipt-text-outline" size={64} color={colors.border} />
+            <View style={styles.emptyIcon}>
+              <MaterialCommunityIcons name="receipt-text-outline" size={30} color={colors.gold} />
+            </View>
+            <Heading size={22} style={{ textAlign: 'center' }}>
+              No orders yet
+            </Heading>
             <Body muted style={{ textAlign: 'center' }}>
-              No orders yet. When you place one, you can follow it here.
+              When you place an order, you can follow it here from kitchen to doorstep.
             </Body>
-            <GoldButton title="Find something to eat" fullWidth={false} onPress={() => router.navigate('/foodie')} />
+            <GoldButton title="Find something delicious" fullWidth={false} onPress={() => router.navigate('/foodie')} />
           </View>
         }
       />
@@ -37,5 +47,15 @@ export default function Orders() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg },
+  header: { gap: spacing.xs, marginBottom: spacing.lg },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

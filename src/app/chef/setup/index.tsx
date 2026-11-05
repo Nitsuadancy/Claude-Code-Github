@@ -1,43 +1,54 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Fragment } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BackButton, GoldButton, Heading, Screen, Watermark } from '@/components/ui';
+import { BackButton, Body, Eyebrow, GoldButton, Heading, Rays, Screen } from '@/components/ui';
 import { completedSteps, currentStep, SETUP_STEPS, type SetupStep } from '@/lib/setup';
 import { useMyRestaurant } from '@/state/store';
-import { colors, fonts, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 
-const ROUTES: Record<SetupStep, '/chef/setup/information' | '/chef/setup/documents' | '/chef/setup/menu' | '/chef/setup/preview'> = {
-  information: '/chef/setup/information',
-  documents: '/chef/setup/documents',
-  menu: '/chef/setup/menu',
-  preview: '/chef/setup/preview',
+type SetupRoute =
+  | '/chef/setup/information'
+  | '/chef/setup/documents'
+  | '/chef/setup/menu'
+  | '/chef/setup/preview';
+
+const STEP_INFO: Record<SetupStep, { route: SetupRoute; blurb: string }> = {
+  information: { route: '/chef/setup/information', blurb: 'Name, cuisine, photos, location and hours.' },
+  documents: { route: '/chef/setup/documents', blurb: 'Your permit and food handler certificate.' },
+  menu: { route: '/chef/setup/menu', blurb: 'Your signature dishes and prices.' },
+  preview: { route: '/chef/setup/preview', blurb: 'See your kitchen as foodies will, then publish.' },
 };
 
-/** "Lets Setup your Restaurant" — the four-step checklist for new chefs. */
+/** "Let's set up your restaurant": the four-step checklist for new chefs. */
 export default function SetupOverview() {
   const restaurant = useMyRestaurant();
   const done = completedSteps(restaurant);
   const current = currentStep(restaurant);
+  const completed = SETUP_STEPS.filter((s) => done[s.key]).length;
 
   return (
     <Screen>
-      <Watermark corner size={320} />
+      <Rays size={520} opacity={0.14} style={{ top: -280 }} />
       <ScrollView contentContainerStyle={styles.content}>
         <BackButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/choose-role'))}
         />
-        <Heading style={styles.title}>Lets Setup{'\n'}your Restaurant</Heading>
+        <View style={styles.header}>
+          <Eyebrow>
+            Your restaurant · {completed} of {SETUP_STEPS.length} complete
+          </Eyebrow>
+          <Heading size={34}>Let’s set up{'\n'}your restaurant</Heading>
+          <Body muted>Four short steps and your kitchen is open for business.</Body>
+        </View>
 
-        {SETUP_STEPS.map((step, i) => {
-          const isCurrent = step.key === current;
-          const isDone = done[step.key];
-          const reachable = isDone || isCurrent;
-          const last = i === SETUP_STEPS.length - 1;
-          return (
-            <Fragment key={step.key}>
-              <View style={styles.stepRow}>
+        <View>
+          {SETUP_STEPS.map((step, i) => {
+            const isCurrent = step.key === current;
+            const isDone = done[step.key];
+            const last = i === SETUP_STEPS.length - 1;
+            return (
+              <View key={step.key} style={styles.stepRow}>
                 <View style={styles.rail}>
                   <View
                     style={[
@@ -46,71 +57,82 @@ export default function SetupOverview() {
                       isDone && { backgroundColor: colors.gold },
                     ]}>
                     {isDone ? (
-                      <MaterialCommunityIcons name="check" size={22} color={colors.white} />
+                      <MaterialCommunityIcons name="check" size={18} color={colors.onGold} />
                     ) : (
-                      <Text style={styles.circleText}>{i + 1}</Text>
+                      <Text style={[styles.circleText, isCurrent && { color: colors.gold }]}>{i + 1}</Text>
                     )}
                   </View>
-                  {!last ? <View style={styles.dash} /> : null}
+                  {!last ? <View style={[styles.line, isDone && { backgroundColor: colors.gold }]} /> : null}
                 </View>
-                <View style={styles.stepBody}>
+
+                <View style={[styles.stepBody, isCurrent && styles.stepBodyCurrent]}>
                   <View style={styles.stepHeader}>
-                    <Text style={[styles.stepTitle, !reachable && { color: colors.textMuted }]}>
+                    <Text
+                      style={[styles.stepTitle, !isCurrent && !isDone && { color: colors.textFaint }]}>
                       {step.title}
                     </Text>
                     {isDone && !isCurrent ? (
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Edit ${step.title}`}
-                        hitSlop={8}
-                        onPress={() => router.push(ROUTES[step.key])}>
+                        hitSlop={10}
+                        onPress={() => router.push(STEP_INFO[step.key].route)}>
                         <Text style={styles.edit}>Edit</Text>
                       </Pressable>
                     ) : null}
                   </View>
                   {isCurrent ? (
-                    <GoldButton
-                      title={step.key === 'preview' ? 'Review & Publish' : 'Start'}
-                      onPress={() => router.push(ROUTES[step.key])}
-                      style={{ marginTop: spacing.md }}
-                    />
+                    <>
+                      <Body muted style={{ fontSize: 14 }}>
+                        {STEP_INFO[step.key].blurb}
+                      </Body>
+                      <GoldButton
+                        title={step.key === 'preview' ? 'Review & publish' : completed ? 'Continue' : 'Start'}
+                        chevron
+                        onPress={() => router.push(STEP_INFO[step.key].route)}
+                        style={{ marginTop: spacing.sm }}
+                      />
+                    </>
                   ) : null}
                 </View>
               </View>
-            </Fragment>
-          );
-        })}
+            );
+          })}
+        </View>
       </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  title: { marginTop: spacing.xxl, marginBottom: spacing.xl },
-  stepRow: { flexDirection: 'row', gap: spacing.md, minHeight: 120 },
-  rail: { alignItems: 'center', width: 40 },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.xl },
+  header: { gap: spacing.sm, marginTop: spacing.md },
+  stepRow: { flexDirection: 'row', gap: spacing.md },
+  rail: { alignItems: 'center', width: 36 },
   circle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
   },
-  circleText: { fontFamily: fonts.body, fontSize: 20, color: colors.text },
-  dash: {
-    flex: 1,
-    width: 0,
-    borderLeftWidth: 2,
-    borderColor: colors.gold,
-    borderStyle: 'dashed',
-    marginVertical: 4,
+  circleText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.textMuted },
+  line: { flex: 1, width: 1, backgroundColor: colors.borderStrong, marginVertical: 4 },
+  stepBody: { flex: 1, paddingTop: 7, paddingBottom: spacing.xl, gap: spacing.sm },
+  stepBodyCurrent: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    paddingTop: spacing.md,
+    marginBottom: spacing.lg,
+    marginTop: -spacing.sm,
   },
-  stepBody: { flex: 1, paddingTop: 6, paddingBottom: spacing.lg },
   stepHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepTitle: { fontFamily: fonts.headingSemi, fontSize: 20, color: colors.text, flexShrink: 1 },
-  edit: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.gold },
+  stepTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, flexShrink: 1 },
+  edit: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold, letterSpacing: 0.5 },
 });

@@ -3,12 +3,12 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/theme';
 
-/** "① Restaurant Details - - - ② Demographic Details" progress header. */
+/** "① Restaurant details —— ② Location & hours" progress header. */
 export function TwoStepHeader({ step, labels }: { step: 1 | 2; labels: [string, string] }) {
   return (
     <View style={styles.row} accessibilityLabel={`Step ${step} of 2: ${labels[step - 1]}`}>
       <Step n={1} label={labels[0]} state={step === 1 ? 'current' : 'done'} />
-      <View style={styles.dash} />
+      <View style={[styles.line, step === 2 && { backgroundColor: colors.gold }]} />
       <Step n={2} label={labels[1]} state={step === 2 ? 'current' : 'todo'} />
     </View>
   );
@@ -24,29 +24,29 @@ function Step({ n, label, state }: { n: number; label: string; state: 'current' 
           state === 'done' && { backgroundColor: colors.gold },
         ]}>
         {state === 'done' ? (
-          <MaterialCommunityIcons name="check" size={18} color={colors.white} />
+          <MaterialCommunityIcons name="check" size={16} color={colors.onGold} />
         ) : (
-          <Text style={styles.n}>{n}</Text>
+          <Text style={[styles.n, state === 'current' && { color: colors.gold }]}>{n}</Text>
         )}
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, state === 'todo' && { color: colors.textFaint }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  step: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  step: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
   circle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  n: { fontFamily: fonts.body, fontSize: 15, color: colors.text },
-  label: { flexShrink: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text },
-  dash: { width: 40, borderTopWidth: 2, borderColor: colors.gold, borderStyle: 'dashed' },
+  n: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textMuted },
+  label: { flexShrink: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.text },
+  line: { flex: 1, minWidth: 16, height: 1, backgroundColor: colors.borderStrong },
 });

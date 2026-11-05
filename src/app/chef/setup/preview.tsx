@@ -34,9 +34,9 @@ export default function Preview() {
       title="Preview"
       footer={
         restaurant.status === 'live' ? (
-          <GoldButton title="Go to dashboard" onPress={() => resetTo('/chef/dashboard')} />
+          <GoldButton title="Go to dashboard" chevron onPress={() => resetTo('/chef/dashboard')} />
         ) : (
-          <GoldButton title="Publish my restaurant" disabled={!ready} onPress={publish} />
+          <GoldButton title="Publish my restaurant" icon="check-decagram" disabled={!ready} onPress={publish} />
         )
       }>
       <SectionTitle style={{ marginTop: 0 }}>How foodies will see you</SectionTitle>

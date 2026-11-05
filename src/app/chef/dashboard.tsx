@@ -1,16 +1,25 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
 import { OrderCard } from '@/components/order-card';
-import { Body, Divider, Heading, Screen, SectionTitle } from '@/components/ui';
+import {
+  Body,
+  Eyebrow,
+  Heading,
+  type IconName,
+  Rays,
+  Screen,
+  SectionHeader,
+} from '@/components/ui';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { formatCents } from '@/lib/money';
 import { isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
 import { NEXT_STATUSES } from '@/state/reducer';
 import { useMyRestaurant, useStore } from '@/state/store';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
 
 export default function ChefDashboard() {
   const { state, dispatch } = useStore();
@@ -27,29 +36,35 @@ export default function ChefDashboard() {
     .filter((o) => o.status === 'completed' && new Date(o.createdAt).toDateString() === today)
     .reduce((sum, o) => sum + o.subtotalCents, 0);
   const inHours = isOpenAt(restaurant, new Date());
+  const live = restaurant.acceptingOrders && inHours;
 
   return (
     <Screen>
+      <Rays size={520} opacity={0.12} style={{ top: -300 }} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Body muted>Welcome back, {state.user?.name.split(' ')[0]}</Body>
-        <Heading>{restaurant.name}</Heading>
+        <View style={{ gap: spacing.xs }}>
+          <Eyebrow>Welcome back, {state.user?.name.split(' ')[0]}</Eyebrow>
+          <Heading size={34}>{restaurant.name}</Heading>
+        </View>
 
-        <View style={styles.statusCard}>
-          <View style={{ flex: 1 }}>
+        <View style={[styles.statusCard, live && { borderColor: colors.gold }]}>
+          <View style={[styles.statusDot, { backgroundColor: live ? colors.success : colors.textFaint }]} />
+          <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.statusTitle}>
-              {restaurant.acceptingOrders ? 'Accepting orders' : 'Paused'}
+              {!restaurant.acceptingOrders ? 'Paused' : inHours ? 'Open for orders' : 'Closed for now'}
             </Text>
-            <Body muted style={{ fontSize: 14 }}>
+            <Body muted style={{ fontSize: 13 }}>
               {inHours
-                ? `Within your hours (${formatTime(restaurant.openTime)}–${formatTime(restaurant.closeTime)})`
-                : `Outside your hours. Opens ${formatTime(restaurant.openTime)}.`}
+                ? `Your hours: ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`
+                : `Opens at ${formatTime(restaurant.openTime)}`}
             </Body>
           </View>
           <Switch
             accessibilityLabel="Accepting orders"
             value={restaurant.acceptingOrders}
-            trackColor={{ true: colors.gold, false: colors.border }}
-            thumbColor={colors.white}
+            trackColor={{ true: colors.gold, false: colors.borderStrong }}
+            thumbColor={colors.ivory}
+            {...webSwitchThumb}
             onValueChange={(accepting) =>
               dispatch({ type: 'setAcceptingOrders', restaurantId: restaurant.id, accepting })
             }
@@ -57,54 +72,76 @@ export default function ChefDashboard() {
         </View>
 
         <View style={styles.stats}>
-          <Stat label="Active orders" value={String(active.length)} />
-          <Stat label="Today’s sales" value={formatCents(todaysSales)} />
-          <Stat label="All-time orders" value={String(orders.length)} />
+          <Stat label="Active" value={String(active.length)} />
+          <Stat label="Today" value={formatCents(todaysSales)} />
+          <Stat label="All time" value={String(orders.length)} />
         </View>
 
-        <SectionTitle>Incoming orders</SectionTitle>
+        <SectionHeader eyebrow="Live" title="Incoming orders" />
         {active.length === 0 ? (
-          <Body muted>No active orders. New orders show up here as soon as they’re placed.</Body>
+          <View style={styles.emptyCard}>
+            <MaterialCommunityIcons name="bell-ring-outline" size={22} color={colors.gold} />
+            <Body muted style={{ flex: 1, fontSize: 14 }}>
+              No active orders. New orders appear here the moment they’re placed.
+            </Body>
+          </View>
         ) : null}
         {active.map((order) => (
           <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'}>
-            <Body muted style={{ fontSize: 14 }}>
-              Deliver to: {order.deliveryAddress}
-            </Body>
+            <View style={styles.deliver}>
+              <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textMuted} />
+              <Body muted style={{ flex: 1, fontSize: 13 }}>
+                {order.deliveryAddress}
+              </Body>
+            </View>
             <View style={styles.actions}>
-              {NEXT_STATUSES[order.status].map((status) => (
-                <Pressable
-                  key={status}
-                  accessibilityRole="button"
-                  onPress={() => dispatch({ type: 'setOrderStatus', orderId: order.id, status })}
-                  style={[styles.action, status === 'declined' && styles.decline]}>
-                  <Text style={[styles.actionText, status === 'declined' && { color: colors.danger }]}>
-                    {KITCHEN_ACTION_LABEL[status]}
-                  </Text>
-                </Pressable>
-              ))}
+              {NEXT_STATUSES[order.status].map((status) => {
+                const decline = status === 'declined';
+                return (
+                  <Pressable
+                    key={status}
+                    accessibilityRole="button"
+                    onPress={() => dispatch({ type: 'setOrderStatus', orderId: order.id, status })}
+                    style={({ pressed }) => [
+                      styles.action,
+                      decline ? styles.decline : styles.primaryAction,
+                      pressed && { opacity: 0.8 },
+                    ]}>
+                    <Text style={[styles.actionText, { color: decline ? colors.danger : colors.onGold }]}>
+                      {KITCHEN_ACTION_LABEL[status]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </OrderCard>
         ))}
 
-        <SectionTitle>Manage</SectionTitle>
-        <View style={styles.links}>
-          <LinkRow label="Edit menu" onPress={() => router.push('/chef/setup/menu')} />
-          <LinkRow label="Edit restaurant information" onPress={() => router.push('/chef/setup/information')} />
-          <LinkRow label="Documents" onPress={() => router.push('/chef/setup/documents')} />
+        <SectionHeader eyebrow="Your kitchen" title="Manage" />
+        <View style={styles.list}>
+          <LinkRow icon="book-open-variant" label="Menu" onPress={() => router.push('/chef/setup/menu')} />
+          <LinkRow icon="storefront-outline" label="Restaurant details" onPress={() => router.push('/chef/setup/information')} />
+          <LinkRow icon="file-document-outline" label="Documents" onPress={() => router.push('/chef/setup/documents')} />
           <LinkRow
+            icon="eye-outline"
             label="View my restaurant page"
             onPress={() =>
               router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id, preview: '1' } })
             }
           />
-          <LinkRow label={showAccount ? 'Hide account' : 'Account'} onPress={() => setShowAccount((v) => !v)} />
+          <LinkRow
+            icon="account-outline"
+            label="Account"
+            onPress={() => setShowAccount((v) => !v)}
+            open={showAccount}
+            last
+          />
         </View>
         {showAccount ? <AccountSettings showAddress={false} /> : null}
 
         {past.length ? (
           <>
-            <SectionTitle>Past orders</SectionTitle>
+            <SectionHeader eyebrow="History" title="Past orders" />
             {past.map((order) => (
               <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'} />
             ))}
@@ -124,55 +161,96 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
+function LinkRow({
+  icon,
+  label,
+  onPress,
+  open,
+  last,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  open?: boolean;
+  last?: boolean;
+}) {
   return (
-    <>
-      <Pressable accessibilityRole="button" onPress={onPress} style={styles.linkRow}>
-        <Text style={styles.linkText}>{label}</Text>
-        <Text style={styles.chevron}>›</Text>
-      </Pressable>
-      <Divider />
-    </>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.linkRow,
+        !last && styles.linkRowBorder,
+        pressed && { backgroundColor: colors.goldTint },
+      ]}>
+      <MaterialCommunityIcons name={icon} size={20} color={colors.gold} />
+      <Text style={styles.linkText}>{label}</Text>
+      <MaterialCommunityIcons name={open ? 'chevron-up' : 'chevron-right'} size={20} color={colors.textFaint} />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
+  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   statusCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.gold,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     padding: spacing.md,
-    backgroundColor: colors.goldTint,
+    backgroundColor: colors.surface,
   },
-  statusTitle: { fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text },
+  statusDot: { width: 10, height: 10, borderRadius: 5 },
+  statusTitle: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
     flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
-    gap: 2,
+    gap: 4,
   },
-  statValue: { fontFamily: fonts.heading, fontSize: 20, color: colors.text },
-  statLabel: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
-  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, flexWrap: 'wrap' },
+  statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
+  statLabel: {
+    fontFamily: fonts.semibold,
+    fontSize: 10,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colors.gold,
+  },
+  emptyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.borderStrong,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+  },
+  deliver: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap' },
   action: {
-    borderWidth: 1.5,
-    borderColor: colors.gold,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
     minHeight: 44,
     justifyContent: 'center',
   },
-  decline: { borderColor: colors.danger },
-  actionText: { fontFamily: fonts.button, fontSize: 15, color: colors.text },
-  links: {},
-  linkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 52 },
-  linkText: { fontFamily: fonts.body, fontSize: 17, color: colors.text },
-  chevron: { fontSize: 24, color: colors.textMuted },
+  primaryAction: { backgroundColor: colors.gold },
+  decline: { borderWidth: 1, borderColor: colors.danger },
+  actionText: { fontFamily: fonts.semibold, fontSize: 14, letterSpacing: 0.3 },
+  list: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 56 },
+  linkRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  linkText: { flex: 1, fontFamily: fonts.medium, fontSize: 15, color: colors.text },
 });

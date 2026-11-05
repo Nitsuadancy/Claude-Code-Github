@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, fonts, radius, spacing } from '@/theme';
 
-import { GoldButton } from './ui';
+import { GoldButton, Heading } from './ui';
 
 export interface Option<T extends string> {
   value: T;
@@ -45,8 +45,9 @@ export function OptionSheet<T extends string>({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
       <SafeAreaView edges={['bottom']} style={styles.sheet}>
+        <View style={styles.handle} />
         <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
+          <Heading size={22}>{title}</Heading>
           {multiple && selected.length > 0 ? (
             <Pressable onPress={() => onSelect([])} hitSlop={8}>
               <Text style={styles.clear}>Clear</Text>
@@ -57,6 +58,7 @@ export function OptionSheet<T extends string>({
           data={options}
           keyExtractor={(o) => o.value}
           style={{ maxHeight: 420 }}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => {
             const isSelected = selected.includes(item.value);
             return (
@@ -65,19 +67,13 @@ export function OptionSheet<T extends string>({
                 accessibilityState={{ checked: isSelected }}
                 onPress={() => toggle(item.value)}
                 style={({ pressed }) => [styles.option, pressed && { backgroundColor: colors.goldTint }]}>
-                <Text style={[styles.optionText, isSelected && { color: colors.goldDark }]}>
-                  {item.label}
-                </Text>
-                {isSelected ? (
-                  <MaterialCommunityIcons name="check-circle" size={22} color={colors.gold} />
-                ) : null}
+                <Text style={[styles.optionText, isSelected && { color: colors.gold }]}>{item.label}</Text>
+                {isSelected ? <MaterialCommunityIcons name="check" size={20} color={colors.gold} /> : null}
               </Pressable>
             );
           }}
         />
-        {multiple ? (
-          <GoldButton title="Done" chevron={false} onPress={onClose} style={{ marginTop: spacing.md }} />
-        ) : null}
+        {multiple ? <GoldButton title="Done" onPress={onClose} style={{ marginTop: spacing.md }} /> : null}
       </SafeAreaView>
     </Modal>
   );
@@ -86,11 +82,22 @@ export function OptionSheet<T extends string>({
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: colors.overlay },
   sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: colors.hairline,
     padding: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.borderStrong,
+    marginBottom: spacing.md,
   },
   header: {
     flexDirection: 'row',
@@ -98,15 +105,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  title: { fontFamily: fonts.heading, fontSize: 20, color: colors.gold },
-  clear: { fontFamily: fonts.bodySemi, color: colors.textMuted, fontSize: 15 },
+  clear: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 14 },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: spacing.sm,
+    paddingVertical: 15,
+    paddingHorizontal: spacing.xs,
     borderRadius: radius.sm,
   },
-  optionText: { fontFamily: fonts.body, fontSize: 17, color: colors.text },
+  optionText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
 });

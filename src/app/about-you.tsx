@@ -1,8 +1,7 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackButton, GoldButton, Heading, Screen, TextField, Watermark } from '@/components/ui';
+import { BackButton, Body, Eyebrow, GoldButton, Heading, Rays, Screen, TextField } from '@/components/ui';
 import { resetTo } from '@/lib/navigation';
 import { formatE164UsPhone, isValidEmail } from '@/lib/validation';
 import { useStore } from '@/state/store';
@@ -27,22 +26,24 @@ export default function AboutYou() {
 
   return (
     <Screen>
-      <Watermark corner size={320} />
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Rays size={480} opacity={0.12} style={{ top: -260 }} />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <BackButton
             onPress={() => {
               dispatch({ type: 'signOut' });
-              router.replace('/login');
+              resetTo('/login');
             }}
           />
-          <Heading style={styles.title}>Please tell us{'\n'}about yourself</Heading>
+          <View style={styles.header}>
+            <Eyebrow>Almost there</Eyebrow>
+            <Heading>Please tell us{'\n'}about yourself</Heading>
+            <Body muted>So chefs know who they’re cooking for.</Body>
+          </View>
           <View style={{ gap: spacing.lg }}>
             <TextField
-              label="Name"
-              placeholder="Your Name"
+              label="Full name"
+              placeholder="Your name"
               icon="account-outline"
               textContentType="name"
               autoComplete="name"
@@ -52,7 +53,7 @@ export default function AboutYou() {
             />
             <TextField
               label="Email"
-              placeholder="Email"
+              placeholder="you@example.com"
               icon="email-outline"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -63,15 +64,15 @@ export default function AboutYou() {
               error={errors.email}
             />
             <TextField
-              label="Phone Number"
-              icon="phone-outline"
+              label="Phone number"
+              icon="lock-outline"
               value={formatE164UsPhone(user?.phone ?? '')}
               editable={false}
             />
           </View>
         </ScrollView>
         <View style={styles.footer}>
-          <GoldButton title="Save & Continue" onPress={save} />
+          <GoldButton title="Save & continue" chevron onPress={save} />
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -79,7 +80,7 @@ export default function AboutYou() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.lg },
-  title: { marginTop: spacing.xxl, marginBottom: spacing.sm },
-  footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
+  content: { padding: spacing.lg, gap: spacing.xl },
+  header: { gap: spacing.sm, marginTop: spacing.lg },
+  footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
 });

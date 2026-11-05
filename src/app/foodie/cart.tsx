@@ -3,10 +3,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
-import { Body, Divider, GoldButton, Heading, Screen, TextField } from '@/components/ui';
+import { Body, Card, Divider, Eyebrow, GoldButton, Heading, Screen, TextField } from '@/components/ui';
 import { notify } from '@/lib/alert';
-import { isOpenAt } from '@/lib/hours';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
 import { newId } from '@/lib/validation';
@@ -17,13 +17,16 @@ export default function Cart() {
   const { state, dispatch } = useStore();
   const restaurant = useRestaurant(state.cart.restaurantId ?? undefined);
   const [address, setAddress] = useState(state.user?.deliveryAddress ?? '');
-  const [placing, setPlacing] = useState(false);
 
   if (!restaurant || state.cart.lines.length === 0) {
     return (
       <Screen edges={['top']} style={styles.empty}>
-        <MaterialCommunityIcons name="cart-outline" size={64} color={colors.border} />
-        <Heading size={24}>Your cart is empty</Heading>
+        <View style={styles.emptyIcon}>
+          <MaterialCommunityIcons name="shopping-outline" size={30} color={colors.gold} />
+        </View>
+        <Heading size={24} style={{ textAlign: 'center' }}>
+          Your cart is empty
+        </Heading>
         <Body muted style={{ textAlign: 'center' }}>
           Find a kitchen you love and add a few dishes.
         </Body>
@@ -33,7 +36,7 @@ export default function Cart() {
   }
 
   const totals = computeCartTotals(state.cart, restaurant.menu);
-  const open = restaurant.acceptingOrders && isOpenAt(restaurant, new Date());
+  const open = isOpenNow(restaurant, new Date());
 
   const placeOrder = () => {
     const user = state.user;
@@ -46,7 +49,6 @@ export default function Cart() {
       notify('Kitchen closed', `${restaurant.name} isn’t taking orders right now.`);
       return;
     }
-    setPlacing(true);
     // Payments aren't connected yet: orders are recorded as placed without charging a card.
     dispatch({ type: 'updateProfile', changes: { deliveryAddress: address.trim() } });
     dispatch({
@@ -67,73 +69,79 @@ export default function Cart() {
         createdAt: new Date().toISOString(),
       },
     });
-    setPlacing(false);
     router.navigate('/foodie/orders');
   };
 
   return (
     <Screen edges={['top']}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}>
-        <Heading>Your Cart</Heading>
-        <Pressable
-          onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id } })}>
-          <Text style={styles.kitchen}>{restaurant.name} ›</Text>
-        </Pressable>
+        <View style={{ gap: spacing.xs }}>
+          <Eyebrow>Your order from</Eyebrow>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id } })}>
+            <Heading>{restaurant.name}</Heading>
+          </Pressable>
+        </View>
 
-        <View style={styles.card}>
-          {totals.lines.map((line) => (
-            <View key={line.itemId} style={styles.line}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemName}>{line.name}</Text>
-                <Body muted style={{ fontSize: 14 }}>
-                  {formatCents(line.priceCents)} each
-                </Body>
-              </View>
-              <View style={styles.stepper}>
-                <Pressable
-                  accessibilityLabel={`Remove one ${line.name}`}
-                  hitSlop={6}
-                  onPress={() =>
-                    dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: line.quantity - 1 })
-                  }>
-                  <MaterialCommunityIcons name="minus" size={20} color={colors.text} />
-                </Pressable>
-                <Text style={styles.qty}>{line.quantity}</Text>
-                <Pressable
-                  accessibilityLabel={`Add one ${line.name}`}
-                  hitSlop={6}
-                  onPress={() =>
-                    dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: line.quantity + 1 })
-                  }>
-                  <MaterialCommunityIcons name="plus" size={20} color={colors.text} />
-                </Pressable>
+        <Card>
+          {totals.lines.map((line, i) => (
+            <View key={line.itemId}>
+              {i > 0 ? <Divider style={{ marginBottom: spacing.sm }} /> : null}
+              <View style={styles.line}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.itemName}>{line.name}</Text>
+                  <Text style={styles.each}>{formatCents(line.priceCents)} each</Text>
+                </View>
+                <View style={styles.stepper}>
+                  <Pressable
+                    accessibilityLabel={`Remove one ${line.name}`}
+                    hitSlop={8}
+                    onPress={() =>
+                      dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: line.quantity - 1 })
+                    }>
+                    <MaterialCommunityIcons name="minus" size={18} color={colors.gold} />
+                  </Pressable>
+                  <Text style={styles.qty}>{line.quantity}</Text>
+                  <Pressable
+                    accessibilityLabel={`Add one ${line.name}`}
+                    hitSlop={8}
+                    onPress={() =>
+                      dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: line.quantity + 1 })
+                    }>
+                    <MaterialCommunityIcons name="plus" size={18} color={colors.gold} />
+                  </Pressable>
+                </View>
               </View>
             </View>
           ))}
-        </View>
+        </Card>
 
         <TextField
           label="Deliver to"
           placeholder="Street address, apt, city"
-          icon="map-marker"
+          icon="map-marker-outline"
           value={address}
           onChangeText={setAddress}
           textContentType="fullStreetAddress"
         />
 
-        <View style={styles.card}>
+        <Card>
           <Row label="Subtotal" value={formatCents(totals.subtotalCents)} />
           <Row label="Service fee" value={formatCents(totals.serviceFeeCents)} />
           <Row label="Delivery" value={formatCents(totals.deliveryFeeCents)} />
-          <Divider style={{ marginVertical: spacing.sm }} />
-          <Row label="Total" value={formatCents(totals.totalCents)} bold />
-        </View>
+          <Divider style={{ marginVertical: spacing.xs }} />
+          <View style={styles.row}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalValue}>{formatCents(totals.totalCents)}</Text>
+          </View>
+        </Card>
 
-        <Body muted style={{ fontSize: 13 }}>
+        <GoldButton title={`Place order · ${formatCents(totals.totalCents)}`} onPress={placeOrder} />
+        <Body muted style={styles.note}>
           Payments aren’t connected yet. Placing an order sends it to the kitchen without charging a card.
         </Body>
-        <GoldButton title={`Place order · ${formatCents(totals.totalCents)}`} loading={placing} onPress={placeOrder} />
-        <Pressable onPress={() => dispatch({ type: 'clearCart' })} style={{ alignSelf: 'center' }}>
+        <Pressable onPress={() => dispatch({ type: 'clearCart' })} style={{ alignSelf: 'center' }} hitSlop={8}>
           <Text style={styles.clear}>Clear cart</Text>
         </Pressable>
       </ScrollView>
@@ -141,41 +149,45 @@ export default function Cart() {
   );
 }
 
-function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.row}>
-      <Text style={[styles.rowText, bold && styles.bold]}>{label}</Text>
-      <Text style={[styles.rowText, bold && styles.bold]}>{value}</Text>
+      <Text style={styles.rowText}>{label}</Text>
+      <Text style={styles.rowText}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
-  content: { padding: spacing.lg, gap: spacing.lg },
-  kitchen: { fontFamily: fonts.headingSemi, fontSize: 18, color: colors.text, marginTop: -spacing.sm },
-  card: {
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.sm,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  content: { padding: spacing.lg, gap: spacing.lg },
   line: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
-  itemName: { fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text },
+  itemName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
+  each: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.gold,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     minHeight: 40,
   },
-  qty: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.text, minWidth: 16, textAlign: 'center' },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  rowText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
-  bold: { fontFamily: fonts.headingSemi, fontSize: 18 },
-  clear: { fontFamily: fonts.bodySemi, color: colors.textMuted, fontSize: 15 },
+  qty: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, minWidth: 14, textAlign: 'center' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  rowText: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
+  totalLabel: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold },
+  note: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  clear: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 14 },
 });

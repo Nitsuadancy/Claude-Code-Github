@@ -84,24 +84,25 @@ export default function RestaurantInformation() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.topBar}>
           <BackButton onPress={() => (step === 2 ? setStep(1) : router.back())} />
-          <Text style={styles.topTitle}>Restaurant Information</Text>
+          <Text style={styles.topTitle}>Restaurant information</Text>
+          <View style={{ width: 44 }} />
         </View>
         <ScrollView ref={scroller} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <TwoStepHeader step={step} labels={['Restaurant Details', 'Demographic Details']} />
+          <TwoStepHeader step={step} labels={['Details', 'Location & hours']} />
 
           {step === 1 ? (
             <>
-              <SectionTitle>Restaurant Details</SectionTitle>
+              <SectionTitle style={{ marginTop: spacing.sm }}>Tell us about your kitchen</SectionTitle>
               <TextField
-                label="Restaurant Name"
+                label="Restaurant name"
                 placeholder="e.g. Mrs. Susie’s Kitchen"
-                icon="room-service-outline"
+                icon="storefront-outline"
                 value={draft.name}
                 onChangeText={(name) => update({ name })}
                 error={errors.name}
               />
               <PickerField
-                label="Restaurant Type"
+                label="Cuisine"
                 placeholder="Choose a cuisine"
                 value={draft.cuisine || null}
                 onPress={() => setSheet('cuisine')}
@@ -118,7 +119,7 @@ export default function RestaurantInformation() {
                 onPress={() => setSheet('specialties')}
               />
 
-              <SectionTitle>Upload Logo</SectionTitle>
+              <SectionTitle>Logo</SectionTitle>
               <Body muted style={styles.hint}>
                 Square image works best. Max size 2 MB.
               </Body>
@@ -137,7 +138,7 @@ export default function RestaurantInformation() {
                 </View>
               ) : (
                 <UploadBox
-                  label="Upload Logo"
+                  label="Upload logo"
                   onPress={async () => {
                     const [uri] = await pickImages(1);
                     if (uri) update({ logoUri: uri });
@@ -145,13 +146,13 @@ export default function RestaurantInformation() {
                 />
               )}
 
-              <SectionTitle>Upload Cover Pictures</SectionTitle>
+              <SectionTitle>Cover photos</SectionTitle>
               <Body muted style={styles.hint}>
                 Up to 3 pictures of your food. Max size 2 MB each.
               </Body>
               {draft.coverUris.length < 3 ? (
                 <UploadBox
-                  label="Upload Cover Pictures"
+                  label="Upload cover photos"
                   onPress={async () => {
                     const uris = await pickImages(3 - draft.coverUris.length);
                     if (uris.length) update({ coverUris: [...draft.coverUris, ...uris].slice(0, 3) });
@@ -174,7 +175,7 @@ export default function RestaurantInformation() {
             </>
           ) : (
             <>
-              <SectionTitle>Demographic Details</SectionTitle>
+              <SectionTitle style={{ marginTop: spacing.sm }}>Where and when you cook</SectionTitle>
               <TextField
                 label="Address"
                 placeholder="Address"
@@ -196,7 +197,7 @@ export default function RestaurantInformation() {
                 />
                 <TextField
                   containerStyle={{ flex: 1 }}
-                  label="Area Code"
+                  label="ZIP code"
                   placeholder="ZIP"
                   keyboardType="number-pad"
                   textContentType="postalCode"
@@ -208,7 +209,7 @@ export default function RestaurantInformation() {
               </View>
 
               <View style={styles.sectionHeader}>
-                <SectionTitle>Working Days</SectionTitle>
+                <SectionTitle>Working days</SectionTitle>
                 <TextLink
                   title={allSelected ? 'Clear All' : 'Select All'}
                   onPress={() => update({ workingDays: allSelected ? [] : [...WEEKDAYS] })}
@@ -241,20 +242,20 @@ export default function RestaurantInformation() {
               </View>
               {errors.days ? <Text style={styles.error}>{errors.days}</Text> : null}
 
-              <SectionTitle>Timings</SectionTitle>
+              <SectionTitle>Hours</SectionTitle>
               <View style={styles.pair}>
                 <PickerField
                   containerStyle={{ flex: 1 }}
-                  label="Start Time"
-                  placeholder="Start Time"
+                  label="Opens"
+                  placeholder="Opening time"
                   icon="clock-outline"
                   value={draft.openTime ? formatTime(draft.openTime) : null}
                   onPress={() => setSheet('open')}
                 />
                 <PickerField
                   containerStyle={{ flex: 1 }}
-                  label="Close Time"
-                  placeholder="Close Time"
+                  label="Closes"
+                  placeholder="Closing time"
                   icon="clock-outline"
                   value={draft.closeTime ? formatTime(draft.closeTime) : null}
                   onPress={() => setSheet('close')}
@@ -268,7 +269,7 @@ export default function RestaurantInformation() {
           )}
         </ScrollView>
         <View style={styles.footer}>
-          <GoldButton title="Save & Next" onPress={next} />
+          <GoldButton title={step === 1 ? 'Next' : 'Save'} chevron onPress={next} />
         </View>
       </KeyboardAvoidingView>
 
@@ -327,7 +328,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
-  topTitle: { fontFamily: fonts.button, fontSize: 20, color: colors.text },
+  topTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.text,
+  },
   content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md, paddingBottom: spacing.xl },
   hint: { fontSize: 14, marginTop: -spacing.sm },
   footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
@@ -340,7 +349,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderWidth: 1.5,
     borderColor: colors.gold,
     alignItems: 'center',
@@ -357,7 +366,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     minHeight: 56,
   },
-  uploadText: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.gold },
+  uploadText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
   covers: { flexDirection: 'row', gap: spacing.lg, paddingTop: spacing.sm },
   cover: { width: 88, height: 88, borderRadius: radius.sm },
   remove: {
@@ -367,7 +376,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.text,
     alignItems: 'center',

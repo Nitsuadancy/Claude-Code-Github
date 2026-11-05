@@ -23,9 +23,10 @@ export function FormScreen({
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.topBar}>
           <BackButton onPress={onBack ?? (() => router.back())} />
-          <Text style={styles.title} accessibilityRole="header">
+          <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
             {title}
           </Text>
+          <View style={{ width: 44 }} />
         </View>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {children}
@@ -44,8 +45,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
-  title: { fontFamily: fonts.button, fontSize: 20, color: colors.text, flexShrink: 1 },
-  content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md, paddingBottom: spacing.xl },
-  footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
+  title: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: colors.text,
+  },
+  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
+  footer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
 });

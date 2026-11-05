@@ -1,47 +1,64 @@
 # Design System
 
-These tokens are taken from the original Manna mockups and live in `src/theme/index.ts`.
+Manna should feel like a fine-dining room: calm, dark and warm, with gold used
+sparingly. Everything comes from the logo, which has ivory serif lettering inside fine
+gold rays on black. The tokens live in `src/theme/index.ts`.
+
+## Principles
+
+1. **Dark canvas, gold accents.** Backgrounds are warm near-black. Gold marks what
+   matters: section labels, prices, active states and the one main action on each screen.
+2. **Serif for names, sans serif for information.** Titles, restaurant names and dish
+   names use the serif. Everything else uses the sans serif.
+3. **Fine lines, not heavy boxes.** Use 1px borders, hairline dividers and generous spacing.
+4. **One primary action per screen.** It's a gold gradient pill. Secondary actions are
+   gold outlines or plain gold text.
+5. **No empty photos.** A kitchen without photos gets a serif monogram on black with
+   the logo's rays, so the feed still looks premium.
 
 ## Color
 
 | Token | Hex | Use |
 |---|---|---|
-| `gold` | `#E3AE0A` | Headings, outlines, active icons, glows |
-| `goldDark` | `#B98800` | Gold text on white that needs more contrast |
-| `goldTint` | `#FFF8E1` | Selected chips, notices |
-| `black` | `#000000` | Onboarding, login and role-choice backgrounds |
-| `white` | `#FFFFFF` | Forms, browsing, dashboards |
-| `text` | `#2B2B2B` | Body text on white |
-| `textMuted` | `#7A7A7A` | Hints, secondary info |
-| `border` | `#C9C9C9` | Field and card outlines |
-| `danger` / `success` | `#D64545` / `#2E9E5B` | Errors, decline; open / delivered |
+| `bg` | `#0A0907` | Screen background (warm black) |
+| `surface` | `#14120E` | Cards, fields, sheets |
+| `surfaceRaised` | `#1D1A15` | Raised elements |
+| `border` / `borderStrong` | `#2E2A22` / `#4A4234` | Card and field outlines, rails |
+| `hairline` | gold at 28% | Fine gold outlines on featured cards and sheets |
+| `gold` | `#CDA558` | From the logo's rays: accents, prices, active states |
+| `goldBright` → `goldDeep` | `#EBD08E` → `#A8853D` | Gradient on primary buttons |
+| `ivory` | `#FFF5E0` | From the logo's lettering: headings |
+| `text` / `textMuted` / `textFaint` | `#F2E9D8` / `#A89E8C` / `#6F675A` | Body, secondary, placeholder |
+| `success` / `danger` | `#8FC38D` / `#E8826F` | Open / delivered; errors, decline |
 
-**Dark screens** (welcome, role choice, login) are pure black with gold. **Light screens**
-(everything after sign-in) are white with gold accents and a faint gold fork-and-knife
-watermark in the corner.
+Contrast: ivory and gold on the background are both well above WCAG AA. On gold
+buttons, use `onGold` (`#140F06`) for text.
 
 ## Type
 
-- **Headings:** Montserrat Bold (700). The onboarding titles add letter spacing.
-- **Buttons:** Montserrat Medium (500)
-- **Body:** Raleway Medium (500) and SemiBold (600)
+| Role | Font | Example |
+|---|---|---|
+| Display | Playfair Display SemiBold | "Tonight's table", restaurant and dish names |
+| Display italic | Playfair Display Italic | Chef bylines, taglines |
+| Eyebrow | Montserrat SemiBold, 10–11px, uppercase, letter-spaced, gold | "CURATED FOR YOU" |
+| Body | Montserrat Regular / Medium | Descriptions, fields, buttons |
 
 ## Components (`src/components/ui.tsx`)
 
-- `GoldButton`: pill-shaped, gold outline, soft gold glow, optional chevron. Works on light and dark backgrounds.
-- `TextField` / `PickerField`: label above, 12px rounded outline, icon on the right.
-- `BackButton`: circular outlined arrow.
-- `Chip`: filter pill; turns gold-tinted when selected.
-- `Watermark`: faint crossed fork and knife (or chef hat) behind content.
-- `MannaTabBar`: floating white pill with a gold border; the active tab turns gold.
-- `OptionSheet`: bottom sheet for dropdowns and time pickers.
-- `CoachMarks`: first-visit tips on the Foodie home screen.
+- `Logo`, `Wordmark`, `Rays`: brand assets cut from the logo (`assets/images/logo.png`, `wordmark.png`, `rays.png`). `Rays` sits faintly behind hero areas.
+- `Heading`, `Eyebrow`, `Body`, `SectionHeader`: the type scale. Pair an eyebrow with a heading for every section.
+- `GoldButton`: `primary` (gold gradient), `outline` and `ghost` variants.
+- `TextField`, `PickerField`: dark fields whose border turns gold on focus.
+- `Chip`, `Badge`, `Card`, `Divider`, `GoldRule`, `IconCircleButton`, `BackButton`.
+- `RestaurantCard` / `FeaturedCard` / `RestaurantCover` (`restaurant-card.tsx`): photo cards with a monogram fallback.
+- `MannaTabBar`: floating dark-glass pill with a gold hairline and a gold active state.
+- `OptionSheet`, `CoachMarks`, `OrderCard` (with a gold progress bar), `FormScreen`.
 
-Icons come from Material Community Icons (`@expo/vector-icons`). Replace them with
-custom illustrations later if you have brand assets.
+Icons come from Material Community Icons (`@expo/vector-icons`), always outline style
+in gold or ivory.
 
-## Assets still needed
+## Updating the logo
 
-- The real Manna logo and wordmark. The app icon is currently a gold fork and knife on black.
-- The login hero photo. The current version uses a warm gradient.
-- Category illustrations, if you want them to match the mockups exactly.
+Replace `assets/images/icon.png` with the full logo on black (1024×1024). Then rebuild
+`logo.png`, `wordmark.png` and `rays.png` with transparent backgrounds. The splash
+screen and Android icons use these same files.

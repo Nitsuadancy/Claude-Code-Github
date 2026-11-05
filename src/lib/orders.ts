@@ -1,7 +1,7 @@
 import type { OrderStatus } from '@/types';
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  placed: 'Waiting for kitchen',
+  placed: 'Waiting for the kitchen',
   accepted: 'Accepted',
   preparing: 'Being prepared',
   ready: 'Ready / on the way',
@@ -18,6 +18,9 @@ export const KITCHEN_ACTION_LABEL: Record<OrderStatus, string> = {
   completed: 'Mark delivered',
   declined: 'Decline',
 };
+
+/** The happy path, in order, for progress bars. */
+export const ORDER_PROGRESS: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
 
 export function isActive(status: OrderStatus): boolean {
   return status !== 'completed' && status !== 'declined';

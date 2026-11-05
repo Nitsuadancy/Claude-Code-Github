@@ -16,7 +16,7 @@ export default function FoodieTabs() {
 
   return (
     <Tabs
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.white } }}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
       tabBar={(props) => (
         <MannaTabBar {...props} badges={{ cart: cartCount, orders: activeOrders }} />
       )}>

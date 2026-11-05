@@ -1,11 +1,14 @@
 import {
+  Montserrat_400Regular,
   Montserrat_500Medium,
   Montserrat_600SemiBold,
-  Montserrat_700Bold,
 } from '@expo-google-fonts/montserrat';
-import { Raleway_500Medium, Raleway_600SemiBold } from '@expo-google-fonts/raleway';
+import {
+  PlayfairDisplay_400Regular_Italic,
+  PlayfairDisplay_600SemiBold,
+} from '@expo-google-fonts/playfair-display';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -16,14 +19,26 @@ import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+const navTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.bg,
+    card: colors.bg,
+    primary: colors.gold,
+    text: colors.text,
+    border: colors.border,
+  },
+};
+
 function AppStack() {
   const { state } = useStore();
   const [fontsLoaded, fontError] = useFonts({
+    Montserrat_400Regular,
     Montserrat_500Medium,
     Montserrat_600SemiBold,
-    Montserrat_700Bold,
-    Raleway_500Medium,
-    Raleway_600SemiBold,
+    PlayfairDisplay_400Regular_Italic,
+    PlayfairDisplay_600SemiBold,
   });
   const ready = state.hydrated && (fontsLoaded || !!fontError);
 
@@ -34,28 +49,25 @@ function AppStack() {
   if (!ready) return null;
 
   return (
-    <>
-      <StatusBar style="auto" />
+    <ThemeProvider value={navTheme}>
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.white },
-          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: colors.bg },
+          animation: 'fade_from_bottom',
         }}>
         <Stack.Screen name="index" options={{ animation: 'none' }} />
-        <Stack.Screen name="welcome" options={{ contentStyle: { backgroundColor: colors.black } }} />
-        <Stack.Screen name="choose-role" options={{ contentStyle: { backgroundColor: colors.black } }} />
-        <Stack.Screen name="login" options={{ contentStyle: { backgroundColor: colors.black } }} />
         <Stack.Screen name="foodie" options={{ animation: 'fade' }} />
         <Stack.Screen name="chef" options={{ animation: 'fade' }} />
       </Stack>
-    </>
+    </ThemeProvider>
   );
 }
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ backgroundColor: colors.bg }}>
       <StoreProvider>
         <AppStack />
       </StoreProvider>

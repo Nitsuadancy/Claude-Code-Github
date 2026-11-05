@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, goldGlow, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
+
+import { Eyebrow, GoldButton, Heading } from './ui';
 
 export interface CoachStep {
   title: string;
   body: string;
 }
 
-/** First-visit walkthrough ("Explore Food Categories" tooltip in the mockup). */
+/** First-visit walkthrough on the Foodie home screen. */
 export function CoachMarks({
   steps,
   visible,
@@ -27,23 +29,26 @@ export function CoachMarks({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onDone}>
       <View style={styles.backdrop}>
         <View style={styles.card} accessibilityViewIsModal>
-          <Text style={styles.title}>{step.title}</Text>
+          <Eyebrow>
+            Tip {index + 1} of {steps.length}
+          </Eyebrow>
+          <Heading size={24}>{step.title}</Heading>
           <Text style={styles.body}>{step.body}</Text>
+          <View style={styles.dots}>
+            {steps.map((s, i) => (
+              <View key={s.title} style={[styles.dot, i === index && styles.dotActive]} />
+            ))}
+          </View>
           <View style={styles.footer}>
-            <View style={styles.dots}>
-              {steps.map((s, i) => (
-                <View key={s.title} style={[styles.dot, i === index && styles.dotActive]} />
-              ))}
-            </View>
-            <Pressable accessibilityRole="button" onPress={onDone} hitSlop={8}>
-              <Text style={styles.skip}>Skip</Text>
+            <Pressable accessibilityRole="button" onPress={onDone} hitSlop={8} style={styles.skip}>
+              <Text style={styles.skipText}>Skip</Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
+            <GoldButton
+              title={last ? 'Start exploring' : 'Next'}
+              fullWidth={false}
               onPress={() => (last ? onDone() : setIndex(index + 1))}
-              style={styles.next}>
-              <Text style={styles.nextText}>{last ? 'Done' : 'Next'}</Text>
-            </Pressable>
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
       </View>
@@ -55,33 +60,23 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    padding: spacing.lg,
+    justifyContent: 'flex-end',
+    padding: spacing.md,
+    paddingBottom: spacing.xxl,
   },
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.gold,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     padding: spacing.lg,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  title: { fontFamily: fonts.headingSemi, fontSize: 22, color: colors.text },
-  body: { fontFamily: fonts.body, fontSize: 16, color: colors.textMuted, lineHeight: 22 },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
-  dots: { flex: 1, flexDirection: 'row', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
-  dotActive: { width: 28, backgroundColor: colors.gold },
-  skip: { fontFamily: fonts.bodySemi, fontSize: 17, color: colors.text },
-  next: {
-    borderWidth: 1.5,
-    borderColor: colors.gold,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    backgroundColor: colors.white,
-    ...goldGlow,
-    shadowOpacity: 0.3,
-  },
-  nextText: { fontFamily: fonts.button, fontSize: 18, color: colors.text },
+  body: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted, lineHeight: 22 },
+  dots: { flexDirection: 'row', gap: 6, marginTop: spacing.sm },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.borderStrong },
+  dotActive: { width: 24, backgroundColor: colors.gold },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
+  skip: { paddingHorizontal: spacing.md, minHeight: 44, justifyContent: 'center' },
+  skipText: { fontFamily: fonts.medium, fontSize: 15, color: colors.textMuted },
 });

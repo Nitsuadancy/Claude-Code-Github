@@ -18,8 +18,10 @@ Read the full vision in [docs/BUSINESS_PLAN.md](docs/BUSINESS_PLAN.md).
 
 ## Status
 
-This is a **working prototype** built from the original UI/UX mockups. Every screen
-runs end to end on iPhone, Android and the web. Data is stored on the device for now,
+This is a **working prototype**. It started from the original UI/UX mockups and was
+redesigned around the Manna logo: black, ivory serif type and fine gold rays (see
+[docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)). Every screen runs end to end on
+iPhone, Android and the web. Data is stored on the device for now,
 so there's no server yet. The prototype includes:
 
 - Onboarding, role choice and phone sign-in. Sign-in runs in demo mode: any 6-digit code works.

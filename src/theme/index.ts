@@ -1,34 +1,50 @@
 /**
- * Manna design tokens, taken from the product mockups:
- * deep black canvases for onboarding, white canvases for forms and browsing,
- * and a warm gold accent used for headings, outlines and glows.
+ * Manna design tokens.
+ *
+ * Taken from the Manna logo: deep black, ivory serif lettering and fine
+ * champagne-gold rays. The whole app uses one dark, luxurious palette; gold
+ * is an accent (lines, highlights, primary actions), never a background wash.
  */
 export const colors = {
-  gold: '#E3AE0A',
-  goldLight: '#F5C518',
-  goldDark: '#B98800',
-  goldTint: '#FFF8E1',
-  goldGlow: 'rgba(227, 174, 10, 0.35)',
+  // Surfaces, darkest to lightest.
+  bg: '#0A0907',
+  surface: '#14120E',
+  surfaceRaised: '#1D1A15',
+  border: '#2E2A22',
+  borderStrong: '#4A4234',
+  hairline: 'rgba(205, 165, 88, 0.28)',
+
+  // Gold, from the logo's rays.
+  gold: '#CDA558',
+  goldBright: '#E6C77F',
+  goldDeep: '#9C7A35',
+  goldTint: 'rgba(205, 165, 88, 0.12)',
+  goldGlow: 'rgba(205, 165, 88, 0.45)',
+  onGold: '#140F06',
+
+  // Text, from the logo's ivory lettering.
+  ivory: '#FFF5E0',
+  text: '#F2E9D8',
+  textMuted: '#A89E8C',
+  textFaint: '#6F675A',
+
+  success: '#8FC38D',
+  danger: '#E8826F',
+  overlay: 'rgba(0, 0, 0, 0.72)',
   black: '#000000',
-  surfaceDark: '#0B0A06',
-  cardDark: '#14120A',
-  white: '#FFFFFF',
-  text: '#2B2B2B',
-  textMuted: '#7A7A7A',
-  textOnDark: '#EDEDED',
-  border: '#C9C9C9',
-  borderDark: '#3A3A3A',
-  danger: '#D64545',
-  success: '#2E9E5B',
-  overlay: 'rgba(0, 0, 0, 0.6)',
 } as const;
 
+/** Gold gradient for primary buttons and highlights. */
+export const goldGradient = ['#EBD08E', '#CDA558', '#A8853D'] as const;
+
 export const fonts = {
-  heading: 'Montserrat_700Bold',
-  headingSemi: 'Montserrat_600SemiBold',
-  button: 'Montserrat_500Medium',
-  body: 'Raleway_500Medium',
-  bodySemi: 'Raleway_600SemiBold',
+  /** Serif display face for titles, restaurant and dish names. */
+  display: 'PlayfairDisplay_600SemiBold',
+  displayItalic: 'PlayfairDisplay_400Regular_Italic',
+  /** Sans serif for everything else. */
+  body: 'Montserrat_400Regular',
+  medium: 'Montserrat_500Medium',
+  semibold: 'Montserrat_600SemiBold',
 } as const;
 
 export const spacing = {
@@ -42,16 +58,19 @@ export const spacing = {
 
 export const radius = {
   sm: 8,
-  md: 12,
-  lg: 20,
+  md: 14,
+  lg: 22,
   pill: 999,
 } as const;
 
-/** Soft gold glow used under primary buttons and selected cards. */
+/** react-native-web colors the Switch knob with its own prop; native uses thumbColor. */
+export const webSwitchThumb = { activeThumbColor: '#FFF5E0' } as object;
+
+/** Soft gold glow for primary actions. */
 export const goldGlow = {
   shadowColor: colors.gold,
-  shadowOpacity: 0.45,
-  shadowRadius: 18,
-  shadowOffset: { width: 0, height: 4 },
-  elevation: 8,
+  shadowOpacity: 0.35,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 6,
 } as const;

@@ -9,7 +9,7 @@ import { formatCents, parsePriceToCents } from '@/lib/money';
 import { isMenuComplete } from '@/lib/setup';
 import { newId } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
 import type { MenuItem } from '@/types';
 
 export default function MenuSetup() {
@@ -72,7 +72,7 @@ export default function MenuSetup() {
   };
 
   return (
-    <FormScreen title="Menu Setup" footer={<GoldButton title="Save & Next" onPress={done} />}>
+    <FormScreen title="Menu" footer={<GoldButton title="Done" chevron onPress={done} />}>
       <SectionTitle style={{ marginTop: 0 }}>{editingId ? 'Edit dish' : 'Add a dish'}</SectionTitle>
       <TextField label="Dish name" placeholder="Grandma’s Lasagna" value={name} onChangeText={setName} error={errors.name} />
       <TextField
@@ -99,7 +99,7 @@ export default function MenuSetup() {
         ) : null}
         <GoldButton
           title={editingId ? 'Update dish' : 'Add to menu'}
-          chevron={false}
+          variant="outline"
           onPress={saveItem}
           style={{ flex: 1 }}
         />
@@ -118,7 +118,8 @@ export default function MenuSetup() {
             accessibilityLabel={`${item.name} available`}
             value={item.available}
             trackColor={{ true: colors.gold, false: colors.border }}
-            thumbColor={colors.white}
+            thumbColor={colors.ivory}
+            {...webSwitchThumb}
             onValueChange={(available) =>
               setMenu(draft.menu.map((m) => (m.id === item.id ? { ...m, available } : m)))
             }
@@ -142,7 +143,7 @@ export default function MenuSetup() {
 const styles = StyleSheet.create({
   formButtons: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   cancel: { paddingHorizontal: spacing.md, minHeight: 44, justifyContent: 'center' },
-  cancelText: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.textMuted },
+  cancelText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.textMuted },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
   },
-  itemName: { fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text },
+  itemName: { fontFamily: fonts.display, fontSize: 16, color: colors.text },
   itemPrice: { fontFamily: fonts.body, fontSize: 15, color: colors.text },
   itemMeta: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14 },

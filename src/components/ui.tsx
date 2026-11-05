@@ -1,6 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import type { ComponentProps, ReactNode } from 'react';
+import { type ComponentProps, type ReactNode, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -8,51 +10,127 @@ import {
   type StyleProp,
   StyleSheet,
   Text,
-  type TextProps,
   TextInput,
   type TextInputProps,
+  type TextProps,
+  type TextStyle,
   View,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, goldGlow, radius, spacing } from '@/theme';
+import { colors, fonts, goldGlow, goldGradient, radius, spacing } from '@/theme';
 
 export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-type Tone = 'light' | 'dark';
+const LOGO = require('@/assets/images/logo.png');
+const WORDMARK = require('@/assets/images/wordmark.png');
+const RAYS = require('@/assets/images/rays.png');
 
-/* ---------- Text ---------- */
+/* ---------- Brand ---------- */
 
-export function Heading({
-  style,
-  size = 30,
-  ...props
-}: TextProps & { size?: number }) {
+/** The full Manna logo: ivory wordmark inside gold rays. */
+export function Logo({ size = 220 }: { size?: number }) {
   return (
-    <Text
-      accessibilityRole="header"
-      {...props}
-      style={[styles.heading, { fontSize: size, lineHeight: size * 1.25 }, style]}
+    <Image
+      source={LOGO}
+      style={{ width: size, height: size }}
+      contentFit="contain"
+      accessibilityLabel="Manna"
     />
   );
 }
 
-export function Body({
+/** Just the MANNA lettering, for headers. Aspect ratio 859:156. */
+export function Wordmark({ width = 120 }: { width?: number }) {
+  return (
+    <Image
+      source={WORDMARK}
+      style={{ width, height: (width * 156) / 859 }}
+      contentFit="contain"
+      accessibilityLabel="Manna"
+    />
+  );
+}
+
+/** The logo's gold sunburst, used faintly behind hero content. */
+export function Rays({
+  size = 520,
+  opacity = 0.35,
   style,
-  tone = 'light',
-  muted,
+}: {
+  size?: number;
+  opacity?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <View pointerEvents="none" style={[styles.raysWrap, style]}>
+      <Image source={RAYS} style={{ width: size, height: size, opacity }} contentFit="contain" />
+    </View>
+  );
+}
+
+/* ---------- Text ---------- */
+
+/** Serif display text for titles, restaurant and dish names. */
+export function Heading({
+  style,
+  size = 32,
+  italic,
   ...props
-}: TextProps & { tone?: Tone; muted?: boolean }) {
+}: TextProps & { size?: number; italic?: boolean }) {
   return (
     <Text
+      accessibilityRole="header"
       {...props}
       style={[
-        styles.body,
-        { color: muted ? colors.textMuted : tone === 'dark' ? colors.textOnDark : colors.text },
+        styles.heading,
+        { fontSize: size, lineHeight: Math.round(size * 1.22) },
+        italic && { fontFamily: fonts.displayItalic },
         style,
       ]}
     />
+  );
+}
+
+/** Small spaced-out gold caps that label a section ("TONIGHT'S TABLE"). */
+export function Eyebrow({ style, ...props }: TextProps) {
+  return <Text {...props} style={[styles.eyebrow, style]} />;
+}
+
+export function Body({ style, muted, ...props }: TextProps & { muted?: boolean }) {
+  return <Text {...props} style={[styles.body, muted && { color: colors.textMuted }, style]} />;
+}
+
+/** Eyebrow + serif title, with an optional action on the right. */
+export function SectionHeader({
+  eyebrow,
+  title,
+  action,
+  style,
+}: {
+  eyebrow?: string;
+  title: string;
+  action?: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <View style={[styles.sectionHeader, style]}>
+      <View style={{ flex: 1, gap: 4 }}>
+        {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
+        <Heading size={24}>{title}</Heading>
+      </View>
+      {action}
+    </View>
+  );
+}
+
+/** Smaller serif title used inside forms. */
+export function SectionTitle({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  return (
+    <Heading size={22} style={[{ marginTop: spacing.md }, style]}>
+      {children}
+    </Heading>
   );
 }
 
@@ -60,64 +138,53 @@ export function Body({
 
 export function Screen({
   children,
-  tone = 'light',
   style,
   edges = ['top', 'bottom'],
 }: {
   children: ReactNode;
-  tone?: Tone;
   style?: StyleProp<ViewStyle>;
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
 }) {
   return (
-    <SafeAreaView
-      edges={edges}
-      style={[
-        { flex: 1, backgroundColor: tone === 'dark' ? colors.black : colors.white },
-        style,
-      ]}>
+    <SafeAreaView edges={edges} style={[{ flex: 1, backgroundColor: colors.bg }, style]}>
       {children}
     </SafeAreaView>
   );
 }
 
-/** Faint crossed fork & knife used as a background watermark across the app. */
-export function Watermark({
-  icon = 'silverware-variant',
-  size = 260,
-  tone = 'light',
-  corner = false,
+export function Card({
+  children,
+  style,
+  highlight,
 }: {
-  icon?: IconName;
-  size?: number;
-  tone?: Tone;
-  /** Tuck the watermark into the bottom-right corner instead of centering it. */
-  corner?: boolean;
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  highlight?: boolean;
 }) {
   return (
-    <View
-      pointerEvents="none"
-      style={
-        corner
-          ? { position: 'absolute', right: -size * 0.2, bottom: -size * 0.1 }
-          : [StyleSheet.absoluteFill, styles.center]
-      }>
-      <MaterialCommunityIcons
-        name={icon}
-        size={size}
-        color={tone === 'dark' ? 'rgba(227,174,10,0.16)' : 'rgba(227,174,10,0.14)'}
-      />
-    </View>
+    <View style={[styles.card, highlight && { borderColor: colors.hairline }, style]}>{children}</View>
   );
+}
+
+export function Divider({ style }: { style?: StyleProp<ViewStyle> }) {
+  return <View style={[{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }, style]} />;
+}
+
+/** A short gold rule, used under hero titles. */
+export function GoldRule({ width = 40, style }: { width?: number; style?: StyleProp<ViewStyle> }) {
+  return <View style={[{ width, height: 1.5, backgroundColor: colors.gold }, style]} />;
 }
 
 /* ---------- Buttons ---------- */
 
+export type ButtonVariant = 'primary' | 'outline' | 'ghost';
+
 export function GoldButton({
   title,
   onPress,
-  tone = 'light',
-  chevron = true,
+  variant = 'primary',
+  chevron = false,
+  icon,
   disabled,
   loading,
   style,
@@ -125,42 +192,54 @@ export function GoldButton({
 }: {
   title: string;
   onPress: () => void;
-  tone?: Tone;
+  variant?: ButtonVariant;
   chevron?: boolean;
+  icon?: IconName;
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
   fullWidth?: boolean;
 }) {
-  const textColor = tone === 'dark' ? colors.textOnDark : colors.text;
+  const primary = variant === 'primary';
+  const textColor = primary ? colors.onGold : variant === 'outline' ? colors.ivory : colors.gold;
+  const content = loading ? (
+    <ActivityIndicator color={textColor} />
+  ) : (
+    <View style={styles.row}>
+      {icon ? (
+        <MaterialCommunityIcons name={icon} size={20} color={textColor} style={{ marginRight: spacing.sm }} />
+      ) : null}
+      <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
+      {chevron ? (
+        <MaterialCommunityIcons name="arrow-right" size={18} color={textColor} style={{ marginLeft: spacing.sm }} />
+      ) : null}
+    </View>
+  );
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled }}
+      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => [
-        styles.goldButton,
-        { backgroundColor: tone === 'dark' ? colors.black : colors.white },
-        !disabled && goldGlow,
-        fullWidth ? { alignSelf: 'stretch' } : { alignSelf: 'center', paddingHorizontal: 40 },
-        disabled && { opacity: 0.45 },
-        pressed && { opacity: 0.8 },
+        fullWidth ? { alignSelf: 'stretch' } : { alignSelf: 'center', minWidth: 220 },
+        primary && !disabled && goldGlow,
+        disabled && { opacity: 0.4 },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
         style,
       ]}>
-      {loading ? (
-        <ActivityIndicator color={colors.gold} />
+      {primary ? (
+        <LinearGradient
+          colors={goldGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.button}>
+          {content}
+        </LinearGradient>
       ) : (
-        <View style={styles.row}>
-          <Text style={[styles.buttonText, { color: textColor }]}>{title}</Text>
-          {chevron && (
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={26}
-              color={textColor}
-              style={{ marginLeft: spacing.sm }}
-            />
-          )}
+        <View style={[styles.button, variant === 'outline' && { borderWidth: 1, borderColor: colors.gold }]}>
+          {content}
         </View>
       )}
     </Pressable>
@@ -170,15 +249,16 @@ export function GoldButton({
 export function IconCircleButton({
   icon,
   onPress,
-  tone = 'light',
   label,
   size = 44,
+  dot,
 }: {
   icon: IconName;
   onPress: () => void;
-  tone?: Tone;
   label: string;
   size?: number;
+  /** Show a small gold notification dot. */
+  dot?: boolean;
 }) {
   return (
     <Pressable
@@ -188,29 +268,20 @@ export function IconCircleButton({
       hitSlop={8}
       style={({ pressed }) => [
         styles.circleButton,
-        {
-          width: size,
-          height: size,
-          borderColor: tone === 'dark' ? 'rgba(255,255,255,0.7)' : colors.border,
-          backgroundColor: tone === 'dark' ? 'rgba(0,0,0,0.25)' : colors.white,
-        },
+        { width: size, height: size, borderRadius: size / 2 },
         pressed && { opacity: 0.7 },
       ]}>
-      <MaterialCommunityIcons
-        name={icon}
-        size={size * 0.5}
-        color={tone === 'dark' ? colors.white : colors.text}
-      />
+      <MaterialCommunityIcons name={icon} size={size * 0.48} color={colors.ivory} />
+      {dot ? <View style={styles.dot} /> : null}
     </Pressable>
   );
 }
 
-export function BackButton({ tone = 'light', onPress }: { tone?: Tone; onPress?: () => void }) {
+export function BackButton({ onPress }: { onPress?: () => void }) {
   return (
     <IconCircleButton
       icon="arrow-left"
       label="Go back"
-      tone={tone}
       onPress={onPress ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))}
     />
   );
@@ -226,7 +297,7 @@ export function TextLink({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={8} style={style}>
+    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={10} style={style}>
       <Text style={styles.link}>{title}</Text>
     </Pressable>
   );
@@ -234,54 +305,57 @@ export function TextLink({
 
 /* ---------- Form fields ---------- */
 
-export function FieldLabel({ children, tone = 'light' }: { children: ReactNode; tone?: Tone }) {
-  return (
-    <Text
-      style={[styles.label, { color: tone === 'dark' ? colors.textOnDark : colors.text }]}>
-      {children}
-    </Text>
-  );
+export function FieldLabel({ children }: { children: ReactNode }) {
+  return <Text style={styles.label}>{children}</Text>;
 }
 
 export function TextField({
   label,
   icon,
   error,
-  tone = 'light',
   containerStyle,
   ...input
 }: TextInputProps & {
   label?: string;
   icon?: IconName;
   error?: string | null;
-  tone?: Tone;
   containerStyle?: StyleProp<ViewStyle>;
 }) {
-  const dark = tone === 'dark';
+  const [focused, setFocused] = useState(false);
+  const readOnly = input.editable === false;
   return (
     <View style={[{ gap: spacing.sm }, containerStyle]}>
-      {label ? <FieldLabel tone={tone}>{label}</FieldLabel> : null}
+      {label ? <FieldLabel>{label}</FieldLabel> : null}
       <View
         style={[
           styles.field,
-          { borderColor: error ? colors.danger : dark ? colors.borderDark : colors.border },
+          focused && { borderColor: colors.gold },
+          error ? { borderColor: colors.danger } : null,
+          readOnly && { backgroundColor: 'transparent' },
         ]}>
         <TextInput
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textFaint}
+          selectionColor={colors.gold}
+          cursorColor={colors.gold}
+          keyboardAppearance="dark"
           accessibilityLabel={label ?? input.placeholder}
           {...input}
+          onFocus={(e) => {
+            setFocused(true);
+            input.onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setFocused(false);
+            input.onBlur?.(e);
+          }}
           style={[
             styles.input,
-            { color: dark ? colors.white : colors.text },
-            input.multiline && { minHeight: 80, textAlignVertical: 'top', paddingTop: 14 },
+            readOnly && { color: colors.textMuted },
+            input.multiline && { minHeight: 84, textAlignVertical: 'top', paddingTop: 14 },
           ]}
         />
         {icon ? (
-          <MaterialCommunityIcons
-            name={icon}
-            size={22}
-            color={dark ? colors.textOnDark : colors.text}
-          />
+          <MaterialCommunityIcons name={icon} size={20} color={focused ? colors.gold : colors.textMuted} />
         ) : null}
       </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -314,21 +388,15 @@ export function PickerField({
         accessibilityRole="button"
         accessibilityLabel={label ? `${label}: ${value ?? placeholder}` : (value ?? placeholder)}
         onPress={onPress}
-        style={[styles.field, { borderColor: error ? colors.danger : colors.border }]}>
-        <Text
-          numberOfLines={1}
-          style={[styles.input, { color: value ? colors.text : colors.textMuted }]}>
+        style={[styles.field, error ? { borderColor: colors.danger } : null]}>
+        <Text numberOfLines={1} style={[styles.input, { color: value ? colors.text : colors.textFaint }]}>
           {value ?? placeholder}
         </Text>
-        <MaterialCommunityIcons name={icon} size={22} color={colors.text} />
+        <MaterialCommunityIcons name={icon} size={20} color={colors.textMuted} />
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
-}
-
-export function SectionTitle({ children, style }: { children: ReactNode; style?: TextProps['style'] }) {
-  return <Heading size={24} style={[{ marginTop: spacing.md }, style]}>{children}</Heading>;
 }
 
 export function Chip({
@@ -347,16 +415,13 @@ export function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
-      style={[
-        styles.chip,
-        selected && { borderColor: colors.gold, backgroundColor: colors.goldTint },
-      ]}>
-      <Text style={styles.chipText}>{label}</Text>
+      style={[styles.chip, selected && styles.chipSelected]}>
+      <Text style={[styles.chipText, selected && { color: colors.gold }]}>{label}</Text>
       {icon ? (
         <MaterialCommunityIcons
           name={icon}
-          size={18}
-          color={colors.text}
+          size={16}
+          color={selected ? colors.gold : colors.textMuted}
           style={{ marginLeft: 4 }}
         />
       ) : null}
@@ -364,36 +429,71 @@ export function Chip({
   );
 }
 
-export function Divider({ style }: { style?: StyleProp<ViewStyle> }) {
-  return <View style={[{ height: StyleSheet.hairlineWidth, backgroundColor: colors.border }, style]} />;
+/** Small outlined label, e.g. "Open" or "Offer". */
+export function Badge({ label, tone = 'gold' }: { label: string; tone?: 'gold' | 'success' | 'muted' }) {
+  const color = tone === 'gold' ? colors.gold : tone === 'success' ? colors.success : colors.textMuted;
+  return (
+    <View style={[styles.badge, { borderColor: color }]}>
+      <Text style={[styles.badgeText, { color }]}>{label}</Text>
+    </View>
+  );
 }
 
+/** Hide the browser's own focus ring on web; fields show focus with a gold border instead. */
+export const webNoOutline = (Platform.OS === 'web' ? { outlineStyle: 'none', outlineWidth: 0 } : {}) as TextStyle;
+
 export const styles = StyleSheet.create({
-  center: { alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center' },
-  heading: { fontFamily: fonts.heading, color: colors.gold },
-  body: { fontFamily: fonts.body, fontSize: 16, lineHeight: 22 },
-  goldButton: {
-    minHeight: 56,
+  raysWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  heading: { fontFamily: fonts.display, color: colors.ivory },
+  eyebrow: {
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
+    color: colors.gold,
+  },
+  body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: colors.text },
+  sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  button: {
+    minHeight: 54,
     borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-  buttonText: { fontFamily: fonts.button, fontSize: 18 },
+  buttonText: { fontFamily: fonts.semibold, fontSize: 15, letterSpacing: 0.6 },
   circleButton: {
-    borderRadius: radius.pill,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(20, 18, 14, 0.85)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  link: { fontFamily: fonts.bodySemi, color: colors.gold, fontSize: 15 },
-  label: { fontFamily: fonts.body, fontSize: 16 },
+  dot: {
+    position: 'absolute',
+    top: 9,
+    right: 10,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.gold,
+  },
+  link: { fontFamily: fonts.semibold, color: colors.gold, fontSize: 14, letterSpacing: 0.3 },
+  label: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted, letterSpacing: 0.3 },
   field: {
-    minHeight: 52,
+    minHeight: 54,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     flexDirection: 'row',
@@ -404,9 +504,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: 16,
-    paddingVertical: 12,
-    // The field border already shows focus; hide the browser's extra outline on web.
-    ...(Platform.OS === 'web' ? { outlineWidth: 0 } : null),
+    color: colors.text,
+    paddingVertical: 14,
+    minWidth: 0,
+    ...webNoOutline,
   },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 13 },
   chip: {
@@ -416,8 +517,16 @@ export const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.pill,
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    backgroundColor: colors.white,
+    paddingVertical: 8,
+    backgroundColor: colors.surface,
   },
-  chipText: { fontFamily: fonts.bodySemi, color: colors.text, fontSize: 14 },
+  chipSelected: { borderColor: colors.gold, backgroundColor: colors.goldTint },
+  chipText: { fontFamily: fonts.medium, color: colors.text, fontSize: 13 },
+  badge: {
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  badgeText: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
 });

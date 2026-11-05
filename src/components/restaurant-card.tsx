@@ -1,35 +1,57 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { CATEGORIES } from '@/data/categories';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
+import { Badge } from './ui';
+
+const RAYS = require('@/assets/images/rays.png');
+
+/** "4.6 (128)", or "New" before the first rating. */
+export function formatRating(r: Restaurant, long = false): string {
+  if (r.ratingCount === 0) return 'New';
+  return `${r.rating.toFixed(1)} (${r.ratingCount}${long ? ' ratings' : ''})`;
+}
+
+export function isOpenNow(r: Restaurant, now: Date): boolean {
+  return r.acceptingOrders && isOpenAt(r, now);
+}
+
+/**
+ * The kitchen's first cover photo. Without one, shows an elegant gold
+ * monogram on black with the logo's rays, so the feed still feels premium.
+ */
 export function RestaurantCover({
   restaurant,
   style,
-  iconSize = 48,
+  monogramSize = 64,
 }: {
   restaurant: Restaurant;
-  style?: object;
-  iconSize?: number;
+  style?: StyleProp<ViewStyle>;
+  monogramSize?: number;
 }) {
   const cover = restaurant.coverUris[0];
   if (cover) {
-    return <Image source={{ uri: cover }} style={style} contentFit="cover" accessibilityIgnoresInvertColors />;
+    return (
+      <View style={[style, { overflow: 'hidden' }]}>
+        <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+      </View>
+    );
   }
-  const icon =
-    CATEGORIES.find((c) => c.id === restaurant.categories[0])?.icon ?? 'silverware-variant';
+  const initial = restaurant.name.trim().charAt(0).toUpperCase() || 'M';
   return (
-    <LinearGradient colors={['#2A1E08', '#5A3F0B']} style={[style, styles.placeholder]}>
-      <MaterialCommunityIcons name={icon} size={iconSize} color={colors.goldLight} />
+    <LinearGradient colors={['#221D13', '#0E0C09']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style, styles.monogramWrap]}>
+      <Image source={RAYS} style={styles.monogramRays} contentFit="contain" />
+      <Text style={[styles.monogram, { fontSize: monogramSize, lineHeight: monogramSize * 1.2 }]}>{initial}</Text>
     </LinearGradient>
   );
 }
 
+/** Full-width card for the "All Kitchens" feed. */
 export function RestaurantCard({
   restaurant,
   favorite,
@@ -43,84 +65,144 @@ export function RestaurantCard({
   onToggleFavorite: () => void;
   now: Date;
 }) {
-  const open = restaurant.acceptingOrders && isOpenAt(restaurant, now);
+  const open = isOpenNow(restaurant, now);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, rated ${restaurant.rating}, ${open ? 'open now' : 'closed'}`}
+      accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, ${formatRating(restaurant, true)}, ${open ? 'open now' : 'closed'}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}>
-      <RestaurantCover restaurant={restaurant} style={styles.cover} />
-      <View style={styles.info}>
-        <View style={styles.titleRow}>
-          <Text style={styles.name} numberOfLines={2}>
-            {restaurant.name}
-          </Text>
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}>
+      <View>
+        <RestaurantCover restaurant={restaurant} style={styles.cover} />
+        <LinearGradient colors={['transparent', 'rgba(10,9,7,0.85)']} style={styles.coverFade} />
+        <View style={styles.coverTop}>
+          {open ? <Badge label="Open now" tone="success" /> : <Badge label="Closed" tone="muted" />}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
             hitSlop={10}
-            onPress={onToggleFavorite}>
+            onPress={onToggleFavorite}
+            style={styles.heart}>
             <MaterialCommunityIcons
               name={favorite ? 'heart' : 'heart-outline'}
-              size={26}
-              color={favorite ? colors.danger : colors.border}
+              size={20}
+              color={favorite ? colors.gold : colors.ivory}
             />
           </Pressable>
         </View>
+      </View>
+      <View style={styles.info}>
         <Text style={styles.cuisine} numberOfLines={1}>
           {restaurant.cuisine}
         </Text>
-        <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="star" size={16} color={colors.gold} />
-          <Text style={styles.meta}>
-            {formatRating(restaurant)}
-          </Text>
-          {restaurant.hasOffer ? <Text style={styles.offer}>Offer</Text> : null}
-        </View>
-        <Text style={[styles.meta, { color: open ? colors.success : colors.textMuted }]}>
-          {open
-            ? `Open · until ${formatTime(restaurant.closeTime)}`
-            : `Closed · opens ${formatTime(restaurant.openTime)}`}
+        <Text style={styles.name} numberOfLines={1}>
+          {restaurant.name}
         </Text>
+        <View style={styles.metaRow}>
+          <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
+          <Text style={styles.meta}>{formatRating(restaurant)}</Text>
+          <Text style={styles.metaDot}>·</Text>
+          <Text style={styles.meta}>by {restaurant.chefName}</Text>
+          <Text style={styles.metaDot}>·</Text>
+          <Text style={styles.meta} numberOfLines={1}>
+            {open ? `Until ${formatTime(restaurant.closeTime)}` : `Opens ${formatTime(restaurant.openTime)}`}
+          </Text>
+          {restaurant.hasOffer ? (
+            <View style={{ marginLeft: 'auto' }}>
+              <Badge label="Offer" />
+            </View>
+          ) : null}
+        </View>
       </View>
     </Pressable>
   );
 }
 
-/** "4.6 (128)", or "New" before the first rating. */
-export function formatRating(r: Restaurant, long = false): string {
-  if (r.ratingCount === 0) return 'New';
-  return `${r.rating.toFixed(1)} (${r.ratingCount}${long ? ' ratings' : ''})`;
+/** Tall card for the horizontal "Tonight's table" carousel. */
+export function FeaturedCard({
+  restaurant,
+  onPress,
+  width,
+}: {
+  restaurant: Restaurant;
+  onPress: () => void;
+  width: number;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.featured, { width }, pressed && { opacity: 0.9 }]}>
+      <RestaurantCover restaurant={restaurant} style={StyleSheet.absoluteFill} monogramSize={88} />
+      <LinearGradient colors={['transparent', 'rgba(10,9,7,0.95)']} style={styles.featuredFade} />
+      <View style={styles.featuredInfo}>
+        <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
+        <Text style={[styles.name, { fontSize: 22 }]} numberOfLines={2}>
+          {restaurant.name}
+        </Text>
+        <View style={styles.metaRow}>
+          <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
+          <Text style={styles.meta}>{formatRating(restaurant)}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    borderWidth: 1.5,
-    borderColor: colors.gold,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    backgroundColor: colors.white,
-    minHeight: 132,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  cover: { width: 120, alignSelf: 'stretch' },
-  placeholder: { alignItems: 'center', justifyContent: 'center' },
-  info: { flex: 1, padding: spacing.md, gap: 4 },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  name: { flex: 1, fontFamily: fonts.headingSemi, fontSize: 19, color: colors.text },
-  cuisine: { fontFamily: fonts.body, fontSize: 15, color: colors.gold },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  meta: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
-  offer: {
-    marginLeft: spacing.sm,
-    fontFamily: fonts.bodySemi,
-    fontSize: 12,
-    color: colors.goldDark,
-    backgroundColor: colors.goldTint,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
+  cover: { width: '100%', aspectRatio: 16 / 9 },
+  coverFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%' },
+  coverTop: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  heart: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(10,9,7,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,245,224,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monogramWrap: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  monogramRays: { position: 'absolute', width: 340, height: 340, opacity: 0.35 },
+  monogram: { fontFamily: fonts.display, color: colors.ivory },
+  info: { padding: spacing.md, paddingTop: spacing.sm + 2, gap: 4 },
+  cuisine: {
+    fontFamily: fonts.semibold,
+    fontSize: 10,
+    letterSpacing: 1.8,
+    textTransform: 'uppercase',
+    color: colors.gold,
+  },
+  name: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
+  metaDot: { color: colors.textFaint, fontSize: 12 },
+  featured: {
+    height: 250,
+    borderRadius: radius.lg,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    justifyContent: 'flex-end',
+    backgroundColor: colors.surface,
   },
+  featuredFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '65%' },
+  featuredInfo: { padding: spacing.md, gap: 4 },
 });

@@ -49,7 +49,7 @@ export default function RestaurantDocuments() {
   };
 
   return (
-    <FormScreen title="Restaurant Documents" footer={<GoldButton title="Save & Next" onPress={next} />}>
+    <FormScreen title="Documents" footer={<GoldButton title="Save" chevron onPress={next} />}>
       <SectionTitle style={{ marginTop: 0 }}>Keep it legit</SectionTitle>
       <Body muted>
         Home kitchens must follow local food laws. We review these before your restaurant goes live
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  cardTitle: { fontFamily: fonts.headingSemi, fontSize: 17, color: colors.text, flexShrink: 1 },
+  cardTitle: { fontFamily: fonts.display, fontSize: 17, color: colors.text, flexShrink: 1 },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     minHeight: 48,
   },
-  uploadText: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.gold },
+  uploadText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.gold },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14 },
 });

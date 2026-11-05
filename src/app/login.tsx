@@ -1,6 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -9,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,9 +15,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   BackButton,
   Body,
+  Eyebrow,
   GoldButton,
   Heading,
   type IconName,
+  Logo,
   TextField,
   TextLink,
 } from '@/components/ui';
@@ -34,6 +35,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
  */
 export default function Login() {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const { dispatch } = useStore();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -66,42 +68,34 @@ export default function Login() {
       style={{ flex: 1, backgroundColor: colors.black }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <LinearGradient
-          colors={['#3B2A10', '#1A1206', colors.black]}
-          style={[styles.hero, { paddingTop: insets.top + spacing.md }]}>
+        <View style={[styles.hero, { paddingTop: insets.top + spacing.sm }]}>
           <View style={{ alignSelf: 'flex-start', paddingHorizontal: spacing.lg }}>
             <BackButton
-              tone="dark"
-              onPress={() => (stage === 'code' ? setStage('phone') : router.replace('/choose-role'))}
+              onPress={() => (stage === 'code' ? setStage('phone') : resetTo('/choose-role'))}
             />
           </View>
           <View style={styles.brand}>
-            <MaterialCommunityIcons name="silverware-variant" size={72} color={colors.gold} />
-            <Text style={styles.wordmark}>MANNA</Text>
-            <Body tone="dark" style={{ textAlign: 'center' }}>
-              Your neighborhood’s kitchens, in one place.
-            </Body>
+            <Logo size={Math.min(240, height * 0.28)} />
           </View>
-        </LinearGradient>
+        </View>
 
         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
-          <Heading size={28}>Login to Continue</Heading>
+          <View style={{ gap: spacing.xs }}>
+            <Eyebrow>{stage === 'phone' ? 'Sign in' : 'Verify'}</Eyebrow>
+            <Heading size={28}>{stage === 'phone' ? 'Login to continue' : 'Check your messages'}</Heading>
+          </View>
 
           {stage === 'phone' ? (
             <>
-              <Body tone="dark" style={styles.prompt}>
-                Please enter mobile number
-              </Body>
               <View style={styles.phoneRow}>
                 <View style={styles.country}>
                   <Text style={styles.flag}>🇺🇸</Text>
                   <Text style={styles.countryCode}>+1</Text>
                 </View>
                 <TextField
-                  tone="dark"
                   containerStyle={{ flex: 1 }}
-                  placeholder="Mobile Number"
-                  icon="account-outline"
+                  placeholder="Mobile number"
+                  icon="cellphone"
                   keyboardType="phone-pad"
                   textContentType="telephoneNumber"
                   autoComplete="tel"
@@ -111,11 +105,13 @@ export default function Login() {
                 />
               </View>
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              <GoldButton title="Login" tone="dark" chevron={false} onPress={sendCode} />
+              <GoldButton title="Send code" chevron onPress={sendCode} />
 
-              <Body tone="dark" muted style={styles.or}>
-                or login with
-              </Body>
+              <View style={styles.orRow}>
+                <View style={styles.orLine} />
+                <Text style={styles.orText}>or continue with</Text>
+                <View style={styles.orLine} />
+              </View>
               <View style={styles.socialRow}>
                 {(
                   [
@@ -127,22 +123,22 @@ export default function Login() {
                   <Pressable
                     key={name}
                     accessibilityRole="button"
-                    accessibilityLabel={`Login with ${name}`}
+                    accessibilityLabel={`Continue with ${name}`}
                     onPress={() => comingSoon(name)}
-                    style={({ pressed }) => [styles.social, pressed && { opacity: 0.7 }]}>
-                    <MaterialCommunityIcons name={icon} size={34} color={colors.white} />
+                    style={({ pressed }) => [styles.social, pressed && { borderColor: colors.gold }]}>
+                    <MaterialCommunityIcons name={icon} size={24} color={colors.ivory} />
                   </Pressable>
                 ))}
               </View>
+              <Body muted style={styles.legal}>
+                By continuing you agree to Manna’s Terms of Service and Privacy Policy.
+              </Body>
             </>
           ) : (
             <>
-              <Body tone="dark" style={styles.prompt}>
-                Enter the 6-digit code sent to +1 {formatUsPhone(phone)}
-              </Body>
+              <Body muted>Enter the 6-digit code sent to +1 {formatUsPhone(phone)}.</Body>
               <TextField
-                tone="dark"
-                placeholder="Verification code"
+                placeholder="• • • • • •"
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"
                 autoComplete="sms-otp"
@@ -151,11 +147,12 @@ export default function Login() {
                 onChangeText={(t) => setCode(digitsOnly(t))}
                 onSubmitEditing={verify}
                 error={error}
+                accessibilityLabel="Verification code"
               />
-              <Body tone="dark" muted style={{ fontSize: 13 }}>
+              <Body muted style={{ fontSize: 13 }}>
                 Demo mode: text messages aren’t connected yet, so any 6 digits will work.
               </Body>
-              <GoldButton title="Verify" tone="dark" chevron={false} onPress={verify} />
+              <GoldButton title="Verify" chevron onPress={verify} />
               <TextLink
                 title="Use a different number"
                 onPress={() => {
@@ -174,45 +171,48 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  hero: { minHeight: 340, paddingBottom: spacing.xxl },
-  brand: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg },
-  wordmark: { fontFamily: fonts.heading, color: colors.gold, fontSize: 40, letterSpacing: 10 },
+  hero: { paddingBottom: spacing.xl },
+  brand: { alignItems: 'center', justifyContent: 'center', paddingTop: spacing.md },
   sheet: {
     flex: 1,
-    marginTop: -spacing.lg,
-    backgroundColor: colors.black,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     borderWidth: 1,
     borderBottomWidth: 0,
-    borderColor: colors.borderDark,
+    borderColor: colors.hairline,
     padding: spacing.lg,
+    paddingTop: spacing.xl,
     gap: spacing.lg,
   },
-  prompt: { fontSize: 18 },
-  phoneRow: { flexDirection: 'row', gap: spacing.md },
+  phoneRow: { flexDirection: 'row', gap: spacing.sm },
   country: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.borderDark,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    minHeight: 52,
+    minHeight: 54,
   },
-  flag: { fontSize: 24 },
-  countryCode: { fontFamily: fonts.body, color: colors.white, fontSize: 18 },
+  flag: { fontSize: 20 },
+  countryCode: { fontFamily: fonts.medium, color: colors.text, fontSize: 16 },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 13, marginTop: -spacing.sm },
-  or: { textAlign: 'center' },
-  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.lg },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+  orText: { fontFamily: fonts.body, color: colors.textMuted, fontSize: 13 },
+  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.md },
   social: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    flex: 1,
+    height: 54,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.borderDark,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  legal: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });
