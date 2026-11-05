@@ -5,8 +5,7 @@ import type { Collection } from '@/data/collections';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 import { PressableScale } from './motion';
-import type { IconName } from './ui';
-import { Icon } from './icon';
+import { CraftIcon } from './craft-icon';
 
 
 /** Magazine-style tile for an editorial collection. */
@@ -27,7 +26,7 @@ export function CollectionCard({
       style={styles.card}>
       <LinearGradient colors={['#2A2214', '#100D08']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       <View style={styles.icon}>
-        <Icon name={collection.icon as IconName} size={22} color={colors.gold} />
+        <CraftIcon name={collection.icon} size={22} color={colors.gold} />
       </View>
       <View style={{ gap: 4 }}>
         <Text style={styles.eyebrow}>

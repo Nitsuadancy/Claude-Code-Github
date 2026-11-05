@@ -12,14 +12,11 @@ export type Weekday =
 export type CategoryId =
   | 'vegan'
   | 'cottage-kitchen'
-  | 'foodie-adventures'
-  | 'bakery'
-  | 'meal-preppers'
   | 'global-flavors'
-  | 'sweet-tooth'
-  | 'kids-favorites'
+  | 'bakery'
   | 'breakfast-preppers'
-  | 'late-night-bites';
+  | 'late-night-bites'
+  | 'sweet-tooth';
 
 export interface UserProfile {
   id: string;

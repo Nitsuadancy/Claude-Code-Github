@@ -1,4 +1,5 @@
 import type { PersistedState } from '@/state/reducer';
+import { isCategoryId } from '@/data/categories';
 import type { MenuItem, Order, Restaurant } from '@/types';
 
 import { estimateReadyAt } from './orders';
@@ -28,6 +29,8 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     chefBio: r.chefBio ?? '',
     verified: r.verified ?? false,
     prepMinutes: r.prepMinutes ?? DEFAULT_PREP_MINUTES,
+    // Meal Preppers, Kids Favorites and Foodie Adventures were retired.
+    categories: (r.categories ?? []).filter(isCategoryId),
     menu: (r.menu ?? []).map(normalizeMenuItem),
   };
 }

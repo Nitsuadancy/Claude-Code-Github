@@ -1,25 +1,29 @@
-import type { IconName } from '@/components/icon';
+import type { CraftIconName } from '@/components/craft-icon';
 import type { CategoryId } from '@/types';
 
 export interface Category {
   id: CategoryId;
   label: string;
-  icon: IconName;
+  icon: CraftIconName;
 }
 
-/** The "Fuel your Food Desire" grid on the Foodie home screen. */
+/** The seven crafts on the Foodie home screen, each with its own drawn icon. */
 export const CATEGORIES: Category[] = [
-  { id: 'vegan', label: 'Vegan', icon: 'sprout' },
-  { id: 'cottage-kitchen', label: 'Cottage Kitchen', icon: 'home-heart' },
-  { id: 'foodie-adventures', label: 'Foodie Adventures', icon: 'map-marker-radius' },
-  { id: 'bakery', label: 'Bakery', icon: 'croissant' },
-  { id: 'meal-preppers', label: 'Meal Preppers', icon: 'food-takeout-box' },
-  { id: 'global-flavors', label: 'Global Flavors', icon: 'earth' },
-  { id: 'sweet-tooth', label: 'Sweet Tooth', icon: 'ice-cream' },
-  { id: 'kids-favorites', label: 'Kids Favorites', icon: 'emoticon-happy-outline' },
-  { id: 'breakfast-preppers', label: 'Breakfast Preppers', icon: 'egg-fried' },
-  { id: 'late-night-bites', label: 'Late Night Bites', icon: 'weather-night' },
+  { id: 'vegan', label: 'Vegan', icon: 'vegan' },
+  { id: 'cottage-kitchen', label: 'Cottage', icon: 'cottage' },
+  { id: 'global-flavors', label: 'Global', icon: 'global' },
+  { id: 'bakery', label: 'Bakery', icon: 'bakery' },
+  { id: 'breakfast-preppers', label: 'Breakfast', icon: 'breakfast' },
+  { id: 'late-night-bites', label: 'Late Night', icon: 'late-night' },
+  { id: 'sweet-tooth', label: 'Sweet', icon: 'sweet' },
 ];
+
+const CATEGORY_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
+
+/** True for a category Manna still offers. Older saved kitchens may carry retired ones. */
+export function isCategoryId(value: string): value is CategoryId {
+  return CATEGORY_IDS.has(value);
+}
 
 /** Options for the "Restaurant Type" dropdown during chef onboarding. */
 export const CUISINES = [

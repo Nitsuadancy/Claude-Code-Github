@@ -1,3 +1,4 @@
+import type { CraftIconName } from '@/components/craft-icon';
 import type { CategoryId, DietaryTag, Restaurant } from '@/types';
 
 /**
@@ -8,7 +9,7 @@ export interface Collection {
   id: string;
   title: string;
   tagline: string;
-  icon: string;
+  icon: CraftIconName;
   categories?: CategoryId[];
   dietary?: DietaryTag[];
 }
@@ -18,14 +19,14 @@ export const COLLECTIONS: Collection[] = [
     id: 'sunday-supper',
     title: 'Sunday Supper',
     tagline: 'Slow-cooked comfort, made to share at the table.',
-    icon: 'cooking-pot',
+    icon: 'cottage',
     categories: ['cottage-kitchen'],
   },
   {
     id: 'plant-powered',
     title: 'Plant-Powered',
     tagline: 'Vegan and vegetarian cooking that tastes like a treat.',
-    icon: 'sprout',
+    icon: 'vegan',
     categories: ['vegan'],
     dietary: ['vegan', 'vegetarian'],
   },
@@ -33,21 +34,21 @@ export const COLLECTIONS: Collection[] = [
     id: 'sweet-endings',
     title: 'Sweet Endings',
     tagline: 'Cobblers, cookies and cakes from neighborhood bakers.',
-    icon: 'croissant',
+    icon: 'sweet',
     categories: ['bakery', 'sweet-tooth'],
   },
   {
     id: 'around-the-world',
     title: 'Around the World',
     tagline: 'Family recipes carried here from far away.',
-    icon: 'earth',
-    categories: ['global-flavors', 'foodie-adventures'],
+    icon: 'global',
+    categories: ['global-flavors'],
   },
   {
     id: 'after-dark',
     title: 'After Dark',
     tagline: 'Kitchens that keep the oven on late.',
-    icon: 'weather-night',
+    icon: 'late-night',
     categories: ['late-night-bites'],
   },
 ];

@@ -101,6 +101,11 @@ describe('upgrading saved data from older versions', () => {
     expect(r.menu[0]).toMatchObject({ dietary: [], allergens: [], dailyLimit: null });
   });
 
+  it('drops retired categories from saved kitchens', () => {
+    const old = { ...SAMPLE_RESTAURANTS[0], categories: ['vegan', 'meal-preppers', 'kids-favorites'] };
+    expect(normalizeRestaurant(old as unknown as Restaurant).categories).toEqual(['vegan']);
+  });
+
   it('gives old orders a history, note and ready time', () => {
     const old = { ...order({}), statusHistory: undefined, chefNote: undefined, estimatedReadyAt: undefined };
     const o = normalizeOrder(old as unknown as Order);

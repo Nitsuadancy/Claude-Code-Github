@@ -28,6 +28,7 @@ import {
   SectionHeader,
   webNoOutline,
 } from '@/components/ui';
+import { CraftIcon } from '@/components/craft-icon';
 import { CATEGORIES } from '@/data/categories';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import { buildActivity, unseenCount } from '@/lib/activity';
@@ -58,7 +59,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 const COACH_STEPS = [
   {
     title: 'Explore by craving',
-    body: 'Tap a category like Vegan or Late Night Bites to see kitchens that specialize in it.',
+    body: 'Tap a craft like Vegan or Late Night to see kitchens that specialize in it.',
   },
   {
     title: 'Refine your search',
@@ -368,7 +369,7 @@ export default function FoodieHome() {
                 onPress={() => update({ category: selected ? null : c.id })}
                 style={styles.category}>
                 <View style={[styles.categoryRing, selected && styles.categoryRingOn]}>
-                  <Icon name={c.icon} size={28} color={selected ? colors.onGold : colors.gold} />
+                  <CraftIcon name={c.icon} size={30} color={selected ? colors.onGold : colors.gold} />
                 </View>
                 <Text style={[styles.categoryLabel, selected && { color: colors.gold }]} numberOfLines={2}>
                   {c.label}

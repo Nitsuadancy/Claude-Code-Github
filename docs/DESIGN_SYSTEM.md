@@ -74,6 +74,9 @@ buttons, use `onGold` (`#140F06`) for text.
 - Every celebration can be skipped with a tap.
 
 Icons are Lucide thin-line icons at one 1.6 stroke, through `src/components/icon.tsx`.
+The seven crafts (Vegan, Cottage, Global, Bakery, Breakfast, Late Night, Sweet) have
+Manna's own drawings in `src/components/craft-icon.tsx`. They use a finer 1.35 stroke to
+match the logo's rays, and Breakfast is a sunrise drawn from those rays. Collections reuse them.
 Filled shapes are reserved for states (a filled heart, a gold seal). Dietary marks are
 menu-style letter codes (V, VG, GF, DF, H), not pictograms.
 
