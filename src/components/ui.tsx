@@ -339,6 +339,7 @@ export function TextField({
           cursorColor={colors.gold}
           keyboardAppearance="dark"
           accessibilityLabel={label ?? input.placeholder}
+          numberOfLines={input.multiline ? 5 : undefined}
           {...input}
           onFocus={(e) => {
             setFocused(true);
@@ -351,7 +352,7 @@ export function TextField({
           style={[
             styles.input,
             readOnly && { color: colors.textMuted },
-            input.multiline && { minHeight: 84, textAlignVertical: 'top', paddingTop: 14 },
+            input.multiline && { minHeight: 120, textAlignVertical: 'top', paddingTop: 14, paddingBottom: 14 },
           ]}
         />
         {icon ? (

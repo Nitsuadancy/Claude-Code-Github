@@ -1,3 +1,4 @@
+import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
   Order,
@@ -49,11 +50,18 @@ export type Action =
   | { type: 'saveRestaurant'; restaurant: Restaurant }
   | { type: 'publishRestaurant'; restaurantId: string }
   | { type: 'setAcceptingOrders'; restaurantId: string; accepting: boolean }
-  | { type: 'addToCart'; restaurantId: string; itemId: string }
+  | {
+      type: 'addToCart';
+      restaurantId: string;
+      itemId: string;
+      /** Portions still available today; adding stops here. */
+      max?: number | null;
+    }
   | { type: 'setCartQuantity'; itemId: string; quantity: number }
   | { type: 'clearCart' }
   | { type: 'placeOrder'; order: Order }
-  | { type: 'setOrderStatus'; orderId: string; status: OrderStatus }
+  | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
+  | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'toggleFavorite'; restaurantId: string };
 
 /** Which status changes a kitchen is allowed to make. */
@@ -69,7 +77,7 @@ export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'hydrate':
-      return { ...state, ...(action.state ?? {}), hydrated: true };
+      return { ...state, ...(normalizePersisted(action.state) ?? {}), hydrated: true };
 
     case 'completeWelcome':
       return { ...state, hasSeenWelcome: true };
@@ -141,6 +149,8 @@ export function reducer(state: AppState, action: Action): AppState {
       const sameKitchen = state.cart.restaurantId === action.restaurantId;
       const lines = sameKitchen ? state.cart.lines : [];
       const existing = lines.find((l) => l.itemId === action.itemId);
+      const max = action.max ?? Infinity;
+      if ((existing?.quantity ?? 0) >= max) return state;
       return {
         ...state,
         cart: {
@@ -178,8 +188,23 @@ export function reducer(state: AppState, action: Action): AppState {
         ...state,
         orders: state.orders.map((o) =>
           o.id === action.orderId && NEXT_STATUSES[o.status].includes(action.status)
-            ? { ...o, status: action.status }
+            ? {
+                ...o,
+                status: action.status,
+                statusHistory: [
+                  ...o.statusHistory,
+                  { status: action.status, at: action.at ?? new Date().toISOString() },
+                ],
+              }
             : o,
+        ),
+      };
+
+    case 'setOrderNote':
+      return {
+        ...state,
+        orders: state.orders.map((o) =>
+          o.id === action.orderId ? { ...o, chefNote: action.note.trim().slice(0, 280) } : o,
         ),
       };
 

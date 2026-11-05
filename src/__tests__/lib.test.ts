@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { browseRestaurants, cuisineTags, DEFAULT_FILTERS, isNew } from '@/lib/browse';
 import { formatTime, isOpenAt, TIME_SLOTS, toMinutes } from '@/lib/hours';
+import { normalizeMenuItem } from '@/lib/migrate';
 import { formatCents, parsePriceToCents } from '@/lib/money';
 import { computeCartTotals, DELIVERY_FEE_CENTS } from '@/lib/pricing';
 import { blankRestaurant, currentStep, isInformationComplete } from '@/lib/setup';
@@ -29,9 +30,9 @@ describe('money', () => {
 
 describe('pricing', () => {
   const menu: MenuItem[] = [
-    { id: 'a', name: 'A', description: '', priceCents: 1000, available: true },
-    { id: 'b', name: 'B', description: '', priceCents: 550, available: true },
-    { id: 'c', name: 'C', description: '', priceCents: 900, available: false },
+    normalizeMenuItem({ id: 'a', name: 'A', priceCents: 1000 }),
+    normalizeMenuItem({ id: 'b', name: 'B', priceCents: 550 }),
+    normalizeMenuItem({ id: 'c', name: 'C', priceCents: 900, available: false }),
   ];
 
   it('totals the cart with fees', () => {
@@ -186,7 +187,7 @@ describe('chef setup', () => {
 
     const withMenu: Restaurant = {
       ...withDocs,
-      menu: [{ id: 'm', name: 'Lasagna', description: '', priceCents: 1500, available: true }],
+      menu: [normalizeMenuItem({ id: 'm', name: 'Lasagna', priceCents: 1500 })],
     };
     expect(currentStep(withMenu)).toBe('preview');
   });

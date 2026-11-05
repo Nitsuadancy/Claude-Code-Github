@@ -70,6 +70,16 @@ describe('cart', () => {
     expect(s.cart).toEqual({ restaurantId: null, lines: [] });
   });
 
+  it('stops at the daily limit', () => {
+    let s = signedIn('foodie');
+    for (let i = 0; i < 4; i++) {
+      s = reducer(s, { type: 'addToCart', restaurantId: 'r1', itemId: 'a', max: 2 });
+    }
+    expect(s.cart.lines).toEqual([{ itemId: 'a', quantity: 2 }]);
+    const none = reducer(signedIn('foodie'), { type: 'addToCart', restaurantId: 'r1', itemId: 'a', max: 0 });
+    expect(none.cart.lines).toEqual([]);
+  });
+
   it('starts a new cart when adding from a different kitchen', () => {
     let s = signedIn('foodie');
     s = reducer(s, { type: 'addToCart', restaurantId: 'r1', itemId: 'a' });
@@ -92,7 +102,10 @@ describe('orders', () => {
     totalCents: 1399,
     deliveryAddress: '1 Main',
     status: 'placed',
+    statusHistory: [{ status: 'placed', at: '2026-11-05T12:00:00.000Z' }],
+    chefNote: '',
     createdAt: '2026-11-05T12:00:00.000Z',
+    estimatedReadyAt: '2026-11-05T12:30:00.000Z',
   };
 
   it('placing an order clears the cart', () => {
@@ -112,6 +125,27 @@ describe('orders', () => {
     }
     s = reducer(s, { type: 'setOrderStatus', orderId: 'o1', status: 'declined' });
     expect(s.orders[0].status).toBe('completed');
+    expect(s.orders[0].statusHistory.map((h) => h.status)).toEqual([
+      'placed',
+      'accepted',
+      'preparing',
+      'ready',
+      'completed',
+    ]);
+  });
+
+  it('records when each status happened', () => {
+    let s = reducer(signedIn('chef'), { type: 'placeOrder', order });
+    s = reducer(s, { type: 'setOrderStatus', orderId: 'o1', status: 'accepted', at: '2026-11-05T12:05:00.000Z' });
+    expect(s.orders[0].statusHistory[1]).toEqual({ status: 'accepted', at: '2026-11-05T12:05:00.000Z' });
+  });
+
+  it('saves a trimmed chef note of at most 280 characters', () => {
+    let s = reducer(signedIn('chef'), { type: 'placeOrder', order });
+    s = reducer(s, { type: 'setOrderNote', orderId: 'o1', note: '  Fresh out of the oven!  ' });
+    expect(s.orders[0].chefNote).toBe('Fresh out of the oven!');
+    s = reducer(s, { type: 'setOrderNote', orderId: 'o1', note: 'x'.repeat(400) });
+    expect(s.orders[0].chefNote).toHaveLength(280);
   });
 });
 

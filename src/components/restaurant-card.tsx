@@ -7,6 +7,7 @@ import { formatTime, isOpenAt } from '@/lib/hours';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
+import { VerifiedSeal } from './chef';
 import { Badge } from './ui';
 
 const RAYS = require('@/assets/images/rays.png');
@@ -95,17 +96,22 @@ export function RestaurantCard({
         <Text style={styles.cuisine} numberOfLines={1}>
           {restaurant.cuisine}
         </Text>
-        <Text style={styles.name} numberOfLines={1}>
-          {restaurant.name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={[styles.name, { flexShrink: 1 }]} numberOfLines={1}>
+            {restaurant.name}
+          </Text>
+          {restaurant.verified ? <VerifiedSeal /> : null}
+        </View>
         <View style={styles.metaRow}>
           <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
           <Text style={styles.meta}>{formatRating(restaurant)}</Text>
           <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.meta}>by {restaurant.chefName}</Text>
+          <Text style={styles.meta} numberOfLines={1}>
+            {open ? `~${restaurant.prepMinutes} min` : `Opens ${formatTime(restaurant.openTime)}`}
+          </Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta} numberOfLines={1}>
-            {open ? `Until ${formatTime(restaurant.closeTime)}` : `Opens ${formatTime(restaurant.openTime)}`}
+            by {restaurant.chefName}
           </Text>
           {restaurant.hasOffer ? (
             <View style={{ marginLeft: 'auto' }}>
@@ -138,12 +144,17 @@ export function FeaturedCard({
       <LinearGradient colors={['transparent', 'rgba(10,9,7,0.95)']} style={styles.featuredFade} />
       <View style={styles.featuredInfo}>
         <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
-        <Text style={[styles.name, { fontSize: 22 }]} numberOfLines={2}>
-          {restaurant.name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={[styles.name, { fontSize: 22, flexShrink: 1 }]} numberOfLines={2}>
+            {restaurant.name}
+          </Text>
+          {restaurant.verified ? <VerifiedSeal /> : null}
+        </View>
         <View style={styles.metaRow}>
           <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
           <Text style={styles.meta}>{formatRating(restaurant)}</Text>
+          <Text style={styles.metaDot}>·</Text>
+          <Text style={styles.meta}>~{restaurant.prepMinutes} min</Text>
         </View>
       </View>
     </Pressable>
@@ -191,6 +202,7 @@ const styles = StyleSheet.create({
     color: colors.gold,
   },
   name: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
   metaDot: { color: colors.textFaint, fontSize: 12 },

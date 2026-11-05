@@ -7,7 +7,9 @@ import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Body, Card, Divider, Eyebrow, GoldButton, Heading, Screen, TextField } from '@/components/ui';
 import { notify } from '@/lib/alert';
+import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
+import { estimateReadyAt } from '@/lib/orders';
 import { computeCartTotals } from '@/lib/pricing';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
@@ -49,12 +51,24 @@ export default function Cart() {
       notify('Kitchen closed', `${restaurant.name} isn’t taking orders right now.`);
       return;
     }
+    const now = new Date();
+    const short = totals.lines.find((line) => {
+      const item = restaurant.menu.find((m) => m.id === line.itemId);
+      const left = item ? remainingToday(item, state.orders, restaurant.id, now) : null;
+      return left !== null && line.quantity > left;
+    });
+    if (short) {
+      notify('Almost gone', `${restaurant.name} doesn’t have enough ${short.name} left today. Lower the quantity and try again.`);
+      return;
+    }
+    const createdAt = now.toISOString();
+    const orderId = newId('order');
     // Payments aren't connected yet: orders are recorded as placed without charging a card.
     dispatch({ type: 'updateProfile', changes: { deliveryAddress: address.trim() } });
     dispatch({
       type: 'placeOrder',
       order: {
-        id: newId('order'),
+        id: orderId,
         customerId: user.id,
         customerName: user.name,
         restaurantId: restaurant.id,
@@ -66,10 +80,13 @@ export default function Cart() {
         totalCents: totals.totalCents,
         deliveryAddress: address.trim(),
         status: 'placed',
-        createdAt: new Date().toISOString(),
+        statusHistory: [{ status: 'placed', at: createdAt }],
+        chefNote: '',
+        createdAt,
+        estimatedReadyAt: estimateReadyAt(createdAt, restaurant.prepMinutes),
       },
     });
-    router.navigate('/foodie/orders');
+    router.push({ pathname: '/order/[id]', params: { id: orderId, celebrate: '1' } });
   };
 
   return (

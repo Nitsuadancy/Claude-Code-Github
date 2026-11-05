@@ -35,3 +35,23 @@ export function formatOrderTime(iso: string): string {
     minute: '2-digit',
   });
 }
+
+/** ISO time the food should be ready, from when it was ordered plus the kitchen's prep time. */
+export function estimateReadyAt(createdAt: string, prepMinutes: number): string {
+  return new Date(new Date(createdAt).getTime() + prepMinutes * 60_000).toISOString();
+}
+
+/** "7:45 PM" in the device's locale. */
+export function formatClock(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Customer-facing headline for each status on the tracking screen. */
+export const ORDER_HEADLINE: Record<OrderStatus, string> = {
+  placed: 'Order sent to the kitchen',
+  accepted: 'The chef accepted your order',
+  preparing: 'Your food is being prepared',
+  ready: 'Ready and on its way',
+  completed: 'Delivered. Enjoy!',
+  declined: 'The kitchen couldn’t take this order',
+};

@@ -1,0 +1,189 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { ChefAvatar } from '@/components/chef';
+import { OrderCelebration } from '@/components/order-celebration';
+import {
+  BackButton,
+  Body,
+  Card,
+  Divider,
+  Eyebrow,
+  GoldButton,
+  Heading,
+  Rays,
+  Screen,
+} from '@/components/ui';
+import * as haptics from '@/lib/haptics';
+import { formatCents } from '@/lib/money';
+import { formatClock, isActive, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import { useRestaurant, useStore } from '@/state/store';
+import { colors, fonts, radius, spacing } from '@/theme';
+
+/** Live tracking for one order, with a celebration when it was just placed. */
+export default function OrderTracking() {
+  const { id, celebrate } = useLocalSearchParams<{ id: string; celebrate?: string }>();
+  const { state } = useStore();
+  const order = state.orders.find((o) => o.id === id);
+  const restaurant = useRestaurant(order?.restaurantId);
+  const [celebrating, setCelebrating] = useState(celebrate === '1');
+  const endCelebration = useCallback(() => setCelebrating(false), []);
+
+  useEffect(() => {
+    if (celebrate === '1') haptics.success();
+  }, [celebrate]);
+
+  if (!order) {
+    return (
+      <Screen style={{ padding: spacing.lg, gap: spacing.lg }}>
+        <BackButton />
+        <Body>That order couldn’t be found.</Body>
+      </Screen>
+    );
+  }
+
+  const chefName = restaurant?.chefName ?? order.restaurantName;
+  const declined = order.status === 'declined';
+  const current = ORDER_PROGRESS.indexOf(order.status);
+  const timeFor = (status: string) => order.statusHistory.find((h) => h.status === status)?.at;
+
+  return (
+    <Screen>
+      <Rays size={520} opacity={0.12} style={{ top: -300 }} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <BackButton
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/foodie/orders'))}
+        />
+
+        <View style={styles.header}>
+          <Eyebrow>{order.restaurantName}</Eyebrow>
+          <Heading size={30}>{ORDER_HEADLINE[order.status]}</Heading>
+          {isActive(order.status) ? (
+            <View style={styles.eta}>
+              <MaterialCommunityIcons name="timer-sand" size={16} color={colors.gold} />
+              <Text style={styles.etaText}>Estimated ready by {formatClock(order.estimatedReadyAt)}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        {!declined ? (
+          <Card>
+            {ORDER_PROGRESS.map((status, i) => {
+              const done = i <= current;
+              const now = i === current && isActive(order.status);
+              const at = timeFor(status);
+              const last = i === ORDER_PROGRESS.length - 1;
+              return (
+                <View key={status} style={styles.step}>
+                  <View style={styles.rail}>
+                    <View style={[styles.dot, done && styles.dotDone, now && styles.dotNow]}>
+                      {done && !now ? <MaterialCommunityIcons name="check" size={12} color={colors.onGold} /> : null}
+                    </View>
+                    {!last ? <View style={[styles.line, i < current && { backgroundColor: colors.gold }]} /> : null}
+                  </View>
+                  <View style={styles.stepText}>
+                    <Text style={[styles.stepLabel, !done && { color: colors.textFaint }, now && { color: colors.gold }]}>
+                      {ORDER_STATUS_LABEL[status]}
+                    </Text>
+                    {at && done ? <Text style={styles.stepTime}>{formatClock(at)}</Text> : null}
+                  </View>
+                </View>
+              );
+            })}
+          </Card>
+        ) : (
+          <Card>
+            <Body>
+              The kitchen couldn’t take this order, so you won’t be charged. Try another dish or
+              another kitchen.
+            </Body>
+          </Card>
+        )}
+
+        {order.chefNote ? (
+          <View style={styles.note}>
+            <ChefAvatar name={chefName} photoUri={restaurant?.chefPhotoUri} size={44} />
+            <View style={{ flex: 1, gap: 4 }}>
+              <Eyebrow>A note from {chefName}</Eyebrow>
+              <Text style={styles.noteText}>“{order.chefNote}”</Text>
+            </View>
+          </View>
+        ) : null}
+
+        <Card>
+          <Eyebrow>Your order</Eyebrow>
+          {order.lines.map((l) => (
+            <View key={l.itemId} style={styles.row}>
+              <Text style={styles.line1}>
+                {l.quantity} × {l.name}
+              </Text>
+              <Text style={styles.line1}>{formatCents(l.priceCents * l.quantity)}</Text>
+            </View>
+          ))}
+          <Divider style={{ marginVertical: spacing.xs }} />
+          <View style={styles.row}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalValue}>{formatCents(order.totalCents)}</Text>
+          </View>
+          <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.xs }]}>
+            <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textMuted} />
+            <Body muted style={{ flex: 1, fontSize: 13 }}>
+              {order.deliveryAddress}
+            </Body>
+          </View>
+        </Card>
+
+        {restaurant ? (
+          <GoldButton
+            title={`Visit ${order.restaurantName}`}
+            variant="outline"
+            onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id } })}
+          />
+        ) : null}
+      </ScrollView>
+
+      {celebrating ? <OrderCelebration chefName={chefName} onDone={endCelebration} /> : null}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
+  header: { gap: spacing.sm, marginTop: spacing.sm },
+  eta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  etaText: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
+  step: { flexDirection: 'row', gap: spacing.md, minHeight: 48 },
+  rail: { alignItems: 'center', width: 22 },
+  dot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  dotDone: { backgroundColor: colors.gold, borderColor: colors.gold },
+  dotNow: { backgroundColor: colors.surface, borderWidth: 6, borderColor: colors.gold },
+  line: { flex: 1, width: 1, backgroundColor: colors.borderStrong, marginVertical: 2 },
+  stepText: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 1 },
+  stepLabel: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  stepTime: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
+  note: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.goldTint,
+  },
+  noteText: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 24, color: colors.ivory },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
+  totalLabel: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  totalValue: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
+});

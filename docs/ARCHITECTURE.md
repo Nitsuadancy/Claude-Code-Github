@@ -44,13 +44,21 @@ The TypeScript types in `src/types.ts` map one-to-one to the planned tables:
 | Table | Key fields | Who can read / write |
 |---|---|---|
 | `profiles` | id (= auth user), name, email, phone, role, delivery_address | Owner |
-| `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, address, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes |
-| `menu_items` | restaurant_id, name, description, price_cents, available | Public reads; owner writes |
+| `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, chef_bio, chef_photo_path, signature_item_id, prep_minutes, verified, address, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes; only admins set `verified` |
+| `menu_items` | restaurant_id, name, description, price_cents, available, photo_path, dietary[], allergens[], daily_limit | Public reads; owner writes |
 | `restaurant_documents` | restaurant_id, kind, storage_path, review_status | Owner + admins only |
-| `orders` | customer_id, restaurant_id, status, subtotal/fee/total cents, delivery_address, stripe_payment_intent | Customer and that restaurant's owner |
+| `orders` | customer_id, restaurant_id, status, subtotal/fee/total cents, delivery_address, chef_note, estimated_ready_at, stripe_payment_intent | Customer and that restaurant's owner |
+| `order_status_events` | order_id, status, at | Same as orders. This table drives the tracking timeline. |
 | `order_lines` | order_id, menu_item_id, name, price_cents, quantity (price copied at order time) | Same as orders |
 
 Money is always stored in **cents** as integers, never floating point.
+
+**Daily limits** must be enforced on the server when an order is placed (count today's
+non-declined order lines inside the same transaction). The app's check in
+`src/lib/limits.ts` only gives quick feedback in the interface.
+
+**Saved data from older app versions** is upgraded on load by `src/lib/migrate.ts`. When
+you add a field, give it a default there.
 
 ### Migration path
 

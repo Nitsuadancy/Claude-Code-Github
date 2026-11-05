@@ -1,8 +1,9 @@
-import type { Restaurant, Weekday } from '@/types';
+import type { MenuItem, Restaurant, Weekday } from '@/types';
 
 /**
  * Demo kitchens so the Foodie side has something to browse before real chefs
- * sign up. Replace with data from the backend once it exists.
+ * sign up. The chefs and stories are fictional. Replace with data from the
+ * backend once it exists.
  */
 const EVERY_DAY: Weekday[] = [
   'monday',
@@ -19,7 +20,12 @@ const base = {
   documents: [],
   status: 'live' as const,
   acceptingOrders: true,
+  verified: true,
 };
+
+function dish(item: Partial<MenuItem> & Pick<MenuItem, 'id' | 'name' | 'description' | 'priceCents'>): MenuItem {
+  return { available: true, dietary: [], allergens: [], dailyLimit: null, ...item };
+}
 
 export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
@@ -27,6 +33,10 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     id: 'sample_cafe_parmesan',
     name: 'Cafe Parmesan',
     chefName: 'Chef Marco',
+    chefBio:
+      'I learned to cook standing on a chair in my nonna’s kitchen outside Bologna. Twenty years and two restaurant jobs later, I finally cook her way again: slowly, and for people I know.',
+    signatureItemId: 'cp_lasagna',
+    prepMinutes: 40,
     cuisine: 'Italian • Continental',
     categories: ['global-flavors', 'cottage-kitchen'],
     address: '14 Elm Street',
@@ -40,27 +50,30 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     hasOffer: true,
     createdAt: '2026-08-02T12:00:00.000Z',
     menu: [
-      {
+      dish({
         id: 'cp_lasagna',
         name: 'Grandma’s Lasagna',
-        description: 'Slow-simmered beef ragù, ricotta and mozzarella layers.',
+        description: 'Eight layers of slow-simmered beef ragù, ricotta and mozzarella. Baked to order.',
         priceCents: 1499,
-        available: true,
-      },
-      {
+        allergens: ['gluten', 'dairy', 'eggs'],
+        dailyLimit: 12,
+      }),
+      dish({
         id: 'cp_tiramisu',
         name: 'Tiramisu',
-        description: 'Espresso-soaked ladyfingers with mascarpone cream.',
+        description: 'Espresso-soaked ladyfingers with mascarpone cream and cocoa.',
         priceCents: 699,
-        available: true,
-      },
-      {
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy', 'eggs'],
+      }),
+      dish({
         id: 'cp_caprese',
         name: 'Caprese Salad',
-        description: 'Fresh mozzarella, tomatoes, basil and balsamic glaze.',
+        description: 'Fresh mozzarella, heirloom tomatoes, basil and aged balsamic.',
         priceCents: 899,
-        available: true,
-      },
+        dietary: ['vegetarian', 'gluten-free'],
+        allergens: ['dairy'],
+      }),
     ],
   },
   {
@@ -68,6 +81,10 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     id: 'sample_momo_mania',
     name: 'Momo Mania',
     chefName: 'Pema D.',
+    chefBio:
+      'Every Saturday my family folded hundreds of momos together. Now I fold them for my neighbors. Each one is pleated by hand, exactly the way my mother taught me in Kathmandu.',
+    signatureItemId: 'mm_chicken_momo',
+    prepMinutes: 30,
     cuisine: 'Nepali • Tibetan',
     categories: ['global-flavors', 'foodie-adventures'],
     address: '220 Oak Avenue',
@@ -81,20 +98,23 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     hasOffer: false,
     createdAt: '2026-10-20T12:00:00.000Z',
     menu: [
-      {
+      dish({
         id: 'mm_chicken_momo',
         name: 'Chicken Momo (10 pc)',
-        description: 'Hand-pleated dumplings with tomato-sesame achar.',
+        description: 'Hand-pleated dumplings with a bright tomato-sesame achar.',
         priceCents: 1199,
-        available: true,
-      },
-      {
+        dietary: ['halal', 'spicy'],
+        allergens: ['gluten', 'sesame'],
+        dailyLimit: 30,
+      }),
+      dish({
         id: 'mm_veg_momo',
         name: 'Veggie Momo (10 pc)',
-        description: 'Cabbage, carrot and paneer filling.',
+        description: 'Cabbage, carrot and paneer, steamed and served with achar.',
         priceCents: 1099,
-        available: true,
-      },
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy', 'sesame'],
+      }),
     ],
   },
   {
@@ -102,6 +122,10 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     id: 'sample_jacksons_deep_dish',
     name: 'Jackson’s Deep Dish',
     chefName: 'Mr. Jackson',
+    chefBio:
+      'Thirty years of Friday pizza nights for my kids and their friends. They grew up, the friends kept asking, so here we are. One oven, one pan size, done right.',
+    signatureItemId: 'jd_classic',
+    prepMinutes: 55,
     cuisine: 'American • Pizza',
     categories: ['kids-favorites', 'late-night-bites', 'cottage-kitchen'],
     address: '9 Maple Court',
@@ -115,20 +139,23 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     hasOffer: true,
     createdAt: '2026-06-11T12:00:00.000Z',
     menu: [
-      {
+      dish({
         id: 'jd_classic',
         name: 'Famous Deep-Dish Pie',
-        description: 'Buttery crust, sausage, chunky tomato sauce. Serves 2–3.',
+        description: 'Buttery crust, fennel sausage and chunky tomato sauce. Serves 2–3.',
         priceCents: 2299,
-        available: true,
-      },
-      {
+        allergens: ['gluten', 'dairy'],
+        dailyLimit: 8,
+      }),
+      dish({
         id: 'jd_cheese',
         name: 'Four-Cheese Deep Dish',
         description: 'Mozzarella, provolone, parmesan and fontina.',
         priceCents: 1999,
-        available: true,
-      },
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy'],
+        dailyLimit: 8,
+      }),
     ],
   },
   {
@@ -136,6 +163,10 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     id: 'sample_green_bowl',
     name: 'The Green Bowl',
     chefName: 'Aisha K.',
+    chefBio:
+      'I’m a nutritionist and a mom of three. I started prepping plant-based lunches for friends who wanted to eat better but had no time. My rule: it has to taste like a treat.',
+    signatureItemId: 'gb_falafel',
+    prepMinutes: 20,
     cuisine: 'Vegan • Mediterranean',
     categories: ['vegan', 'meal-preppers'],
     address: '77 Cedar Lane',
@@ -149,20 +180,23 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     hasOffer: false,
     createdAt: '2026-10-28T12:00:00.000Z',
     menu: [
-      {
+      dish({
         id: 'gb_falafel',
         name: 'Falafel Power Bowl',
-        description: 'Herb falafel, quinoa, hummus, pickled onions.',
+        description: 'Herb falafel, lemony quinoa, hummus and quick-pickled onions.',
         priceCents: 1349,
-        available: true,
-      },
-      {
+        dietary: ['vegan', 'dairy-free'],
+        allergens: ['sesame'],
+      }),
+      dish({
         id: 'gb_weekly',
         name: 'Weekly Meal Prep (5 meals)',
         description: 'Five rotating plant-based lunches, delivered Monday.',
         priceCents: 5499,
-        available: true,
-      },
+        dietary: ['vegan', 'dairy-free'],
+        allergens: ['soy', 'sesame', 'gluten'],
+        dailyLimit: 10,
+      }),
     ],
   },
   {
@@ -170,6 +204,10 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     id: 'sample_sunrise_plates',
     name: 'Sunrise Plates',
     chefName: 'Denise R.',
+    chefBio:
+      'Born in Louisiana, raised on Sunday breakfasts that lasted until noon. Biscuits from scratch, grits stirred low and slow. That’s the only way I know.',
+    signatureItemId: 'sp_shrimp_grits',
+    prepMinutes: 25,
     cuisine: 'Southern • Breakfast',
     categories: ['breakfast-preppers', 'cottage-kitchen'],
     address: '310 Birch Road',
@@ -183,20 +221,22 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     hasOffer: true,
     createdAt: '2026-09-15T12:00:00.000Z',
     menu: [
-      {
+      dish({
         id: 'sp_biscuits',
         name: 'Biscuits & Gravy',
-        description: 'Buttermilk biscuits with sausage gravy.',
+        description: 'Flaky buttermilk biscuits under peppery sausage gravy.',
         priceCents: 999,
-        available: true,
-      },
-      {
+        allergens: ['gluten', 'dairy'],
+      }),
+      dish({
         id: 'sp_shrimp_grits',
         name: 'Shrimp & Grits',
-        description: 'Stone-ground grits, Cajun shrimp, scallions.',
+        description: 'Stone-ground grits, Cajun shrimp, scallions and a little heat.',
         priceCents: 1499,
-        available: true,
-      },
+        dietary: ['gluten-free', 'spicy'],
+        allergens: ['shellfish', 'dairy'],
+        dailyLimit: 15,
+      }),
     ],
   },
   {
@@ -204,6 +244,10 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     id: 'sample_susies_sweets',
     name: 'Susie’s Sweets',
     chefName: 'Mrs. Susie',
+    chefBio:
+      'Forty years of church bake sales taught me one thing: people come back for the cobbler. This is my late husband’s favorite recipe, still made with fresh Texas peaches.',
+    signatureItemId: 'ss_peach_cobbler',
+    prepMinutes: 35,
     cuisine: 'Bakery • Desserts',
     categories: ['bakery', 'sweet-tooth', 'kids-favorites'],
     address: '5 Willow Way',
@@ -217,20 +261,23 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     hasOffer: false,
     createdAt: '2026-04-03T12:00:00.000Z',
     menu: [
-      {
+      dish({
         id: 'ss_peach_cobbler',
         name: 'Peach Cobbler',
-        description: 'Family recipe, served warm. Feeds 4.',
+        description: 'Family recipe, served warm with a crisp sugar crust. Feeds 4.',
         priceCents: 1599,
-        available: true,
-      },
-      {
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy', 'eggs'],
+        dailyLimit: 6,
+      }),
+      dish({
         id: 'ss_cookies',
         name: 'Brown Butter Cookies (6)',
-        description: 'Chewy, salted, chocolate chunk.',
+        description: 'Chewy, salted, with dark chocolate chunks.',
         priceCents: 899,
-        available: true,
-      },
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy', 'eggs'],
+      }),
     ],
   },
 ];

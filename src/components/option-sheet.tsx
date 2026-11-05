@@ -58,6 +58,8 @@ export function OptionSheet<T extends string>({
           data={options}
           keyExtractor={(o) => o.value}
           style={{ maxHeight: 420 }}
+          // Lists here are short (at most 48 time slots); render them fully for smooth scrolling.
+          initialNumToRender={options.length}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => {
             const isSelected = selected.includes(item.value);

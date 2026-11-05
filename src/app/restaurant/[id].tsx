@@ -2,9 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ChefCard, VerifiedSeal } from '@/components/chef';
+import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
 import { formatRating, isOpenNow, RestaurantCover } from '@/components/restaurant-card';
 import {
   BackButton,
@@ -14,10 +17,13 @@ import {
   GoldButton,
   GoldRule,
   Heading,
+  type IconName,
   Screen,
 } from '@/components/ui';
 import { confirmAction } from '@/lib/alert';
+import * as haptics from '@/lib/haptics';
 import { capitalize, formatTime, WEEKDAYS } from '@/lib/hours';
+import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
 import { useRestaurant, useStore } from '@/state/store';
@@ -29,6 +35,7 @@ export default function RestaurantDetail() {
   const restaurant = useRestaurant(id);
   const { state, dispatch } = useStore();
   const insets = useSafeAreaInsets();
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -40,16 +47,32 @@ export default function RestaurantDetail() {
     );
   }
 
-  const open = isOpenNow(restaurant, new Date());
+  const now = new Date();
+  const open = isOpenNow(restaurant, now);
   const canOrder = open && !isPreview && state.user?.role === 'foodie';
   const inThisCart = state.cart.restaurantId === restaurant.id;
   const totals = computeCartTotals(inThisCart ? state.cart : { restaurantId: null, lines: [] }, restaurant.menu);
   const qty = (itemId: string) =>
     inThisCart ? (state.cart.lines.find((l) => l.itemId === itemId)?.quantity ?? 0) : 0;
+  const remaining = (item: MenuItem) => remainingToday(item, state.orders, restaurant.id, now);
   const favorite = state.favoriteRestaurantIds.includes(restaurant.id);
 
+  // Signature dish first, then the rest in the chef's order.
+  const menu = [...restaurant.menu].sort(
+    (a, b) => Number(b.id === restaurant.signatureItemId) - Number(a.id === restaurant.signatureItemId),
+  );
+  const openItem = restaurant.menu.find((m) => m.id === openItemId) ?? null;
+
   const add = (item: MenuItem) => {
-    const doAdd = () => dispatch({ type: 'addToCart', restaurantId: restaurant.id, itemId: item.id });
+    const left = remaining(item);
+    if (left !== null && qty(item.id) >= left) {
+      haptics.warning();
+      return;
+    }
+    const doAdd = () => {
+      haptics.tap();
+      dispatch({ type: 'addToCart', restaurantId: restaurant.id, itemId: item.id, max: left });
+    };
     if (state.cart.restaurantId && !inThisCart && state.cart.lines.length) {
       confirmAction(
         'Start a new cart?',
@@ -72,14 +95,21 @@ export default function RestaurantDetail() {
       <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
         <View>
           <RestaurantCover restaurant={restaurant} style={styles.hero} monogramSize={120} />
-          <LinearGradient colors={['rgba(10,9,7,0.5)', 'transparent', colors.bg]} locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
+          <LinearGradient
+            colors={['rgba(10,9,7,0.5)', 'transparent', colors.bg]}
+            locations={[0, 0.4, 1]}
+            style={StyleSheet.absoluteFill}
+          />
           <View style={[styles.heroBar, { top: insets.top + spacing.sm }]}>
             <BackButton />
             {!isPreview ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
-                onPress={() => dispatch({ type: 'toggleFavorite', restaurantId: restaurant.id })}
+                onPress={() => {
+                  haptics.tap();
+                  dispatch({ type: 'toggleFavorite', restaurantId: restaurant.id });
+                }}
                 style={styles.heroIcon}>
                 <MaterialCommunityIcons
                   name={favorite ? 'heart' : 'heart-outline'}
@@ -96,7 +126,12 @@ export default function RestaurantDetail() {
             {restaurant.logoUri ? <Image source={{ uri: restaurant.logoUri }} style={styles.logo} /> : null}
             <View style={{ flex: 1, gap: 4 }}>
               <Eyebrow>{restaurant.cuisine}</Eyebrow>
-              <Heading size={32}>{restaurant.name}</Heading>
+              <View style={styles.nameRow}>
+                <Heading size={32} style={{ flexShrink: 1 }}>
+                  {restaurant.name}
+                </Heading>
+                {restaurant.verified ? <VerifiedSeal size={20} /> : null}
+              </View>
               <Text style={styles.chef}>by {restaurant.chefName}</Text>
             </View>
           </View>
@@ -104,72 +139,115 @@ export default function RestaurantDetail() {
           <View style={styles.facts}>
             <Fact icon="star" label={formatRating(restaurant)} />
             <View style={styles.factDivider} />
-            <Fact
-              icon="clock-outline"
-              label={`${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`}
-            />
+            <Fact icon="timer-sand" label={`~${restaurant.prepMinutes} min`} />
             <View style={styles.factDivider} />
             <Badge label={open ? 'Open now' : 'Closed'} tone={open ? 'success' : 'muted'} />
           </View>
-          <Text style={styles.days}>{days}</Text>
+          <Text style={styles.days}>
+            {days} · {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
+          </Text>
 
           {isPreview ? (
-            <View style={styles.notice}>
-              <MaterialCommunityIcons name="eye-outline" size={18} color={colors.gold} />
-              <Body style={{ flex: 1, fontSize: 14 }}>This is how foodies will see your kitchen.</Body>
-            </View>
+            <Notice icon="eye-outline" text="This is how foodies will see your kitchen." />
           ) : !open ? (
-            <View style={styles.notice}>
-              <MaterialCommunityIcons name="moon-waning-crescent" size={18} color={colors.gold} />
-              <Body style={{ flex: 1, fontSize: 14 }}>
-                This kitchen isn’t taking orders right now. Come back during its hours.
-              </Body>
-            </View>
+            <Notice
+              icon="moon-waning-crescent"
+              text="This kitchen isn’t taking orders right now. Come back during its hours."
+            />
           ) : null}
+
+          {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
 
           <View style={styles.menuHeader}>
             <Eyebrow>The menu</Eyebrow>
             <GoldRule width={28} />
           </View>
-          {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
-          {restaurant.menu.map((item) => {
+          {menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
+          {menu.map((item) => {
             const q = qty(item.id);
+            const left = remaining(item);
+            const soldOut = !item.available || left === 0;
+            const atLimit = left !== null && q >= left;
+            const signature = item.id === restaurant.signatureItemId;
             return (
-              <View key={item.id} style={[styles.item, !item.available && { opacity: 0.45 }]}>
+              <Pressable
+                key={item.id}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
+                onPress={() => setOpenItemId(item.id)}
+                style={({ pressed }) => [
+                  styles.item,
+                  signature && styles.signature,
+                  soldOut && { opacity: 0.5 },
+                  pressed && { opacity: 0.85 },
+                ]}>
                 <View style={{ flex: 1, gap: 6 }}>
+                  {signature ? (
+                    <View style={styles.signatureLabel}>
+                      <MaterialCommunityIcons name="star-four-points" size={11} color={colors.gold} />
+                      <Eyebrow style={{ fontSize: 10 }}>Signature</Eyebrow>
+                    </View>
+                  ) : null}
                   <Text style={styles.itemName}>{item.name}</Text>
                   {item.description ? (
-                    <Body muted style={{ fontSize: 13, lineHeight: 19 }}>
+                    <Body muted numberOfLines={2} style={{ fontSize: 13, lineHeight: 19 }}>
                       {item.description}
                     </Body>
                   ) : null}
-                  <Text style={styles.price}>{item.available ? formatCents(item.priceCents) : 'Sold out'}</Text>
+                  <View style={styles.itemMeta}>
+                    <Text style={styles.price}>
+                      {item.available ? formatCents(item.priceCents) : 'Unavailable'}
+                    </Text>
+                    <DietaryIcons tags={item.dietary} />
+                  </View>
+                  <StockNote remaining={item.available ? left : null} />
                 </View>
-                {canOrder && item.available ? (
-                  q > 0 ? (
-                    <View style={styles.stepper}>
+
+                <View style={styles.thumbWrap}>
+                  {item.photoUri ? (
+                    <Image source={{ uri: item.photoUri }} style={styles.thumb} contentFit="cover" />
+                  ) : null}
+                  {canOrder && !soldOut ? (
+                    q > 0 ? (
+                      <View style={[styles.stepper, item.photoUri && styles.onThumb]}>
+                        <Pressable
+                          accessibilityLabel={`Remove one ${item.name}`}
+                          onPress={() => {
+                            haptics.tap();
+                            dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 });
+                          }}
+                          hitSlop={8}>
+                          <MaterialCommunityIcons name="minus" size={16} color={colors.gold} />
+                        </Pressable>
+                        <Text style={styles.qty}>{q}</Text>
+                        <Pressable
+                          accessibilityLabel={`Add one ${item.name}`}
+                          disabled={atLimit}
+                          onPress={() => add(item)}
+                          hitSlop={8}>
+                          <MaterialCommunityIcons
+                            name="plus"
+                            size={16}
+                            color={atLimit ? colors.textFaint : colors.gold}
+                          />
+                        </Pressable>
+                      </View>
+                    ) : (
                       <Pressable
-                        accessibilityLabel={`Remove one ${item.name}`}
-                        onPress={() => dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 })}
-                        hitSlop={8}>
-                        <MaterialCommunityIcons name="minus" size={18} color={colors.gold} />
+                        accessibilityRole="button"
+                        accessibilityLabel={`Add ${item.name} to cart`}
+                        onPress={() => add(item)}
+                        style={({ pressed }) => [
+                          styles.addButton,
+                          item.photoUri && styles.onThumb,
+                          pressed && { backgroundColor: colors.gold },
+                        ]}>
+                        <MaterialCommunityIcons name="plus" size={20} color={colors.gold} />
                       </Pressable>
-                      <Text style={styles.qty}>{q}</Text>
-                      <Pressable accessibilityLabel={`Add one ${item.name}`} onPress={() => add(item)} hitSlop={8}>
-                        <MaterialCommunityIcons name="plus" size={18} color={colors.gold} />
-                      </Pressable>
-                    </View>
-                  ) : (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Add ${item.name} to cart`}
-                      onPress={() => add(item)}
-                      style={({ pressed }) => [styles.addButton, pressed && { backgroundColor: colors.goldTint }]}>
-                      <MaterialCommunityIcons name="plus" size={20} color={colors.gold} />
-                    </Pressable>
-                  )
-                ) : null}
-              </View>
+                    )
+                  ) : null}
+                </View>
+              </Pressable>
             );
           })}
         </View>
@@ -177,6 +255,7 @@ export default function RestaurantDetail() {
 
       {canOrder && totals.itemCount > 0 ? (
         <LinearGradient
+          pointerEvents="box-none"
           colors={['transparent', colors.bg]}
           locations={[0, 0.35]}
           style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -187,15 +266,37 @@ export default function RestaurantDetail() {
           />
         </LinearGradient>
       ) : null}
+
+      <DishSheet
+        item={openItem}
+        signature={openItem?.id === restaurant.signatureItemId}
+        remaining={openItem ? remaining(openItem) : null}
+        quantityInCart={openItem ? qty(openItem.id) : 0}
+        canOrder={canOrder}
+        onAdd={() => {
+          if (openItem) add(openItem);
+          setOpenItemId(null);
+        }}
+        onClose={() => setOpenItemId(null)}
+      />
     </View>
   );
 }
 
-function Fact({ icon, label }: { icon: 'star' | 'clock-outline'; label: string }) {
+function Fact({ icon, label }: { icon: IconName; label: string }) {
   return (
     <View style={styles.fact}>
       <MaterialCommunityIcons name={icon} size={15} color={colors.gold} />
       <Text style={styles.factText}>{label}</Text>
+    </View>
+  );
+}
+
+function Notice({ icon, text }: { icon: IconName; text: string }) {
+  return (
+    <View style={styles.notice}>
+      <MaterialCommunityIcons name={icon} size={18} color={colors.gold} />
+      <Body style={{ flex: 1, fontSize: 14 }}>{text}</Body>
     </View>
   );
 }
@@ -221,6 +322,7 @@ const styles = StyleSheet.create({
   },
   body: { paddingHorizontal: spacing.lg, gap: spacing.md, marginTop: -spacing.xl },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   logo: { width: 64, height: 64, borderRadius: radius.md, borderWidth: 1, borderColor: colors.hairline },
   chef: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.textMuted },
   facts: {
@@ -236,7 +338,7 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
   factDivider: { width: 1, height: 14, backgroundColor: colors.border },
-  days: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, letterSpacing: 0.5, marginTop: -spacing.sm },
+  days: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, letterSpacing: 0.4, marginTop: -spacing.sm },
   notice: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -256,12 +358,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
+  signature: {
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  signatureLabel: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   itemName: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
+  itemMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   price: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold, letterSpacing: 0.4 },
+  thumbWrap: { alignItems: 'center', justifyContent: 'center', minWidth: 44 },
+  thumb: { width: 96, height: 96, borderRadius: radius.md },
+  onThumb: { position: 'absolute', bottom: -10, backgroundColor: colors.surface },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.gold,
     alignItems: 'center',
@@ -270,14 +385,14 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm + 2,
     borderWidth: 1,
     borderColor: colors.gold,
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    minHeight: 44,
+    paddingHorizontal: spacing.sm + 4,
+    minHeight: 40,
   },
-  qty: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, minWidth: 14, textAlign: 'center' },
+  qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory, minWidth: 12, textAlign: 'center' },
   footer: {
     position: 'absolute',
     left: 0,

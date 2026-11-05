@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FormScreen } from '@/components/form-screen';
 import { RestaurantCard } from '@/components/restaurant-card';
@@ -67,6 +67,30 @@ export default function Preview() {
           <Text style={styles.checkText}>{s.title}</Text>
         </View>
       ))}
+
+      <SectionTitle>Make it shine</SectionTitle>
+      {[
+        { done: restaurant.chefBio.trim().length > 0, label: 'Share your story', route: '/chef/setup/information' as const },
+        { done: !!restaurant.chefPhotoUri, label: 'Add a photo of yourself', route: '/chef/setup/information' as const },
+        { done: restaurant.coverUris.length > 0, label: 'Add cover photos', route: '/chef/setup/information' as const },
+        { done: restaurant.menu.some((m) => m.photoUri), label: 'Add dish photos', route: '/chef/setup/menu' as const },
+      ].map((tip) => (
+        <Pressable
+          key={tip.label}
+          accessibilityRole="button"
+          disabled={tip.done}
+          onPress={() => router.push(tip.route)}
+          style={styles.check}>
+          <MaterialCommunityIcons
+            name={tip.done ? 'check-circle' : 'star-four-points-outline'}
+            size={22}
+            color={tip.done ? colors.success : colors.gold}
+          />
+          <Text style={[styles.checkText, { flex: 1 }]}>{tip.label}</Text>
+          {!tip.done ? <Text style={styles.optional}>Recommended</Text> : null}
+        </Pressable>
+      ))}
+
       <Body muted style={{ fontSize: 14 }}>
         Publishing makes your kitchen visible to foodies right away. Document review by the Manna
         team will happen here once the admin tools are live.
@@ -76,6 +100,7 @@ export default function Preview() {
 }
 
 const styles = StyleSheet.create({
-  check: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  checkText: { fontFamily: fonts.body, fontSize: 17, color: colors.text },
+  check: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 36 },
+  checkText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
+  optional: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold },
 });

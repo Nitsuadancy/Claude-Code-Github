@@ -4,16 +4,20 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
+import { VerifiedSeal } from '@/components/chef';
 import { OrderCard } from '@/components/order-card';
 import {
   Body,
   Eyebrow,
+  GoldButton,
   Heading,
   type IconName,
   Rays,
   Screen,
   SectionHeader,
+  TextField,
 } from '@/components/ui';
+import * as haptics from '@/lib/haptics';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { formatCents } from '@/lib/money';
 import { isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
@@ -45,6 +49,21 @@ export default function ChefDashboard() {
         <View style={{ gap: spacing.xs }}>
           <Eyebrow>Welcome back, {state.user?.name.split(' ')[0]}</Eyebrow>
           <Heading size={34}>{restaurant.name}</Heading>
+          <View style={styles.verifyRow}>
+            {restaurant.verified ? (
+              <>
+                <VerifiedSeal />
+                <Text style={styles.verifyText}>Verified kitchen</Text>
+              </>
+            ) : (
+              <>
+                <MaterialCommunityIcons name="progress-clock" size={16} color={colors.textMuted} />
+                <Text style={styles.verifyText}>
+                  Verification pending. The Manna team will review your documents.
+                </Text>
+              </>
+            )}
+          </View>
         </View>
 
         <View style={[styles.statusCard, live && { borderColor: colors.gold }]}>
@@ -101,7 +120,11 @@ export default function ChefDashboard() {
                   <Pressable
                     key={status}
                     accessibilityRole="button"
-                    onPress={() => dispatch({ type: 'setOrderStatus', orderId: order.id, status })}
+                    onPress={() => {
+                      if (decline) haptics.warning();
+                      else haptics.tap();
+                      dispatch({ type: 'setOrderStatus', orderId: order.id, status });
+                    }}
                     style={({ pressed }) => [
                       styles.action,
                       decline ? styles.decline : styles.primaryAction,
@@ -114,6 +137,10 @@ export default function ChefDashboard() {
                 );
               })}
             </View>
+            <NoteEditor
+              note={order.chefNote}
+              onSave={(note) => dispatch({ type: 'setOrderNote', orderId: order.id, note })}
+            />
           </OrderCard>
         ))}
 
@@ -149,6 +176,52 @@ export default function ChefDashboard() {
         ) : null}
       </ScrollView>
     </Screen>
+  );
+}
+
+/** Lets the chef send a short personal note that shows on the customer's tracking screen. */
+function NoteEditor({ note, onSave }: { note: string; onSave: (note: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note);
+  if (!editing) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => {
+          setDraft(note);
+          setEditing(true);
+        }}
+        style={styles.noteRow}>
+        <MaterialCommunityIcons name="message-text-outline" size={16} color={colors.gold} />
+        <Text style={[styles.noteText, !note && { color: colors.gold }]} numberOfLines={2}>
+          {note ? `“${note}”` : 'Add a note for the customer'}
+        </Text>
+      </Pressable>
+    );
+  }
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <TextField
+        placeholder="Pulling it out of the oven now!"
+        value={draft}
+        onChangeText={setDraft}
+        maxLength={280}
+        autoFocus
+        accessibilityLabel="Note for the customer"
+      />
+      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+        <GoldButton title="Cancel" variant="ghost" fullWidth={false} onPress={() => setEditing(false)} style={{ minWidth: 0, flex: 1 }} />
+        <GoldButton
+          title="Send note"
+          fullWidth={false}
+          onPress={() => {
+            onSave(draft);
+            setEditing(false);
+          }}
+          style={{ minWidth: 0, flex: 1 }}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -252,5 +325,17 @@ const styles = StyleSheet.create({
   },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 56 },
   linkRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  verifyRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs },
+  verifyText: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    minHeight: 40,
+  },
+  noteText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.text },
   linkText: { flex: 1, fontFamily: fonts.medium, fontSize: 15, color: colors.text },
 });

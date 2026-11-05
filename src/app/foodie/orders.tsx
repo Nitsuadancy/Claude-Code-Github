@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import { OrderCard } from '@/components/order-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
@@ -25,7 +25,15 @@ export default function Orders() {
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-        renderItem={({ item }) => <OrderCard order={item} title={item.restaurantName} />}
+        renderItem={({ item }) => (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="Opens live tracking"
+            onPress={() => router.push({ pathname: '/order/[id]', params: { id: item.id } })}
+            style={({ pressed }) => pressed && { opacity: 0.85 }}>
+            <OrderCard order={item} title={item.restaurantName} />
+          </Pressable>
+        )}
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>

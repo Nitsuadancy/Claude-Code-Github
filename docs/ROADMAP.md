@@ -9,6 +9,11 @@ then expand. Each phase ends with something real people can use.
 - [x] Foodie: browse, categories, search, filters, restaurant page, cart, orders
 - [x] Chef: four-step setup, publish, order dashboard, pause orders
 - [x] Unit tests, type checking, linting and CI on every pull request
+- [x] Redesign around the Manna logo (dark, ivory serif, champagne gold)
+- [x] Chef stories ("Meet the chef") and a Verified kitchen badge
+- [x] Dish photos, dietary tags (vegan, halal…) and declared allergens
+- [x] Daily dish limits ("Only 3 left today") and typical prep time
+- [x] Order confirmation moment, live tracking timeline and chef notes to customers
 
 ## Phase 1: Real accounts and shared data
 

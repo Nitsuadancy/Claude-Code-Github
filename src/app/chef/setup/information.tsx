@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import { ChefAvatar } from '@/components/chef';
 import { OptionSheet } from '@/components/option-sheet';
 import { TwoStepHeader } from '@/components/two-step-header';
 import {
@@ -33,7 +34,14 @@ import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { CategoryId, Weekday } from '@/types';
 
-type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | null;
+type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null;
+
+const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
+  value: String(m),
+  label: `About ${m} minutes`,
+}));
+
+const BIO_MAX = 400;
 type Errors = Partial<Record<'name' | 'cuisine' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
 
 const TIME_OPTIONS = TIME_SLOTS.map((t) => ({ value: t, label: formatTime(t) }));
@@ -172,6 +180,43 @@ export default function RestaurantInformation() {
                   </View>
                 ))}
               </View>
+
+              <SectionTitle>Your story</SectionTitle>
+              <Body muted style={styles.hint}>
+                Foodies love knowing who’s cooking. Share where your recipes come from.
+              </Body>
+              <View style={styles.storyRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={draft.chefPhotoUri ? 'Change your photo' : 'Add your photo'}
+                  onPress={async () => {
+                    const [uri] = await pickImages(1);
+                    if (uri) update({ chefPhotoUri: uri });
+                  }}>
+                  <ChefAvatar name={draft.chefName || 'Chef'} photoUri={draft.chefPhotoUri} size={76} />
+                  <View style={styles.avatarBadge}>
+                    <MaterialCommunityIcons name="camera-plus-outline" size={14} color={colors.onGold} />
+                  </View>
+                </Pressable>
+                <Body muted style={{ flex: 1, fontSize: 13, lineHeight: 19 }}>
+                  A warm, well-lit photo of you in your kitchen builds trust instantly.
+                </Body>
+              </View>
+              <TextField
+                label={`Your story (${draft.chefBio.length}/${BIO_MAX})`}
+                placeholder="I learned to cook in my grandmother’s kitchen…"
+                multiline
+                maxLength={BIO_MAX}
+                value={draft.chefBio}
+                onChangeText={(chefBio) => update({ chefBio })}
+              />
+              <PickerField
+                label="Typical prep time"
+                placeholder="How long does an order take?"
+                icon="timer-sand"
+                value={`About ${draft.prepMinutes} minutes`}
+                onPress={() => setSheet('prep')}
+              />
             </>
           ) : (
             <>
@@ -281,6 +326,14 @@ export default function RestaurantInformation() {
         onSelect={([cuisine]) => update({ cuisine: cuisine ?? '' })}
         onClose={() => setSheet(null)}
       />
+      <OptionSheet
+        visible={sheet === 'prep'}
+        title="Typical prep time"
+        options={PREP_OPTIONS}
+        selected={[String(draft.prepMinutes)]}
+        onSelect={([m]) => update({ prepMinutes: Number(m ?? 30) })}
+        onClose={() => setSheet(null)}
+      />
       <OptionSheet<CategoryId>
         visible={sheet === 'specialties'}
         title="Specialties"
@@ -320,6 +373,18 @@ function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  storyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  avatarBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

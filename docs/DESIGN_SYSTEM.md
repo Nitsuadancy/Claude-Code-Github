@@ -53,6 +53,15 @@ buttons, use `onGold` (`#140F06`) for text.
 - `RestaurantCard` / `FeaturedCard` / `RestaurantCover` (`restaurant-card.tsx`): photo cards with a monogram fallback.
 - `MannaTabBar`: floating dark-glass pill with a gold hairline and a gold active state.
 - `OptionSheet`, `CoachMarks`, `OrderCard` (with a gold progress bar), `FormScreen`.
+- `ChefCard`, `ChefAvatar`, `VerifiedSeal` (`chef.tsx`): "Meet the chef" with an italic serif story. The gold seal appears only on verified kitchens.
+- `DishSheet`, `DietaryIcons`, `StockNote` (`dish.tsx`): dish details, dietary icons and "Only 3 left today".
+- `OrderCelebration`: the logo's rays burst open around a gold check when an order is placed.
+
+## Motion and touch
+
+- Keep motion slow and soft. The rays rotate over 24 seconds, and fades last 400–900ms. Nothing should bounce hard.
+- Vibration (`src/lib/haptics.ts`) is reserved for moments that matter: a light tap when adding to the cart or changing order status, and a success pulse when an order is placed.
+- Every celebration can be skipped with a tap.
 
 Icons come from Material Community Icons (`@expo/vector-icons`), always outline style
 in gold or ivory.
