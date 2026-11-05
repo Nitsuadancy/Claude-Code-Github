@@ -38,6 +38,7 @@ export function normalizeOrder(o: Order): Order {
     statusHistory: o.statusHistory?.length ? o.statusHistory : [{ status: 'placed', at: o.createdAt }],
     chefNote: o.chefNote ?? '',
     estimatedReadyAt: o.estimatedReadyAt ?? estimateReadyAt(o.createdAt, DEFAULT_PREP_MINUTES),
+    scheduledFor: o.scheduledFor ?? null,
   };
 }
 
@@ -47,5 +48,6 @@ export function normalizePersisted(saved: Partial<PersistedState> | null): Parti
     ...saved,
     restaurants: saved.restaurants?.map(normalizeRestaurant),
     orders: saved.orders?.map(normalizeOrder),
+    reviews: saved.reviews ?? [],
   };
 }

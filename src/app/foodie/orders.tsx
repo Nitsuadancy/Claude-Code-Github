@@ -1,16 +1,18 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { OrderCard } from '@/components/order-card';
+import { Stars } from '@/components/reviews';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
-import { colors, spacing } from '@/theme';
+import { colors, fonts, spacing } from '@/theme';
 
 export default function Orders() {
   const { state } = useStore();
   const orders = state.orders.filter((o) => o.customerId === state.user?.id);
+  const reviewed = new Set(state.reviews.map((r) => r.orderId));
 
   return (
     <Screen edges={['top']}>
@@ -31,7 +33,14 @@ export default function Orders() {
             accessibilityHint="Opens live tracking"
             onPress={() => router.push({ pathname: '/order/[id]', params: { id: item.id } })}
             style={({ pressed }) => pressed && { opacity: 0.85 }}>
-            <OrderCard order={item} title={item.restaurantName} />
+            <OrderCard order={item} title={item.restaurantName}>
+              {item.status === 'completed' && !reviewed.has(item.id) ? (
+                <View style={styles.rate}>
+                  <Stars value={0} size={16} />
+                  <Text style={styles.rateText}>Rate your meal</Text>
+                </View>
+              ) : null}
+            </OrderCard>
           </Pressable>
         )}
         ListEmptyComponent={
@@ -56,6 +65,15 @@ export default function Orders() {
 const styles = StyleSheet.create({
   content: { padding: spacing.lg },
   header: { gap: spacing.xs, marginBottom: spacing.lg },
+  rate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  rateText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
   emptyIcon: {
     width: 72,

@@ -4,6 +4,7 @@ import type {
   Order,
   OrderStatus,
   Restaurant,
+  Review,
   Role,
   UserProfile,
 } from '@/types';
@@ -21,6 +22,8 @@ export interface AppState {
   cart: Cart;
   orders: Order[];
   favoriteRestaurantIds: string[];
+  /** Reviews written on this device. */
+  reviews: Review[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -37,6 +40,7 @@ export const INITIAL_STATE: AppState = {
   cart: EMPTY_CART,
   orders: [],
   favoriteRestaurantIds: [],
+  reviews: [],
 };
 
 export type Action =
@@ -63,7 +67,8 @@ export type Action =
   | { type: 'placeOrder'; order: Order }
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
   | { type: 'setOrderNote'; orderId: string; note: string }
-  | { type: 'toggleFavorite'; restaurantId: string };
+  | { type: 'toggleFavorite'; restaurantId: string }
+  | { type: 'addReview'; review: Review };
 
 /** Which status changes a kitchen is allowed to make. */
 export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
@@ -221,6 +226,21 @@ export function reducer(state: AppState, action: Action): AppState {
         favoriteRestaurantIds: ids.includes(action.restaurantId)
           ? ids.filter((id) => id !== action.restaurantId)
           : [...ids, action.restaurantId],
+      };
+    }
+
+    case 'addReview': {
+      // One review per order, only for delivered orders by the person who placed them.
+      const order = state.orders.find((o) => o.id === action.review.orderId);
+      if (!order || order.status !== 'completed' || order.customerId !== action.review.customerId) return state;
+      if (state.reviews.some((r) => r.orderId === order.id)) return state;
+      const stars = Math.min(5, Math.max(1, Math.round(action.review.stars)));
+      return {
+        ...state,
+        reviews: [
+          { ...action.review, stars, restaurantId: order.restaurantId, text: action.review.text.trim().slice(0, 500) },
+          ...state.reviews,
+        ],
       };
     }
 

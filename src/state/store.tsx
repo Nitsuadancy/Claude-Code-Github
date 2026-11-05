@@ -10,7 +10,9 @@ import {
 } from 'react';
 
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
-import type { Restaurant } from '@/types';
+import { SAMPLE_REVIEWS } from '@/data/sample-reviews';
+import { withReviews } from '@/lib/reviews';
+import type { Restaurant, Review } from '@/types';
 
 import {
   type Action,
@@ -77,7 +79,10 @@ export function useStore() {
 /** Sample kitchens plus any created on this device. */
 export function useAllRestaurants(): Restaurant[] {
   const { state } = useStore();
-  return useMemo(() => [...state.restaurants, ...SAMPLE_RESTAURANTS], [state.restaurants]);
+  return useMemo(
+    () => [...state.restaurants, ...SAMPLE_RESTAURANTS].map((r) => withReviews(r, state.reviews)),
+    [state.restaurants, state.reviews],
+  );
 }
 
 export function useRestaurant(id: string | undefined): Restaurant | undefined {
@@ -89,5 +94,18 @@ export function useRestaurant(id: string | undefined): Restaurant | undefined {
 export function useMyRestaurant(): Restaurant | undefined {
   const { state } = useStore();
   const userId = state.user?.id;
-  return state.restaurants.find((r) => r.ownerId === userId);
+  const mine = state.restaurants.find((r) => r.ownerId === userId);
+  return useMemo(() => (mine ? withReviews(mine, state.reviews) : undefined), [mine, state.reviews]);
+}
+
+/** Reviews for one kitchen (sample + written on this device), newest first. */
+export function useReviews(restaurantId: string | undefined): Review[] {
+  const { state } = useStore();
+  return useMemo(
+    () =>
+      [...state.reviews, ...SAMPLE_REVIEWS]
+        .filter((r) => r.restaurantId === restaurantId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [state.reviews, restaurantId],
+  );
 }

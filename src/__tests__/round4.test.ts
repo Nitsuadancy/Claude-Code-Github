@@ -1,0 +1,118 @@
+import { describe, expect, it } from '@jest/globals';
+
+import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
+import { soldToday } from '@/lib/limits';
+import { publicName, relativeDay, withReviews } from '@/lib/reviews';
+import { availableSlots, dayLabel } from '@/lib/schedule';
+import { INITIAL_STATE, reducer } from '@/state/reducer';
+import type { Order, Review } from '@/types';
+
+function order(partial: Partial<Order>): Order {
+  return {
+    id: 'o1',
+    customerId: 'me',
+    customerName: 'Ada Lovelace',
+    restaurantId: 'r1',
+    restaurantName: 'R',
+    lines: [{ itemId: 'x', name: 'X', priceCents: 100, quantity: 2 }],
+    subtotalCents: 200,
+    serviceFeeCents: 20,
+    deliveryFeeCents: 299,
+    totalCents: 519,
+    deliveryAddress: '',
+    status: 'completed',
+    statusHistory: [],
+    chefNote: '',
+    createdAt: new Date(2026, 10, 5, 12).toISOString(),
+    estimatedReadyAt: new Date(2026, 10, 5, 12, 30).toISOString(),
+    scheduledFor: null,
+    ...partial,
+  };
+}
+
+const review = (partial: Partial<Review> = {}): Review => ({
+  id: 'rv1',
+  orderId: 'o1',
+  restaurantId: 'r1',
+  customerId: 'me',
+  customerName: 'Ada L.',
+  stars: 5,
+  tags: ['Tasted like home'],
+  text: '  Wonderful.  ',
+  createdAt: new Date(2026, 10, 5, 14).toISOString(),
+  ...partial,
+});
+
+describe('reviews', () => {
+  it('shows only a first name and last initial', () => {
+    expect(publicName('Ada Lovelace')).toBe('Ada L.');
+    expect(publicName('  mary jane watson ')).toBe('mary W.');
+    expect(publicName('Cher')).toBe('Cher');
+    expect(publicName('')).toBe('A neighbor');
+  });
+
+  it('folds in-app reviews into the rating', () => {
+    const base = { ...SAMPLE_RESTAURANTS[0], id: 'r1', rating: 4.0, ratingCount: 4 };
+    const rated = withReviews(base, [review({ stars: 5 }), review({ id: 'rv2', stars: 5, restaurantId: 'other' })]);
+    expect(rated.ratingCount).toBe(5);
+    expect(rated.rating).toBe(4.2);
+    expect(withReviews(base, [])).toBe(base);
+  });
+
+  it('accepts one review per delivered order from its customer', () => {
+    let s = reducer({ ...INITIAL_STATE, hydrated: true }, { type: 'placeOrder', order: order({}) });
+    s = reducer(s, { type: 'addReview', review: review({ stars: 9 }) });
+    expect(s.reviews).toHaveLength(1);
+    expect(s.reviews[0].stars).toBe(5);
+    expect(s.reviews[0].text).toBe('Wonderful.');
+    s = reducer(s, { type: 'addReview', review: review({ id: 'again' }) });
+    expect(s.reviews).toHaveLength(1);
+    const stranger = reducer(s, { type: 'addReview', review: review({ id: 'x', customerId: 'other', orderId: 'o1' }) });
+    expect(stranger.reviews).toHaveLength(1);
+  });
+
+  it('refuses reviews for orders that are not delivered yet', () => {
+    let s = reducer({ ...INITIAL_STATE, hydrated: true }, { type: 'placeOrder', order: order({ status: 'preparing' }) });
+    s = reducer(s, { type: 'addReview', review: review() });
+    expect(s.reviews).toHaveLength(0);
+  });
+
+  it('describes dates relative to today', () => {
+    const now = new Date(2026, 10, 5, 18);
+    expect(relativeDay(new Date(2026, 10, 5, 9).toISOString(), now)).toBe('Today');
+    expect(relativeDay(new Date(2026, 10, 4, 9).toISOString(), now)).toBe('Yesterday');
+    expect(relativeDay(new Date(2026, 10, 2, 9).toISOString(), now)).toBe('3 days ago');
+  });
+});
+
+describe('scheduling', () => {
+  const sunrise = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_sunrise_plates')!; // 6:30–12:00 daily, 25 min prep
+
+  it('offers half-hour slots within opening hours, after prep time', () => {
+    const now = new Date(2026, 10, 5, 10, 50); // Thu 10:50 -> ready at 11:15 -> first slot 11:30
+    const slots = availableSlots(sunrise, now);
+    expect(new Date(slots[0]).getHours()).toBe(11);
+    expect(new Date(slots[0]).getMinutes()).toBe(30);
+    // Today: 11:30 only. Tomorrow: 6:30 … 11:30 (11 slots).
+    expect(slots).toHaveLength(12);
+    expect(dayLabel(slots[1], now)).toBe('Tomorrow');
+  });
+
+  it('lets people pre-order from a kitchen that is closed now', () => {
+    const evening = new Date(2026, 10, 5, 20, 0);
+    const slots = availableSlots(sunrise, evening);
+    expect(slots.length).toBeGreaterThan(0);
+    expect(dayLabel(slots[0], evening)).toBe('Tomorrow');
+  });
+
+  it('offers nothing while the kitchen is paused', () => {
+    expect(availableSlots({ ...sunrise, acceptingOrders: false }, new Date(2026, 10, 5, 9))).toEqual([]);
+  });
+
+  it('counts scheduled orders against the day they are cooked', () => {
+    const tomorrow = new Date(2026, 10, 6, 9).toISOString();
+    const orders = [order({ status: 'accepted', scheduledFor: tomorrow })];
+    expect(soldToday(orders, 'r1', 'x', new Date(2026, 10, 5, 13))).toBe(0);
+    expect(soldToday(orders, 'r1', 'x', new Date(2026, 10, 6, 13))).toBe(2);
+  });
+});

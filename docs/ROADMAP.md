@@ -17,6 +17,8 @@ then expand. Each phase ends with something real people can use.
 - [x] Motion: press-scale cards, staggered fade-ins, parallax restaurant hero with a sticky header
 - [x] "Order again" with one-tap reorder, favorites row, "Open now" filter, dish search results
 - [x] Chef dashboard: today's prep list and a 7-day earnings chart
+- [x] Ratings and reviews after delivery (stars, quick compliments, note); "What neighbors say" on restaurant pages
+- [x] Schedule for later, including pre-orders from kitchens that are closed right now
 
 ## Phase 1: Real accounts and shared data
 
@@ -40,7 +42,6 @@ Without this, a chef and a customer on different phones can't see each other.
 
 - [ ] Admin review queue: approve chefs only after checking their permit and food handler card
 - [ ] Allergen fields on menu items, shown clearly to customers
-- [ ] Ratings and reviews after delivered orders
 - [ ] Report a problem with an order
 - [ ] Terms of Service, Privacy Policy and chef agreement (see [COMPANY_SETUP.md](COMPANY_SETUP.md))
 
@@ -68,7 +69,6 @@ The recommendation is to launch with 1 and 2, then add 3 once order volume justi
 
 ## Later ideas
 
-- Scheduled and pre-orders (meal-prep Mondays)
 - Weekly subscriptions from a favorite chef
 - Chef storefront links to share on social media
 - Promotions and "Offers" managed by chefs

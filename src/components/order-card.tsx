@@ -1,8 +1,10 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { formatCents } from '@/lib/money';
 import { formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import { formatSlot } from '@/lib/schedule';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order } from '@/types';
 
@@ -45,6 +47,12 @@ export function OrderCard({
         <Text style={styles.total}>{formatCents(order.totalCents)}</Text>
       </View>
       {active ? <OrderProgress order={order} /> : null}
+      {order.scheduledFor && active ? (
+        <View style={styles.scheduled}>
+          <MaterialCommunityIcons name="calendar-clock" size={14} color={colors.gold} />
+          <Text style={styles.scheduledText}>Scheduled for {formatSlot(order.scheduledFor, new Date())}</Text>
+        </View>
+      ) : null}
       <View style={{ gap: 2 }}>
         {order.lines.map((l) => (
           <Text key={l.itemId} style={styles.line}>
@@ -77,6 +85,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   progress: { flexDirection: 'row', gap: 4 },
+  scheduled: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  scheduledText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
   segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.border },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint },
   line: { fontFamily: fonts.body, fontSize: 14, color: colors.text },

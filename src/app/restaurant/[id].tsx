@@ -3,12 +3,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChefCard, VerifiedSeal } from '@/components/chef';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
 import { NATIVE_DRIVER } from '@/components/motion';
+import { RatingSummary, ReviewCard } from '@/components/reviews';
 import { formatRating, isOpenNow, RestaurantCover } from '@/components/restaurant-card';
 import {
   BackButton,
@@ -27,7 +28,8 @@ import { capitalize, formatTime, WEEKDAYS } from '@/lib/hours';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
-import { useRestaurant, useStore } from '@/state/store';
+import { availableSlots, formatSlot } from '@/lib/schedule';
+import { useRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
 
@@ -40,6 +42,7 @@ export default function RestaurantDetail() {
   const insets = useSafeAreaInsets();
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [scrollY] = useState(() => new Animated.Value(0));
+  const reviews = useReviews(id);
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -53,7 +56,9 @@ export default function RestaurantDetail() {
 
   const now = new Date();
   const open = isOpenNow(restaurant, now);
-  const canOrder = open && !isPreview && state.user?.role === 'foodie';
+  const slots = open ? [] : availableSlots(restaurant, now);
+  // Closed kitchens still take pre-orders for their next opening.
+  const canOrder = (open || slots.length > 0) && !isPreview && state.user?.role === 'foodie';
   const inThisCart = state.cart.restaurantId === restaurant.id;
   const totals = computeCartTotals(inThisCart ? state.cart : { restaurantId: null, lines: [] }, restaurant.menu);
   const qty = (itemId: string) =>
@@ -148,8 +153,12 @@ export default function RestaurantDetail() {
             <Notice icon="eye-outline" text="This is how foodies will see your kitchen." />
           ) : !open ? (
             <Notice
-              icon="moon-waning-crescent"
-              text="This kitchen isn’t taking orders right now. Come back during its hours."
+              icon={slots.length ? 'calendar-clock' : 'moon-waning-crescent'}
+              text={
+                slots.length
+                  ? `Closed right now. Pre-order for ${formatSlot(slots[0], now)} or later.`
+                  : 'This kitchen isn’t taking orders right now. Come back during its hours.'
+              }
             />
           ) : null}
 
@@ -247,6 +256,25 @@ export default function RestaurantDetail() {
               </Pressable>
             );
           })}
+
+          {reviews.length ? (
+            <View style={styles.reviews}>
+              <View style={styles.menuHeader}>
+                <Eyebrow>What neighbors say</Eyebrow>
+                <GoldRule width={28} />
+              </View>
+              <RatingSummary restaurant={restaurant} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+                style={{ marginHorizontal: -spacing.lg }}>
+                {reviews.slice(0, 10).map((r) => (
+                  <ReviewCard key={r.id} review={r} now={now} />
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
         </View>
       </Animated.ScrollView>
 
@@ -391,6 +419,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   menuHeader: { gap: spacing.sm, marginTop: spacing.md },
+  reviews: { gap: spacing.md, marginTop: spacing.lg },
   item: {
     flexDirection: 'row',
     alignItems: 'center',

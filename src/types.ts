@@ -153,4 +153,21 @@ export interface Order {
   chefNote: string;
   createdAt: string;
   estimatedReadyAt: string;
+  /** When the customer wants the food, or null for as soon as possible. */
+  scheduledFor: string | null;
+}
+
+export interface Review {
+  id: string;
+  orderId: string;
+  restaurantId: string;
+  customerId: string;
+  /** Shown as first name and last initial, e.g. "Ada L." */
+  customerName: string;
+  /** 1 to 5. */
+  stars: number;
+  /** Quick compliments like "Tasted like home". */
+  tags: string[];
+  text: string;
+  createdAt: string;
 }

@@ -114,6 +114,7 @@ describe('orders', () => {
     chefNote: '',
     createdAt: '2026-11-05T12:00:00.000Z',
     estimatedReadyAt: '2026-11-05T12:30:00.000Z',
+    scheduledFor: null,
   };
 
   it('placing an order clears the cart', () => {

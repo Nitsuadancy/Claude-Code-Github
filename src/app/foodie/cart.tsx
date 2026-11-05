@@ -5,12 +5,26 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
-import { Body, Card, Divider, Eyebrow, GoldButton, Heading, Screen, TextField } from '@/components/ui';
+import { OptionSheet } from '@/components/option-sheet';
+import {
+  Body,
+  Card,
+  Divider,
+  Eyebrow,
+  FieldLabel,
+  GoldButton,
+  Heading,
+  type IconName,
+  PickerField,
+  Screen,
+  TextField,
+} from '@/components/ui';
 import { notify } from '@/lib/alert';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
 import { computeCartTotals } from '@/lib/pricing';
+import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -19,6 +33,9 @@ export default function Cart() {
   const { state, dispatch } = useStore();
   const restaurant = useRestaurant(state.cart.restaurantId ?? undefined);
   const [address, setAddress] = useState(state.user?.deliveryAddress ?? '');
+  const [when, setWhen] = useState<'asap' | 'later'>('asap');
+  const [slot, setSlot] = useState<string | null>(null);
+  const [slotSheet, setSlotSheet] = useState(false);
 
   if (!restaurant || state.cart.lines.length === 0) {
     return (
@@ -38,7 +55,11 @@ export default function Cart() {
   }
 
   const totals = computeCartTotals(state.cart, restaurant.menu);
-  const open = isOpenNow(restaurant, new Date());
+  const now = new Date();
+  const open = isOpenNow(restaurant, now);
+  const slots = availableSlots(restaurant, now);
+  const mode = open ? when : 'later';
+  const chosen = slot && slots.includes(slot) ? slot : (slots[0] ?? null);
 
   const placeOrder = () => {
     const user = state.user;
@@ -47,21 +68,26 @@ export default function Cart() {
       notify('Delivery address', 'Add where we should bring your food.');
       return;
     }
-    if (!open) {
-      notify('Kitchen closed', `${restaurant.name} isn’t taking orders right now.`);
+    if (mode === 'later' && !chosen) {
+      notify('No times available', `${restaurant.name} isn’t taking orders for the next two days.`);
       return;
     }
-    const now = new Date();
+    const placedAt = new Date();
+    const scheduledFor = mode === 'later' ? chosen : null;
+    const cookDay = scheduledFor ? new Date(scheduledFor) : placedAt;
     const short = totals.lines.find((line) => {
       const item = restaurant.menu.find((m) => m.id === line.itemId);
-      const left = item ? remainingToday(item, state.orders, restaurant.id, now) : null;
+      const left = item ? remainingToday(item, state.orders, restaurant.id, cookDay) : null;
       return left !== null && line.quantity > left;
     });
     if (short) {
-      notify('Almost gone', `${restaurant.name} doesn’t have enough ${short.name} left today. Lower the quantity and try again.`);
+      notify(
+        'Almost gone',
+        `${restaurant.name} doesn’t have enough ${short.name} left for that day. Lower the quantity or pick another day.`,
+      );
       return;
     }
-    const createdAt = now.toISOString();
+    const createdAt = placedAt.toISOString();
     const orderId = newId('order');
     // Payments aren't connected yet: orders are recorded as placed without charging a card.
     dispatch({ type: 'updateProfile', changes: { deliveryAddress: address.trim() } });
@@ -83,7 +109,8 @@ export default function Cart() {
         statusHistory: [{ status: 'placed', at: createdAt }],
         chefNote: '',
         createdAt,
-        estimatedReadyAt: estimateReadyAt(createdAt, restaurant.prepMinutes),
+        estimatedReadyAt: scheduledFor ?? estimateReadyAt(createdAt, restaurant.prepMinutes),
+        scheduledFor,
       },
     });
     router.push({ pathname: '/order/[id]', params: { id: orderId, celebrate: '1' } });
@@ -143,6 +170,37 @@ export default function Cart() {
           textContentType="fullStreetAddress"
         />
 
+        <View style={{ gap: spacing.sm }}>
+          <FieldLabel>When</FieldLabel>
+          <View style={styles.segment}>
+            <WhenOption
+              icon="lightning-bolt-outline"
+              title="As soon as possible"
+              detail={open ? `About ${restaurant.prepMinutes} min` : 'Closed right now'}
+              selected={mode === 'asap'}
+              disabled={!open}
+              onPress={() => setWhen('asap')}
+            />
+            <WhenOption
+              icon="calendar-clock"
+              title="Schedule"
+              detail={slots.length ? 'Pick a time' : 'No times available'}
+              selected={mode === 'later'}
+              disabled={!slots.length}
+              onPress={() => setWhen('later')}
+            />
+          </View>
+          {mode === 'later' && chosen ? (
+            <PickerField
+              placeholder="Choose a time"
+              icon="clock-outline"
+              value={formatSlot(chosen, now)}
+              onPress={() => setSlotSheet(true)}
+              label="Ready at"
+            />
+          ) : null}
+        </View>
+
         <Card>
           <Row label="Subtotal" value={formatCents(totals.subtotalCents)} />
           <Row label="Service fee" value={formatCents(totals.serviceFeeCents)} />
@@ -154,7 +212,10 @@ export default function Cart() {
           </View>
         </Card>
 
-        <GoldButton title={`Place order · ${formatCents(totals.totalCents)}`} onPress={placeOrder} />
+        <GoldButton
+          title={mode === 'later' ? `Schedule order · ${formatCents(totals.totalCents)}` : `Place order · ${formatCents(totals.totalCents)}`}
+          onPress={placeOrder}
+        />
         <Body muted style={styles.note}>
           Payments aren’t connected yet. Placing an order sends it to the kitchen without charging a card.
         </Body>
@@ -162,7 +223,47 @@ export default function Cart() {
           <Text style={styles.clear}>Clear cart</Text>
         </Pressable>
       </ScrollView>
+      <OptionSheet
+        visible={slotSheet}
+        title="Ready at"
+        options={slots.map((value) => ({ value, label: formatSlot(value, now) }))}
+        selected={chosen ? [chosen] : []}
+        onSelect={([value]) => {
+          setSlot(value ?? null);
+          setWhen('later');
+        }}
+        onClose={() => setSlotSheet(false)}
+      />
     </Screen>
+  );
+}
+
+function WhenOption({
+  icon,
+  title,
+  detail,
+  selected,
+  disabled,
+  onPress,
+}: {
+  icon: IconName;
+  title: string;
+  detail: string;
+  selected: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.when, selected && styles.whenOn, disabled && { opacity: 0.45 }]}>
+      <MaterialCommunityIcons name={icon} size={20} color={selected ? colors.gold : colors.textMuted} />
+      <Text style={[styles.whenTitle, selected && { color: colors.ivory }]}>{title}</Text>
+      <Text style={styles.whenDetail}>{detail}</Text>
+    </Pressable>
   );
 }
 
@@ -206,5 +307,18 @@ const styles = StyleSheet.create({
   totalLabel: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
   totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold },
   note: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  segment: { flexDirection: 'row', gap: spacing.sm },
+  when: {
+    flex: 1,
+    gap: 4,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  whenOn: { borderColor: colors.gold, backgroundColor: colors.goldTint },
+  whenTitle: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
+  whenDetail: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   clear: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 14 },
 });

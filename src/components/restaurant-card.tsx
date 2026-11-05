@@ -16,7 +16,8 @@ const RAYS = require('@/assets/images/rays.png');
 /** "4.6 (128)", or "New" before the first rating. */
 export function formatRating(r: Restaurant, long = false): string {
   if (r.ratingCount === 0) return 'New';
-  return `${r.rating.toFixed(1)} (${r.ratingCount}${long ? ' ratings' : ''})`;
+  const noun = r.ratingCount === 1 ? ' rating' : ' ratings';
+  return `${r.rating.toFixed(1)} (${r.ratingCount}${long ? noun : ''})`;
 }
 
 export function isOpenNow(r: Restaurant, now: Date): boolean {

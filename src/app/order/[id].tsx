@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChefAvatar } from '@/components/chef';
 import { OrderCelebration } from '@/components/order-celebration';
+import { RateOrderSheet, Stars } from '@/components/reviews';
 import {
   BackButton,
   Body,
@@ -19,16 +20,21 @@ import {
 import * as haptics from '@/lib/haptics';
 import { formatCents } from '@/lib/money';
 import { formatClock, isActive, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import { publicName } from '@/lib/reviews';
+import { formatSlot } from '@/lib/schedule';
+import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 /** Live tracking for one order, with a celebration when it was just placed. */
 export default function OrderTracking() {
   const { id, celebrate } = useLocalSearchParams<{ id: string; celebrate?: string }>();
-  const { state } = useStore();
+  const { state, dispatch } = useStore();
   const order = state.orders.find((o) => o.id === id);
   const restaurant = useRestaurant(order?.restaurantId);
   const [celebrating, setCelebrating] = useState(celebrate === '1');
+  const [rating, setRating] = useState(false);
+  const myReview = state.reviews.find((r) => r.orderId === id);
   const endCelebration = useCallback(() => setCelebrating(false), []);
 
   useEffect(() => {
@@ -63,7 +69,11 @@ export default function OrderTracking() {
           {isActive(order.status) ? (
             <View style={styles.eta}>
               <MaterialCommunityIcons name="timer-sand" size={16} color={colors.gold} />
-              <Text style={styles.etaText}>Estimated ready by {formatClock(order.estimatedReadyAt)}</Text>
+              <Text style={styles.etaText}>
+                {order.scheduledFor
+                  ? `Scheduled for ${formatSlot(order.scheduledFor, new Date())}`
+                  : `Estimated ready by ${formatClock(order.estimatedReadyAt)}`}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -101,6 +111,25 @@ export default function OrderTracking() {
             </Body>
           </Card>
         )}
+
+        {order.status === 'completed' && !myReview && order.customerId === state.user?.id ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setRating(true)}
+            style={({ pressed }) => [styles.rateCard, pressed && { opacity: 0.85 }]}>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Eyebrow>How was it?</Eyebrow>
+              <Text style={styles.rateTitle}>Rate your meal from {chefName}</Text>
+            </View>
+            <Stars value={0} size={20} />
+          </Pressable>
+        ) : null}
+        {myReview ? (
+          <View style={styles.thanks}>
+            <Stars value={myReview.stars} size={16} />
+            <Text style={styles.thanksText}>Thanks for your review. It helps {chefName} grow.</Text>
+          </View>
+        ) : null}
 
         {order.chefNote ? (
           <View style={styles.note}>
@@ -144,6 +173,31 @@ export default function OrderTracking() {
         ) : null}
       </ScrollView>
 
+      <RateOrderSheet
+        visible={rating}
+        restaurantName={order.restaurantName}
+        chefName={chefName}
+        onClose={() => setRating(false)}
+        onSubmit={(stars, tags, text) => {
+          if (!state.user) return;
+          dispatch({
+            type: 'addReview',
+            review: {
+              id: newId('review'),
+              orderId: order.id,
+              restaurantId: order.restaurantId,
+              customerId: state.user.id,
+              customerName: publicName(state.user.name),
+              stars,
+              tags,
+              text,
+              createdAt: new Date().toISOString(),
+            },
+          });
+          setRating(false);
+        }}
+      />
+
       {celebrating ? <OrderCelebration chefName={chefName} onDone={endCelebration} /> : null}
     </Screen>
   );
@@ -181,6 +235,19 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     backgroundColor: colors.goldTint,
   },
+  rateCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.gold,
+    backgroundColor: colors.goldTint,
+  },
+  rateTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  thanks: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  thanksText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
   noteText: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 24, color: colors.ivory },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },

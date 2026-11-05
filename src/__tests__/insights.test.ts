@@ -24,6 +24,7 @@ function order(partial: Partial<Order>): Order {
     chefNote: '',
     createdAt: at(5),
     estimatedReadyAt: at(5, 13),
+    scheduledFor: null,
     ...partial,
   };
 }

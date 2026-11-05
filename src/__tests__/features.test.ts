@@ -26,6 +26,7 @@ function order(partial: Partial<Order>): Order {
     chefNote: '',
     createdAt: new Date(2026, 10, 5, 12).toISOString(),
     estimatedReadyAt: new Date(2026, 10, 5, 12, 30).toISOString(),
+    scheduledFor: null,
     ...partial,
   };
 }

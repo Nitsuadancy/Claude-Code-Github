@@ -6,12 +6,20 @@ function sameLocalDay(a: Date, b: Date): boolean {
   );
 }
 
-/** How many of a dish a kitchen has sold today (declined orders don't count). */
+/** The day the kitchen cooks an order: its scheduled time, or when it was placed. */
+export function fulfilmentDate(order: Order): Date {
+  return new Date(order.scheduledFor ?? order.createdAt);
+}
+
+/**
+ * How many of a dish a kitchen has committed to on the day of `now`
+ * (declined orders don't count; scheduled orders count on their day).
+ */
 export function soldToday(orders: Order[], restaurantId: string, itemId: string, now: Date): number {
   let sold = 0;
   for (const order of orders) {
     if (order.restaurantId !== restaurantId || order.status === 'declined') continue;
-    if (!sameLocalDay(new Date(order.createdAt), now)) continue;
+    if (!sameLocalDay(fulfilmentDate(order), now)) continue;
     for (const line of order.lines) if (line.itemId === itemId) sold += line.quantity;
   }
   return sold;
