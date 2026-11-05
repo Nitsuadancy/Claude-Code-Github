@@ -34,7 +34,8 @@ Without this, a chef and a customer on different phones can't see each other.
 - [ ] Create the backend project (recommended: Supabase, see [ARCHITECTURE.md](ARCHITECTURE.md))
 - [ ] Phone sign-in with real text-message codes (Supabase Auth + Twilio)
 - [ ] Google and Apple sign-in. Apple's App Store rules require Apple sign-in if Google sign-in is offered.
-- [ ] Database tables for profiles, restaurants, menu items, documents and orders, with row-level security
+- [x] Database tables for profiles, restaurants, menu items, documents and orders, with row-level security (`supabase/`, tested in CI)
+- [x] Server functions: pricing, daily limits, opening hours, order status, reviews, kitchen approval
 - [ ] Photo and document uploads to private storage
 - [ ] Live order updates, so the chef's dashboard updates the moment an order is placed
 

@@ -32,6 +32,9 @@ Expo (React Native) app ── one codebase for iOS, Android and web
 
 ## Next: backend
 
+**Status:** the database schema, security rules and server functions are written and
+tested in [`supabase/`](../supabase/README.md). The next step is connecting the app to it.
+
 **Recommendation: [Supabase](https://supabase.com)** (Postgres, Auth, Storage,
 Realtime). It has phone OTP built in, row-level security for "chefs only see their own
 orders", live updates for the order dashboard, and a free tier that covers the beta.

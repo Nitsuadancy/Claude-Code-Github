@@ -73,6 +73,7 @@ Everything in the demo is stored in each visitor's own browser, so every person 
 | `npm run lint` | ESLint |
 | `npm run check` | All three of the above. CI runs this on every pull request. |
 | `npm run build:web` | Static web build in `dist/` |
+| `npm run test:db` | Database schema checks (needs Postgres; see `supabase/README.md`) |
 
 ## Project layout
 
