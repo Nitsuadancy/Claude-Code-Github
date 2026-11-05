@@ -40,3 +40,12 @@ export function computeCartTotals(cart: Cart, menu: MenuItem[]): CartTotals {
     totalCents: subtotalCents + serviceFeeCents + deliveryFeeCents,
   };
 }
+
+/** Tip choices at checkout, as fractions of the food subtotal. */
+export const TIP_RATES = [0, 0.1, 0.15, 0.2] as const;
+
+/** Tip in cents for a rate, rounded to the nearest 25¢ so amounts look intentional. */
+export function tipFor(subtotalCents: number, rate: number): number {
+  if (rate <= 0 || subtotalCents <= 0) return 0;
+  return Math.max(25, Math.round((subtotalCents * rate) / 25) * 25);
+}

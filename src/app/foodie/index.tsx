@@ -220,6 +220,29 @@ export default function FoodieHome() {
         </View>
       </View>
 
+      {!searching && !searchFocused && !hasDietProfile(diet) && !state.dietNudgeDismissed ? (
+        <FadeIn style={styles.nudge}>
+          <View style={styles.nudgeIcon}>
+            <MaterialCommunityIcons name="leaf" size={20} color={colors.gold} />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Personalize your feed. Set your diet and allergies"
+            onPress={() => router.navigate('/foodie/profile')}
+            style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.nudgeTitle}>Personalize your feed</Text>
+            <Text style={styles.nudgeBody}>Tell us your diet and allergies. We’ll flag what fits and what to avoid.</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+            hitSlop={10}
+            onPress={() => dispatch({ type: 'dismissDietNudge' })}>
+            <MaterialCommunityIcons name="close" size={18} color={colors.textMuted} />
+          </Pressable>
+        </FadeIn>
+      ) : null}
+
       {searchFocused && !searching ? (
         <View style={styles.suggest}>
           {state.recentSearches.length ? (
@@ -509,6 +532,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  nudge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.goldTint,
+    marginTop: -spacing.md,
+  },
+  nudgeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nudgeTitle: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory },
+  nudgeBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textMuted },
   suggest: {
     gap: spacing.lg,
     padding: spacing.md,

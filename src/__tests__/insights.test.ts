@@ -110,7 +110,7 @@ describe('chef dashboard', () => {
     const days = weeklyEarnings(
       [
         order({ createdAt: at(5), subtotalCents: 1500 }),
-        order({ createdAt: at(5, 8), subtotalCents: 500 }),
+        order({ createdAt: at(5, 8), subtotalCents: 400, tipCents: 100 }), // tips count toward earnings
         order({ createdAt: at(30 - 31 + 2), subtotalCents: 700 }), // Nov 1
         order({ createdAt: at(4), status: 'preparing', subtotalCents: 9999 }), // not delivered
         order({ createdAt: new Date(2026, 9, 20).toISOString(), subtotalCents: 9999 }), // too old

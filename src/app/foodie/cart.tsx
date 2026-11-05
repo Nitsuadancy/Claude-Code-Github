@@ -25,7 +25,7 @@ import { allergenConflicts } from '@/lib/diet';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
-import { computeCartTotals } from '@/lib/pricing';
+import { computeCartTotals, TIP_RATES, tipFor } from '@/lib/pricing';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
@@ -39,6 +39,7 @@ export default function Cart() {
   const [slot, setSlot] = useState<string | null>(null);
   const [slotSheet, setSlotSheet] = useState(false);
   const [note, setNote] = useState('');
+  const [tipRate, setTipRate] = useState(0);
 
   if (!restaurant || state.cart.lines.length === 0) {
     return (
@@ -58,6 +59,8 @@ export default function Cart() {
   }
 
   const totals = computeCartTotals(state.cart, restaurant.menu);
+  const tip = tipFor(totals.subtotalCents, tipRate);
+  const grandTotal = totals.totalCents + tip;
   const avoid = state.user?.avoidAllergens ?? [];
   const risky = totals.lines
     .filter((line) => {
@@ -113,7 +116,8 @@ export default function Cart() {
         subtotalCents: totals.subtotalCents,
         serviceFeeCents: totals.serviceFeeCents,
         deliveryFeeCents: totals.deliveryFeeCents,
-        totalCents: totals.totalCents,
+        tipCents: tip,
+        totalCents: grandTotal,
         deliveryAddress: address.trim(),
         status: 'placed',
         statusHistory: [{ status: 'placed', at: createdAt }],
@@ -225,19 +229,42 @@ export default function Cart() {
           ) : null}
         </View>
 
+        <View style={{ gap: spacing.sm }}>
+          <FieldLabel>Tip for {restaurant.chefName}</FieldLabel>
+          <View style={styles.tips}>
+            {TIP_RATES.map((rate) => {
+              const selected = rate === tipRate;
+              return (
+                <Pressable
+                  key={rate}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
+                  accessibilityLabel={rate ? `${rate * 100}% tip, ${formatCents(tipFor(totals.subtotalCents, rate))}` : 'No tip'}
+                  onPress={() => setTipRate(rate)}
+                  style={[styles.tip, selected && styles.tipOn]}>
+                  <Text style={[styles.tipPct, selected && { color: colors.gold }]}>{rate ? `${rate * 100}%` : 'None'}</Text>
+                  {rate ? <Text style={styles.tipAmt}>{formatCents(tipFor(totals.subtotalCents, rate))}</Text> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.tipNote}>100% of your tip goes to {restaurant.chefName.replace(/\.$/, '')}.</Text>
+        </View>
+
         <Card>
           <Row label="Subtotal" value={formatCents(totals.subtotalCents)} />
           <Row label="Service fee" value={formatCents(totals.serviceFeeCents)} />
           <Row label="Delivery" value={formatCents(totals.deliveryFeeCents)} />
+          {tip ? <Row label={`Tip for ${restaurant.chefName}`} value={formatCents(tip)} /> : null}
           <Divider style={{ marginVertical: spacing.xs }} />
           <View style={styles.row}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCents(totals.totalCents)}</Text>
+            <Text style={styles.totalValue}>{formatCents(grandTotal)}</Text>
           </View>
         </Card>
 
         <GoldButton
-          title={mode === 'later' ? `Schedule order · ${formatCents(totals.totalCents)}` : `Place order · ${formatCents(totals.totalCents)}`}
+          title={mode === 'later' ? `Schedule order · ${formatCents(grandTotal)}` : `Place order · ${formatCents(grandTotal)}`}
           onPress={placeOrder}
         />
         <Body muted style={styles.note}>
@@ -332,6 +359,23 @@ const styles = StyleSheet.create({
   totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold },
   note: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
   segment: { flexDirection: 'row', gap: spacing.sm },
+  tips: { flexDirection: 'row', gap: spacing.sm },
+  tip: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    minHeight: 54,
+    justifyContent: 'center',
+  },
+  tipOn: { borderColor: colors.gold, backgroundColor: colors.goldTint },
+  tipPct: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
+  tipAmt: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
+  tipNote: { fontFamily: fonts.displayItalic, fontSize: 13, color: colors.textMuted },
   when: {
     flex: 1,
     gap: 4,

@@ -160,6 +160,24 @@ export default function OrderTracking() {
           ))}
           <Divider style={{ marginVertical: spacing.xs }} />
           <View style={styles.row}>
+            <Text style={styles.fee}>Subtotal</Text>
+            <Text style={styles.fee}>{formatCents(order.subtotalCents)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.fee}>Service fee</Text>
+            <Text style={styles.fee}>{formatCents(order.serviceFeeCents)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.fee}>Delivery</Text>
+            <Text style={styles.fee}>{formatCents(order.deliveryFeeCents)}</Text>
+          </View>
+          {order.tipCents ? (
+            <View style={styles.row}>
+              <Text style={styles.fee}>Tip for {chefName}</Text>
+              <Text style={styles.fee}>{formatCents(order.tipCents)}</Text>
+            </View>
+          ) : null}
+          <View style={styles.row}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>{formatCents(order.totalCents)}</Text>
           </View>
@@ -258,6 +276,7 @@ const styles = StyleSheet.create({
   noteText: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 24, color: colors.ivory },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
+  fee: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   totalLabel: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   totalValue: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
 });

@@ -6,6 +6,7 @@ import { buildActivity, unseenCount } from '@/lib/activity';
 import { allergenConflicts, conflictSentence, dishFits, kitchenFits } from '@/lib/diet';
 import { soldToday } from '@/lib/limits';
 import { groupMenu, kitchenShareMessage } from '@/lib/menu';
+import { tipFor } from '@/lib/pricing';
 import { publicName, relativeDay, withReviews } from '@/lib/reviews';
 import { availableSlots, dayLabel } from '@/lib/schedule';
 import { INITIAL_STATE, reducer } from '@/state/reducer';
@@ -222,5 +223,15 @@ describe('recent searches', () => {
     }
     expect(s.recentSearches).toEqual(['pie', 'tea', 'ziti', 'grits', 'cobbler', 'Lasagna']);
     expect(reducer(s, { type: 'clearSearches' }).recentSearches).toEqual([]);
+  });
+});
+
+describe('tips', () => {
+  it('rounds tips to the nearest quarter and skips zero', () => {
+    expect(tipFor(2498, 0)).toBe(0);
+    expect(tipFor(2498, 0.15)).toBe(375); // 374.7 -> $3.75
+    expect(tipFor(1000, 0.2)).toBe(200);
+    expect(tipFor(99, 0.1)).toBe(25); // never a tip smaller than 25¢
+    expect(tipFor(0, 0.2)).toBe(0);
   });
 });

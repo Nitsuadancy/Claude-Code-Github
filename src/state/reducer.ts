@@ -28,6 +28,8 @@ export interface AppState {
   activitySeenAt: string | null;
   /** Most recent searches first, at most 6. */
   recentSearches: string[];
+  /** Hides the "Personalize your feed" card on home. */
+  dietNudgeDismissed: boolean;
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -47,6 +49,7 @@ export const INITIAL_STATE: AppState = {
   reviews: [],
   activitySeenAt: null,
   recentSearches: [],
+  dietNudgeDismissed: false,
 };
 
 export type Action =
@@ -77,7 +80,8 @@ export type Action =
   | { type: 'addReview'; review: Review }
   | { type: 'markActivitySeen'; at: string }
   | { type: 'rememberSearch'; query: string }
-  | { type: 'clearSearches' };
+  | { type: 'clearSearches' }
+  | { type: 'dismissDietNudge' };
 
 /** Which status changes a kitchen is allowed to make. */
 export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
@@ -244,6 +248,9 @@ export function reducer(state: AppState, action: Action): AppState {
       const rest = state.recentSearches.filter((r) => r.toLowerCase() !== q.toLowerCase());
       return { ...state, recentSearches: [q, ...rest].slice(0, 6) };
     }
+
+    case 'dismissDietNudge':
+      return { ...state, dietNudgeDismissed: true };
 
     case 'clearSearches':
       return { ...state, recentSearches: [] };

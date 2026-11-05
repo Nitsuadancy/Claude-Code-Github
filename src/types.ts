@@ -150,6 +150,8 @@ export interface Order {
   subtotalCents: number;
   serviceFeeCents: number;
   deliveryFeeCents: number;
+  /** Tip for the chef; all of it goes to the kitchen. */
+  tipCents?: number;
   totalCents: number;
   deliveryAddress: string;
   status: OrderStatus;

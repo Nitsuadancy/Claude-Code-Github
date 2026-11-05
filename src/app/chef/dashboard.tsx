@@ -43,7 +43,7 @@ export default function ChefDashboard() {
   const today = new Date().toDateString();
   const todaysSales = orders
     .filter((o) => o.status === 'completed' && new Date(o.createdAt).toDateString() === today)
-    .reduce((sum, o) => sum + o.subtotalCents, 0);
+    .reduce((sum, o) => sum + o.subtotalCents + (o.tipCents ?? 0), 0);
   const inHours = isOpenAt(restaurant, new Date());
   const prep = prepList(state.orders, restaurant.id);
   const week = weeklyEarnings(state.orders, restaurant.id, new Date());
