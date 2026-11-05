@@ -64,6 +64,7 @@ buttons, use `onGold` (`#140F06`) for text.
 
 - Text follows the phone's text-size setting. Headings are capped at 1.4×, labels at 1.3× and the tab bar at 1.2×, so layouts never break.
 - Every tappable element has a spoken label. Touch targets are at least 44pt.
+- Never put a button inside another button. Cards with secondary actions (favorite, reorder, add) keep those actions as siblings of the card's main button.
 - Gold `#CDA558` and ivory on the background both pass WCAG AA contrast.
 
 ## Motion and touch

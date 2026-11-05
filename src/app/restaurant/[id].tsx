@@ -175,18 +175,15 @@ export default function RestaurantDetail() {
             const atLimit = left !== null && q >= left;
             const signature = item.id === restaurant.signatureItemId;
             return (
-              <Pressable
+              <View
                 key={item.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
-                onPress={() => setOpenItemId(item.id)}
-                style={({ pressed }) => [
-                  styles.item,
-                  signature && styles.signature,
-                  soldOut && { opacity: 0.5 },
-                  pressed && { opacity: 0.85 },
-                ]}>
-                <View style={{ flex: 1, gap: 6 }}>
+                style={[styles.item, signature && styles.signature, soldOut && { opacity: 0.5 }]}>
+                {/* Details and the add buttons are separate controls, not nested ones. */}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
+                  onPress={() => setOpenItemId(item.id)}
+                  style={({ pressed }) => [{ flex: 1, gap: 6 }, pressed && { opacity: 0.7 }]}>
                   {signature ? (
                     <View style={styles.signatureLabel}>
                       <MaterialCommunityIcons name="star-four-points" size={11} color={colors.gold} />
@@ -207,16 +204,22 @@ export default function RestaurantDetail() {
                   </View>
                   <StockNote remaining={item.available ? left : null} />
                   <DietNote item={item} profile={diet} />
-                </View>
+                </Pressable>
 
                 <View style={styles.thumbWrap}>
                   {item.photoUri ? (
-                    <Image source={{ uri: item.photoUri }} style={styles.thumb} contentFit="cover" />
+                    <Pressable
+                      accessibilityRole="imagebutton"
+                      accessibilityLabel={`Photo of ${item.name}. Show details`}
+                      onPress={() => setOpenItemId(item.id)}>
+                      <Image source={{ uri: item.photoUri }} style={styles.thumb} contentFit="cover" />
+                    </Pressable>
                   ) : null}
                   {canOrder && !soldOut ? (
                     q > 0 ? (
                       <View style={[styles.stepper, item.photoUri && styles.onThumb]}>
                         <Pressable
+                          accessibilityRole="button"
                           accessibilityLabel={`Remove one ${item.name}`}
                           onPress={() => {
                             haptics.tap();
@@ -227,6 +230,7 @@ export default function RestaurantDetail() {
                         </Pressable>
                         <Text style={styles.qty}>{q}</Text>
                         <Pressable
+                          accessibilityRole="button"
                           accessibilityLabel={`Add one ${item.name}`}
                           disabled={atLimit}
                           onPress={() => add(item)}
@@ -253,7 +257,7 @@ export default function RestaurantDetail() {
                     )
                   ) : null}
                 </View>
-              </Pressable>
+              </View>
             );
           })}
             </View>

@@ -150,6 +150,7 @@ export default function Cart() {
                 </View>
                 <View style={styles.stepper}>
                   <Pressable
+                    accessibilityRole="button"
                     accessibilityLabel={`Remove one ${line.name}`}
                     hitSlop={8}
                     onPress={() =>
@@ -159,6 +160,7 @@ export default function Cart() {
                   </Pressable>
                   <Text style={styles.qty}>{line.quantity}</Text>
                   <Pressable
+                    accessibilityRole="button"
                     accessibilityLabel={`Add one ${line.name}`}
                     hitSlop={8}
                     onPress={() =>

@@ -24,12 +24,14 @@ export function OrderAgainCard({
   onOpen: () => void;
 }) {
   const summary = order.lines.map((l) => `${l.quantity} × ${l.name}`).join(', ');
+  // Opening the kitchen and reordering are sibling buttons, never nested.
   return (
+    <View style={styles.again}>
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${restaurant.name}. Last time: ${summary}`}
       onPress={onOpen}
-      style={styles.again}>
+      style={styles.againMain}>
       <RestaurantCover restaurant={restaurant} style={styles.againCover} monogramSize={34} />
       <View style={{ flex: 1, gap: 3 }}>
         <Text style={styles.againName} numberOfLines={1}>
@@ -40,6 +42,7 @@ export function OrderAgainCard({
         </Text>
         <Text style={styles.againDate}>{formatMonthDay(order.createdAt)}</Text>
       </View>
+    </PressableScale>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Reorder from ${restaurant.name}`}
@@ -50,7 +53,7 @@ export function OrderAgainCard({
           <MaterialCommunityIcons name="replay" size={18} color={pressed ? colors.onGold : colors.gold} />
         )}
       </Pressable>
-    </PressableScale>
+    </View>
   );
 }
 
@@ -123,6 +126,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
+  againMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   againCover: { width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden' },
   againName: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory },
   againSummary: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, lineHeight: 16 },

@@ -76,7 +76,10 @@ export function RestaurantCard({
   now: Date;
 }) {
   const open = isOpenNow(restaurant, now);
+  // The heart sits beside the card's main button, not inside it, so screen
+  // readers and browsers treat them as two separate controls.
   return (
+    <View>
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, ${formatRating(restaurant, true)}, ${open ? 'open now' : 'closed'}`}
@@ -87,18 +90,6 @@ export function RestaurantCard({
         <LinearGradient colors={['transparent', 'rgba(10,9,7,0.85)']} style={styles.coverFade} />
         <View style={styles.coverTop}>
           {open ? <Badge label="Open now" tone="success" /> : <Badge label="Closed" tone="muted" />}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
-            hitSlop={10}
-            onPress={onToggleFavorite}
-            style={styles.heart}>
-            <MaterialCommunityIcons
-              name={favorite ? 'heart' : 'heart-outline'}
-              size={20}
-              color={favorite ? colors.gold : colors.ivory}
-            />
-          </Pressable>
         </View>
       </View>
       <View style={styles.info}>
@@ -134,6 +125,19 @@ export function RestaurantCard({
         </View>
       </View>
     </PressableScale>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={favorite ? `Remove ${restaurant.name} from favorites` : `Add ${restaurant.name} to favorites`}
+        hitSlop={10}
+        onPress={onToggleFavorite}
+        style={[styles.heart, styles.heartPosition]}>
+        <MaterialCommunityIcons
+          name={favorite ? 'heart' : 'heart-outline'}
+          size={20}
+          color={favorite ? colors.gold : colors.ivory}
+        />
+      </Pressable>
+    </View>
   );
 }
 
@@ -193,6 +197,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  heartPosition: { position: 'absolute', top: spacing.md - 6, right: spacing.md },
   heart: {
     width: 38,
     height: 38,
