@@ -1,10 +1,12 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import {
   Animated,
+  Easing,
   Platform,
   Pressable,
   type PressableProps,
   type StyleProp,
+  View,
   type ViewStyle,
 } from 'react-native';
 import Reanimated, { FadeInDown } from 'react-native-reanimated';
@@ -71,5 +73,37 @@ export function FadeIn({
     <Reanimated.View entering={FadeInDown.duration(520).delay(delay + stagger)} style={style}>
       {children}
     </Reanimated.View>
+  );
+}
+
+/**
+ * A soft gold ring that breathes outward behind its child, used to mark
+ * "happening now" (the current step on the order timeline).
+ */
+export function Pulse({ children, size, color }: { children: ReactNode; size: number; color: string }) {
+  const [t] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(t, { toValue: 1, duration: 1800, easing: Easing.out(Easing.quad), useNativeDriver: NATIVE_DRIVER }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [t]);
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+          opacity: t.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0] }),
+          transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [1, 2.2] }) }],
+        }}
+      />
+      {children}
+    </View>
   );
 }

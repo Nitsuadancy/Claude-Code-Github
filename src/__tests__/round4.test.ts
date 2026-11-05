@@ -4,6 +4,7 @@ import { COLLECTIONS, collectionKitchens } from '@/data/collections';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { buildActivity, unseenCount } from '@/lib/activity';
 import { soldToday } from '@/lib/limits';
+import { groupMenu, kitchenShareMessage } from '@/lib/menu';
 import { publicName, relativeDay, withReviews } from '@/lib/reviews';
 import { availableSlots, dayLabel } from '@/lib/schedule';
 import { INITIAL_STATE, reducer } from '@/state/reducer';
@@ -154,5 +155,33 @@ describe('activity feed', () => {
     expect(unseenCount(items, t(12, 1))).toBe(2);
     const s = reducer({ ...INITIAL_STATE, hydrated: true }, { type: 'markActivitySeen', at: t(14) });
     expect(s.activitySeenAt).toBe(t(14));
+  });
+});
+
+describe('menu sections', () => {
+  const dish = (id: string, section?: string) =>
+    ({ id, name: id, description: '', priceCents: 100, available: true, dietary: [], allergens: [], dailyLimit: null, section });
+
+  it('keeps one group when nothing is filed', () => {
+    const groups = groupMenu([dish('a'), dish('b'), dish('sig')], 'sig');
+    expect(groups.map((g) => [g.title, g.items.map((i) => i.id)])).toEqual([
+      [null, ['sig']],
+      [null, ['a', 'b']],
+    ]);
+  });
+
+  it('orders sections and puts unfiled dishes last', () => {
+    const groups = groupMenu(
+      [dish('cake', 'Desserts'), dish('soup'), dish('pasta', 'Mains'), dish('tea', 'Drinks'), dish('sig', 'Mains')],
+      'sig',
+    );
+    expect(groups.map((g) => g.title)).toEqual([null, 'Mains', 'Desserts', 'Drinks', 'More']);
+    expect(groups[1].items.map((i) => i.id)).toEqual(['pasta']);
+  });
+
+  it('builds a share message with a link', () => {
+    const { message, url } = kitchenShareMessage('Susie’s Sweets', 'Mrs. Susie', 'sample_susies_sweets');
+    expect(url).toBe('manna://restaurant/sample_susies_sweets');
+    expect(message).toContain('Susie’s Sweets by Mrs. Susie');
   });
 });

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChefAvatar } from '@/components/chef';
+import { Pulse } from '@/components/motion';
 import { OrderCelebration } from '@/components/order-celebration';
 import { RateOrderSheet, Stars } from '@/components/reviews';
 import {
@@ -88,9 +89,15 @@ export default function OrderTracking() {
               return (
                 <View key={status} style={styles.step}>
                   <View style={styles.rail}>
-                    <View style={[styles.dot, done && styles.dotDone, now && styles.dotNow]}>
-                      {done && !now ? <MaterialCommunityIcons name="check" size={12} color={colors.onGold} /> : null}
-                    </View>
+                    {now ? (
+                      <Pulse size={22} color={colors.gold}>
+                        <View style={[styles.dot, styles.dotNow]} />
+                      </Pulse>
+                    ) : (
+                      <View style={[styles.dot, done && styles.dotDone]}>
+                        {done ? <MaterialCommunityIcons name="check" size={12} color={colors.onGold} /> : null}
+                      </View>
+                    )}
                     {!last ? <View style={[styles.line, i < current && { backgroundColor: colors.gold }]} /> : null}
                   </View>
                   <View style={styles.stepText}>

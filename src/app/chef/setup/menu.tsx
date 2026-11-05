@@ -9,6 +9,7 @@ import { FormScreen } from '@/components/form-screen';
 import { Body, Chip, Eyebrow, FieldLabel, GoldButton, SectionTitle, TextField } from '@/components/ui';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { pickImages } from '@/lib/images';
+import { MENU_SECTIONS } from '@/lib/menu';
 import { formatCents, parsePriceToCents } from '@/lib/money';
 import { isMenuComplete } from '@/lib/setup';
 import { digitsOnly, newId } from '@/lib/validation';
@@ -30,6 +31,7 @@ export default function MenuSetup() {
   const [dietary, setDietary] = useState<DietaryTag[]>([]);
   const [allergens, setAllergens] = useState<Allergen[]>([]);
   const [limit, setLimit] = useState('');
+  const [section, setSection] = useState('');
   const [errors, setErrors] = useState<{ name?: string; price?: string; limit?: string; menu?: string }>({});
 
   const resetForm = () => {
@@ -41,6 +43,7 @@ export default function MenuSetup() {
     setDietary([]);
     setAllergens([]);
     setLimit('');
+    setSection('');
     setErrors({});
   };
 
@@ -63,6 +66,7 @@ export default function MenuSetup() {
       dietary,
       allergens,
       dailyLimit,
+      section: section || undefined,
     };
     const menu = editingId ? draft.menu.map((m) => (m.id === editingId ? item : m)) : [...draft.menu, item];
     // The first dish becomes the signature until the chef picks another.
@@ -79,6 +83,7 @@ export default function MenuSetup() {
     setDietary(item.dietary);
     setAllergens(item.allergens);
     setLimit(item.dailyLimit === null ? '' : String(item.dailyLimit));
+    setSection(item.section ?? '');
     setErrors({});
   };
 
@@ -154,6 +159,13 @@ export default function MenuSetup() {
         The most you’ll make in a day. Customers see “Only 3 left today” as it runs low.
       </Body>
 
+      <FieldLabel>Menu section (optional)</FieldLabel>
+      <View style={styles.chips}>
+        {MENU_SECTIONS.map((name) => (
+          <Chip key={name} label={name} selected={section === name} onPress={() => setSection(section === name ? '' : name)} />
+        ))}
+      </View>
+
       <FieldLabel>Dietary</FieldLabel>
       <View style={styles.chips}>
         {DIETARY_TAGS.map((t) => (
@@ -226,6 +238,7 @@ export default function MenuSetup() {
                 <DietaryIcons tags={item.dietary} />
               </View>
               <Text style={styles.itemMeta}>
+                {item.section ? `${item.section} · ` : ''}
                 {item.available ? 'Available' : 'Sold out'}
                 {item.dailyLimit !== null ? ` · ${item.dailyLimit} per day` : ''}
               </Text>

@@ -22,6 +22,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Editorial collections (Sunday Supper, Plant-Powered, Sweet Endings…), animated logo, reviews on the chef dashboard, text-size caps for accessibility
 - [x] Activity feed behind the bell (order updates, chef notes, unseen dot), profile stats, help and legal links, styled not-found and crash screens
 - [x] Swipeable cover photo gallery, customer notes to the chef (allergies, requests), live card preview while chefs set up
+- [x] Menu sections (Specials, Mains, Sides, Desserts, Drinks), share a kitchen, live pulse on the current tracking step
 
 ## Phase 1: Real accounts and shared data
 

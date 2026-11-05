@@ -57,9 +57,11 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
         priceCents: 1499,
         allergens: ['gluten', 'dairy', 'eggs'],
         dailyLimit: 12,
+        section: 'Mains',
       }),
       dish({
         id: 'cp_tiramisu',
+        section: 'Desserts',
         name: 'Tiramisu',
         description: 'Espresso-soaked ladyfingers with mascarpone cream and cocoa.',
         priceCents: 699,
@@ -68,6 +70,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'cp_caprese',
+        section: 'Sides',
         name: 'Caprese Salad',
         description: 'Fresh mozzarella, heirloom tomatoes, basil and aged balsamic.',
         priceCents: 899,

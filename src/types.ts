@@ -55,6 +55,8 @@ export interface MenuItem {
   allergens: Allergen[];
   /** Most the kitchen will make per day, or null for no limit. */
   dailyLimit: number | null;
+  /** Menu section such as "Mains" or "Desserts"; empty when unfiled. */
+  section?: string;
 }
 
 export type DocumentKind = 'food-handler' | 'home-kitchen-permit' | 'government-id';

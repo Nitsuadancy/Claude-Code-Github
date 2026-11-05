@@ -24,6 +24,7 @@ import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
+import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
@@ -187,6 +188,7 @@ export default function ChefDashboard() {
           <LinkRow icon="book-open-variant" label="Menu" onPress={() => router.push('/chef/setup/menu')} />
           <LinkRow icon="storefront-outline" label="Restaurant details" onPress={() => router.push('/chef/setup/information')} />
           <LinkRow icon="file-document-outline" label="Documents" onPress={() => router.push('/chef/setup/documents')} />
+          <LinkRow icon="export-variant" label="Share your kitchen" onPress={() => shareKitchen(restaurant)} />
           <LinkRow
             icon="eye-outline"
             label="View my restaurant page"

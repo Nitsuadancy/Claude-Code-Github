@@ -28,7 +28,9 @@ import { capitalize, formatTime, WEEKDAYS } from '@/lib/hours';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
+import { groupMenu } from '@/lib/menu';
 import { availableSlots, formatSlot } from '@/lib/schedule';
+import { shareKitchen } from '@/lib/share';
 import { useRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
@@ -67,10 +69,6 @@ export default function RestaurantDetail() {
   const remaining = (item: MenuItem) => remainingToday(item, state.orders, restaurant.id, now);
   const favorite = state.favoriteRestaurantIds.includes(restaurant.id);
 
-  // Signature dish first, then the rest in the chef's order.
-  const menu = [...restaurant.menu].sort(
-    (a, b) => Number(b.id === restaurant.signatureItemId) - Number(a.id === restaurant.signatureItemId),
-  );
   const openItem = restaurant.menu.find((m) => m.id === openItemId) ?? null;
 
   const add = (item: MenuItem) => {
@@ -164,8 +162,11 @@ export default function RestaurantDetail() {
             <Eyebrow>The menu</Eyebrow>
             <GoldRule width={28} />
           </View>
-          {menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
-          {menu.map((item) => {
+          {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
+          {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
+            <View key={group.title ?? `group-${group.items[0].id}`}>
+              {group.title ? <Text style={styles.sectionTitle}>{group.title}</Text> : null}
+          {group.items.map((item) => {
             const q = qty(item.id);
             const left = remaining(item);
             const soldOut = !item.available || left === 0;
@@ -252,6 +253,8 @@ export default function RestaurantDetail() {
               </Pressable>
             );
           })}
+            </View>
+          ))}
 
           {reviews.length ? (
             <View style={styles.reviews}>
@@ -287,6 +290,14 @@ export default function RestaurantDetail() {
       </Animated.View>
       <View style={[styles.heroBar, { top: insets.top + spacing.sm }]} pointerEvents="box-none">
         <BackButton />
+        <View style={{ flex: 1 }} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Share ${restaurant.name}`}
+          onPress={() => shareKitchen(restaurant)}
+          style={[styles.heroIcon, { marginRight: spacing.sm }]}>
+          <MaterialCommunityIcons name="export-variant" size={20} color={colors.ivory} />
+        </Pressable>
         {!isPreview ? (
           <Pressable
             accessibilityRole="button"
@@ -365,7 +376,8 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 72,
+    paddingLeft: 72,
+    paddingRight: 120,
   },
   stickyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   heroBar: {
@@ -415,6 +427,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   menuHeader: { gap: spacing.sm, marginTop: spacing.md },
+  sectionTitle: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.ivory,
+    marginTop: spacing.lg,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.hairline,
+  },
   reviews: { gap: spacing.md, marginTop: spacing.lg },
   item: {
     flexDirection: 'row',
