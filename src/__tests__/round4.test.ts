@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { COLLECTIONS, collectionKitchens } from '@/data/collections';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
+import { buildActivity, unseenCount } from '@/lib/activity';
 import { soldToday } from '@/lib/limits';
 import { publicName, relativeDay, withReviews } from '@/lib/reviews';
 import { availableSlots, dayLabel } from '@/lib/schedule';
@@ -128,5 +129,29 @@ describe('collections', () => {
     expect(names('plant-powered')).toContain('Momo Mania');
     expect(names('plant-powered')).not.toContain('Sunrise Plates');
     for (const c of COLLECTIONS) expect(collectionKitchens(c, SAMPLE_RESTAURANTS).length).toBeGreaterThan(0);
+  });
+});
+
+describe('activity feed', () => {
+  it('lists my order updates and chef notes, newest first, and counts unseen ones', () => {
+    const t = (h: number, m = 0) => new Date(2026, 10, 5, h, m).toISOString();
+    const mine = order({
+      id: 'a',
+      restaurantName: 'Momo Mania',
+      status: 'accepted',
+      statusHistory: [
+        { status: 'placed', at: t(12) },
+        { status: 'accepted', at: t(12, 5) },
+      ],
+      chefNote: 'Extra achar for you!',
+    });
+    const theirs = order({ id: 'b', customerId: 'other', statusHistory: [{ status: 'placed', at: t(13) }] });
+    const items = buildActivity([mine, theirs], 'me');
+    expect(items.map((i) => i.kind)).toEqual(['note', 'accepted', 'placed']);
+    expect(items[1].title).toBe('Momo Mania accepted your order');
+    expect(unseenCount(items, null)).toBe(3);
+    expect(unseenCount(items, t(12, 1))).toBe(2);
+    const s = reducer({ ...INITIAL_STATE, hydrated: true }, { type: 'markActivitySeen', at: t(14) });
+    expect(s.activitySeenAt).toBe(t(14));
   });
 });

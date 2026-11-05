@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -8,7 +9,7 @@ import { formatE164UsPhone, isValidEmail } from '@/lib/validation';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
-import { GoldButton, Heading, type IconName, TextField } from './ui';
+import { GoldButton, Heading, type IconName, TextField, Wordmark } from './ui';
 
 /** Profile editing plus role switching and sign out; shared by Foodie and Chef. */
 export function AccountSettings({ showAddress }: { showAddress: boolean }) {
@@ -93,6 +94,33 @@ export function AccountSettings({ showAddress }: { showAddress: boolean }) {
         <View style={styles.rowDivider} />
         <Row icon="logout" label="Sign out" onPress={signOut} danger />
       </View>
+
+      <View style={styles.list}>
+        <Row
+          icon="lifebuoy"
+          label="Help & support"
+          onPress={() => notify('Help & support', 'Live support arrives with the public launch. For now, reach out to the Manna team directly.')}
+        />
+        <View style={styles.rowDivider} />
+        <Row
+          icon="file-document-outline"
+          label="Terms of Service"
+          onPress={() => notify('Terms of Service', 'Our terms are being finalized with our attorneys before launch.')}
+        />
+        <View style={styles.rowDivider} />
+        <Row
+          icon="shield-lock-outline"
+          label="Privacy Policy"
+          onPress={() =>
+            notify('Privacy Policy', 'Right now your information stays on this device. A full privacy policy will be published before launch.')
+          }
+        />
+      </View>
+
+      <View style={styles.footer}>
+        <Wordmark width={96} />
+        <Text style={styles.version}>Version {Constants.expoConfig?.version ?? '0.1.0'} · Made with care</Text>
+      </View>
     </View>
   );
 }
@@ -144,5 +172,7 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 56 },
   rowText: { flex: 1, fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  footer: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg, opacity: 0.8 },
+  version: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint, letterSpacing: 0.4 },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 52 },
 });

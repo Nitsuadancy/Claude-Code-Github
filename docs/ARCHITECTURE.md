@@ -84,6 +84,8 @@ in the app. Those belong only in server functions.
 - **Over-the-air fixes:** `npx eas-cli update` for JavaScript-only changes.
 - **Web:** `npm run build:web` produces a static site in `dist/` with one page per
   route. It can be hosted on EAS Hosting, Netlify, Vercel or Cloudflare Pages.
+  Configure the host to serve `+not-found.html` (with status 404) for unknown
+  paths, so mistyped links show Manna's own "Off the menu" page.
 
 Before the first store build, replace the placeholder app identifiers
 `com.mannaapp.manna` in `app.json` with one based on a domain the company owns, for

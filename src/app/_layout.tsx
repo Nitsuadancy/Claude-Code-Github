@@ -8,12 +8,13 @@ import {
   PlayfairDisplay_600SemiBold,
 } from '@expo-google-fonts/playfair-display';
 import { useFonts } from 'expo-font';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { FallbackScreen } from '@/components/fallback';
 import { StoreProvider, useStore } from '@/state/store';
 import { colors } from '@/theme';
 
@@ -62,6 +63,20 @@ function AppStack() {
         <Stack.Screen name="chef" options={{ animation: 'fade' }} />
       </Stack>
     </ThemeProvider>
+  );
+}
+
+/** Shown instead of a blank screen if something crashes while rendering. */
+export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+  return (
+    <SafeAreaProvider>
+      <FallbackScreen
+        eyebrow="Something went wrong"
+        title="A small kitchen mishap"
+        body="Manna hit an unexpected problem. Your cart and orders are saved on this device. Try again in a moment."
+        action={{ title: 'Try again', onPress: () => void retry() }}
+      />
+    </SafeAreaProvider>
   );
 }
 

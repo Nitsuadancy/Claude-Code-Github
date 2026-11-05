@@ -24,6 +24,8 @@ export interface AppState {
   favoriteRestaurantIds: string[];
   /** Reviews written on this device. */
   reviews: Review[];
+  /** When the customer last opened Activity; newer items show a dot on the bell. */
+  activitySeenAt: string | null;
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -41,6 +43,7 @@ export const INITIAL_STATE: AppState = {
   orders: [],
   favoriteRestaurantIds: [],
   reviews: [],
+  activitySeenAt: null,
 };
 
 export type Action =
@@ -68,7 +71,8 @@ export type Action =
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
   | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'toggleFavorite'; restaurantId: string }
-  | { type: 'addReview'; review: Review };
+  | { type: 'addReview'; review: Review }
+  | { type: 'markActivitySeen'; at: string };
 
 /** Which status changes a kitchen is allowed to make. */
 export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
@@ -228,6 +232,9 @@ export function reducer(state: AppState, action: Action): AppState {
           : [...ids, action.restaurantId],
       };
     }
+
+    case 'markActivitySeen':
+      return { ...state, activitySeenAt: action.at };
 
     case 'addReview': {
       // One review per order, only for delivered orders by the person who placed them.

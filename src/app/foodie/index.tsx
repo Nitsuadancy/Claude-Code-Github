@@ -32,6 +32,7 @@ import {
 } from '@/components/ui';
 import { CATEGORIES } from '@/data/categories';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
+import { buildActivity, unseenCount } from '@/lib/activity';
 import { confirmAction, notify } from '@/lib/alert';
 import {
   allCuisineTags,
@@ -100,6 +101,10 @@ export default function FoodieHome() {
   const searching = filters.query.trim().length > 0;
   const open = (r: Restaurant) => router.push({ pathname: '/restaurant/[id]', params: { id: r.id } });
   const userId = state.user?.id ?? '';
+  const unseen = useMemo(
+    () => unseenCount(buildActivity(state.orders, userId), state.activitySeenAt),
+    [state.orders, userId, state.activitySeenAt],
+  );
   const againOrders = useMemo(() => recentKitchenOrders(state.orders, userId), [state.orders, userId]);
   const favorites = useMemo(
     () => restaurants.filter((r) => r.status === 'live' && state.favoriteRestaurantIds.includes(r.id)),
@@ -159,9 +164,9 @@ export default function FoodieHome() {
           </Pressable>
           <IconCircleButton
             icon="bell-outline"
-            label="Notifications"
-            dot
-            onPress={() => notify('Notifications', 'You’re all caught up.')}
+            label={unseen ? `Activity, ${unseen} new` : 'Activity'}
+            dot={unseen > 0}
+            onPress={() => router.push('/activity')}
           />
         </View>
 
