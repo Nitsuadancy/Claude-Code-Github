@@ -105,7 +105,19 @@ export default function FoodieHome() {
   const address = state.user?.deliveryAddress;
   const firstName = state.user?.name.split(' ')[0];
   const searching = filters.query.trim().length > 0;
-  const open = (r: Restaurant) => router.push({ pathname: '/restaurant/[id]', params: { id: r.id } });
+  const [searchFocused, setSearchFocused] = useState(false);
+  const open = (r: Restaurant) => {
+    if (filters.query.trim()) dispatch({ type: 'rememberSearch', query: filters.query });
+    router.push({ pathname: '/restaurant/[id]', params: { id: r.id } });
+  };
+  const popular = useMemo(
+    () =>
+      browseRestaurants(restaurants, DEFAULT_FILTERS, new Date())
+        .map((r) => r.menu.find((m) => m.id === r.signatureItemId)?.name.replace(/\s*\(.*\)$/, ''))
+        .filter((n): n is string => !!n)
+        .slice(0, 6),
+    [restaurants],
+  );
   const userId = state.user?.id ?? '';
   const unseen = useMemo(
     () => unseenCount(buildActivity(state.orders, userId), state.activitySeenAt),
@@ -186,6 +198,10 @@ export default function FoodieHome() {
           <TextInput
             value={filters.query}
             onChangeText={(query) => update({ query })}
+            onFocus={() => setSearchFocused(true)}
+            // Delay so a tap on a suggestion lands before the panel hides.
+            onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+            onSubmitEditing={() => dispatch({ type: 'rememberSearch', query: filters.query })}
             placeholder="Search meals, chefs or kitchens"
             placeholderTextColor={colors.textFaint}
             selectionColor={colors.gold}
@@ -203,6 +219,34 @@ export default function FoodieHome() {
           )}
         </View>
       </View>
+
+      {searchFocused && !searching ? (
+        <View style={styles.suggest}>
+          {state.recentSearches.length ? (
+            <View style={{ gap: spacing.sm }}>
+              <View style={styles.suggestHeader}>
+                <Eyebrow>Recent</Eyebrow>
+                <Pressable accessibilityRole="button" onPress={() => dispatch({ type: 'clearSearches' })} hitSlop={8}>
+                  <Text style={styles.clearText}>Clear</Text>
+                </Pressable>
+              </View>
+              <View style={styles.suggestChips}>
+                {state.recentSearches.map((q) => (
+                  <Chip key={q} label={q} icon="history" onPress={() => update({ query: q })} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+          <View style={{ gap: spacing.sm }}>
+            <Eyebrow>Popular right now</Eyebrow>
+            <View style={styles.suggestChips}>
+              {popular.map((q) => (
+                <Chip key={q} label={q} onPress={() => update({ query: q })} />
+              ))}
+            </View>
+          </View>
+        </View>
+      ) : null}
 
       {searching && dishMatches.length ? (
         <FadeIn style={{ gap: spacing.xs }}>
@@ -465,6 +509,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  suggest: {
+    gap: spacing.lg,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
+    marginTop: -spacing.md,
+  },
+  suggestHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  suggestChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  clearText: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
   reset: { fontFamily: fonts.semibold, color: colors.gold, fontSize: 14 },
 });

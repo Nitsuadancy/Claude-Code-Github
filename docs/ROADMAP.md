@@ -24,6 +24,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Swipeable cover photo gallery, customer notes to the chef (allergies, requests), live card preview while chefs set up
 - [x] Menu sections (Specials, Mains, Sides, Desserts, Drinks), share a kitchen, live pulse on the current tracking step
 - [x] Personal diet & allergy profile: "Fits your diet" tags, allergen warnings on dishes and in the cart, "Fits my diet" filter
+- [x] Accessibility audit (no nested or unlabeled buttons), search suggestions with recent and popular searches, soft fade between tabs
 
 ## Phase 1: Real accounts and shared data
 

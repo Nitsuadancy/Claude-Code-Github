@@ -213,3 +213,14 @@ describe('diet and allergy preferences', () => {
     expect(kitchenFits(cobbler, { dietary: [], avoid: ['peanuts'] })).toBe(true);
   });
 });
+
+describe('recent searches', () => {
+  it('keeps the six most recent, newest first, without duplicates', () => {
+    let s = { ...INITIAL_STATE, hydrated: true };
+    for (const q of ['lasagna', 'momo', ' Lasagna ', 'a', 'cobbler', 'grits', 'ziti', 'tea', 'pie']) {
+      s = reducer(s, { type: 'rememberSearch', query: q });
+    }
+    expect(s.recentSearches).toEqual(['pie', 'tea', 'ziti', 'grits', 'cobbler', 'Lasagna']);
+    expect(reducer(s, { type: 'clearSearches' }).recentSearches).toEqual([]);
+  });
+});

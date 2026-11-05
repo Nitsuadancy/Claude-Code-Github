@@ -53,6 +53,16 @@ Then do one of these:
 2. Open **Dashboard → Account → Switch to Foodie** and order from your new kitchen.
 3. Go to **Profile → Become a Culinary Entrepreneur**. The order is waiting on your dashboard.
 
+## Share a demo link
+
+The fastest way to send people a link they can open on any phone or computer:
+
+1. Run `npm run build:web`. This creates the `dist/` folder.
+2. **Netlify Drop:** go to app.netlify.com/drop and drag the `dist` folder onto the page. You get a link in seconds. A free account keeps it online.
+3. **Or EAS Hosting** (Expo's own hosting): run `npx eas-cli@latest deploy` and sign in with an Expo account.
+
+Everything in the demo is stored in each visitor's own browser, so every person who opens the link gets a fresh copy with the sample kitchens.
+
 ## Scripts
 
 | Command | What it does |

@@ -26,6 +26,8 @@ export interface AppState {
   reviews: Review[];
   /** When the customer last opened Activity; newer items show a dot on the bell. */
   activitySeenAt: string | null;
+  /** Most recent searches first, at most 6. */
+  recentSearches: string[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -44,6 +46,7 @@ export const INITIAL_STATE: AppState = {
   favoriteRestaurantIds: [],
   reviews: [],
   activitySeenAt: null,
+  recentSearches: [],
 };
 
 export type Action =
@@ -72,7 +75,9 @@ export type Action =
   | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
-  | { type: 'markActivitySeen'; at: string };
+  | { type: 'markActivitySeen'; at: string }
+  | { type: 'rememberSearch'; query: string }
+  | { type: 'clearSearches' };
 
 /** Which status changes a kitchen is allowed to make. */
 export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
@@ -232,6 +237,16 @@ export function reducer(state: AppState, action: Action): AppState {
           : [...ids, action.restaurantId],
       };
     }
+
+    case 'rememberSearch': {
+      const q = action.query.trim().replace(/\s+/g, ' ');
+      if (q.length < 2) return state;
+      const rest = state.recentSearches.filter((r) => r.toLowerCase() !== q.toLowerCase());
+      return { ...state, recentSearches: [q, ...rest].slice(0, 6) };
+    }
+
+    case 'clearSearches':
+      return { ...state, recentSearches: [] };
 
     case 'markActivitySeen':
       return { ...state, activitySeenAt: action.at };

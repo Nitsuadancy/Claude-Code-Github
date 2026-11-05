@@ -50,5 +50,6 @@ export function normalizePersisted(saved: Partial<PersistedState> | null): Parti
     restaurants: saved.restaurants?.map(normalizeRestaurant),
     orders: saved.orders?.map(normalizeOrder),
     reviews: saved.reviews ?? [],
+    recentSearches: saved.recentSearches ?? [],
   };
 }
