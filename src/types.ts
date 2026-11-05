@@ -151,6 +151,8 @@ export interface Order {
   statusHistory: OrderStatusChange[];
   /** Optional message from the kitchen to the customer. */
   chefNote: string;
+  /** Optional request from the customer, e.g. allergies or "no onions". */
+  customerNote: string;
   createdAt: string;
   estimatedReadyAt: string;
   /** When the customer wants the food, or null for as soon as possible. */

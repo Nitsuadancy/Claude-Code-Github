@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -20,8 +21,14 @@ export function formatRating(r: Restaurant, long = false): string {
   return `${r.rating.toFixed(1)} (${r.ratingCount}${long ? noun : ''})`;
 }
 
+/** True once the chef has set valid opening and closing times. */
+export function hasHours(r: Restaurant): boolean {
+  const valid = (t: string) => /^\d{1,2}:\d{2}$/.test(t);
+  return valid(r.openTime) && valid(r.closeTime);
+}
+
 export function isOpenNow(r: Restaurant, now: Date): boolean {
-  return r.acceptingOrders && isOpenAt(r, now);
+  return r.acceptingOrders && hasHours(r) && isOpenAt(r, now);
 }
 
 /**
@@ -109,7 +116,11 @@ export function RestaurantCard({
           <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta} numberOfLines={1}>
-            {open ? `~${restaurant.prepMinutes} min` : `Opens ${formatTime(restaurant.openTime)}`}
+            {open
+              ? `~${restaurant.prepMinutes} min`
+              : hasHours(restaurant)
+                ? `Opens ${formatTime(restaurant.openTime)}`
+                : 'Hours not set'}
           </Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta} numberOfLines={1}>
@@ -220,4 +231,74 @@ const styles = StyleSheet.create({
   },
   featuredFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '65%' },
   featuredInfo: { padding: spacing.md, gap: 4 },
+});
+
+/**
+ * Restaurant hero: swipe between up to three cover photos, with gold dots.
+ * Falls back to the single cover (or monogram) when there's only one.
+ */
+export function CoverGallery({
+  restaurant,
+  width,
+  height,
+}: {
+  restaurant: Restaurant;
+  width: number;
+  height: number;
+}) {
+  const [index, setIndex] = useState(0);
+  const covers = restaurant.coverUris;
+  // Fade into the page background; drawn under the dots so they stay visible.
+  const fade = (
+    <LinearGradient
+      pointerEvents="none"
+      colors={['rgba(10,9,7,0.5)', 'transparent', colors.bg]}
+      locations={[0, 0.4, 1]}
+      style={StyleSheet.absoluteFill}
+    />
+  );
+  if (covers.length <= 1) {
+    return (
+      <View style={{ width, height }}>
+        <RestaurantCover restaurant={restaurant} style={{ width, height }} monogramSize={120} />
+        {fade}
+      </View>
+    );
+  }
+  return (
+    <View style={{ width, height }}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+        onScroll={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+        scrollEventThrottle={64}
+        accessibilityLabel={`Photo ${index + 1} of ${covers.length}`}>
+        {covers.map((uri) => (
+          <Image key={uri} source={{ uri }} style={{ width, height }} contentFit="cover" transition={250} />
+        ))}
+      </ScrollView>
+      {fade}
+      <View style={galleryStyles.dots} pointerEvents="none">
+        {covers.map((uri, i) => (
+          <View key={uri} style={[galleryStyles.dot, i === index && galleryStyles.dotOn]} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const galleryStyles = StyleSheet.create({
+  dots: {
+    position: 'absolute',
+    bottom: 56,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,245,224,0.45)' },
+  dotOn: { width: 22, backgroundColor: colors.gold },
 });

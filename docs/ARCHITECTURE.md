@@ -47,7 +47,7 @@ The TypeScript types in `src/types.ts` map one-to-one to the planned tables:
 | `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, chef_bio, chef_photo_path, signature_item_id, prep_minutes, verified, address, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes; only admins set `verified` |
 | `menu_items` | restaurant_id, name, description, price_cents, available, photo_path, dietary[], allergens[], daily_limit | Public reads; owner writes |
 | `restaurant_documents` | restaurant_id, kind, storage_path, review_status | Owner + admins only |
-| `orders` | customer_id, restaurant_id, status, subtotal/fee/total cents, delivery_address, chef_note, estimated_ready_at, stripe_payment_intent | Customer and that restaurant's owner |
+| `orders` | customer_id, restaurant_id, status, subtotal/fee/total cents, delivery_address, chef_note, customer_note, scheduled_for, estimated_ready_at, stripe_payment_intent | Customer and that restaurant's owner |
 | `order_status_events` | order_id, status, at | Same as orders. This table drives the tracking timeline. |
 | `order_lines` | order_id, menu_item_id, name, price_cents, quantity (price copied at order time) | Same as orders |
 

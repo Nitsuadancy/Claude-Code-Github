@@ -22,6 +22,7 @@ function order(partial: Partial<Order>): Order {
     status: 'completed',
     statusHistory: [],
     chefNote: '',
+    customerNote: '',
     createdAt: at(5),
     estimatedReadyAt: at(5, 13),
     scheduledFor: null,

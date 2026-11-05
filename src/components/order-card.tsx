@@ -53,6 +53,12 @@ export function OrderCard({
           <Text style={styles.scheduledText}>Scheduled for {formatSlot(order.scheduledFor, new Date())}</Text>
         </View>
       ) : null}
+      {order.customerNote ? (
+        <View style={styles.request} accessibilityLabel={`Customer note: ${order.customerNote}`}>
+          <MaterialCommunityIcons name="message-alert-outline" size={16} color={colors.gold} />
+          <Text style={styles.requestText}>“{order.customerNote}”</Text>
+        </View>
+      ) : null}
       <View style={{ gap: 2 }}>
         {order.lines.map((l) => (
           <Text key={l.itemId} style={styles.line}>
@@ -86,6 +92,17 @@ const styles = StyleSheet.create({
   },
   progress: { flexDirection: 'row', gap: 4 },
   scheduled: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  request: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.sm + 2,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.goldTint,
+  },
+  requestText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 14, lineHeight: 20, color: colors.ivory },
   scheduledText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
   segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.border },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint },

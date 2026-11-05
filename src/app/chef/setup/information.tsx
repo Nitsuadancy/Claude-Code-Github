@@ -15,10 +15,12 @@ import {
 
 import { ChefAvatar } from '@/components/chef';
 import { OptionSheet } from '@/components/option-sheet';
+import { RestaurantCard } from '@/components/restaurant-card';
 import { TwoStepHeader } from '@/components/two-step-header';
 import {
   BackButton,
   Body,
+  Eyebrow,
   GoldButton,
   PickerField,
   Screen,
@@ -100,6 +102,22 @@ export default function RestaurantInformation() {
 
           {step === 1 ? (
             <>
+              <View style={styles.preview}>
+                <Eyebrow>Live preview</Eyebrow>
+                <RestaurantCard
+                  restaurant={{
+                    ...draft,
+                    name: draft.name.trim() || 'Your restaurant',
+                    cuisine: draft.cuisine || 'Cuisine',
+                    chefName: draft.chefName || 'you',
+                    status: 'live',
+                  }}
+                  favorite={false}
+                  now={new Date()}
+                  onPress={() => {}}
+                  onToggleFavorite={() => {}}
+                />
+              </View>
               <SectionTitle style={{ marginTop: spacing.sm }}>Tell us about your kitchen</SectionTitle>
               <TextField
                 label="Restaurant name"
@@ -373,6 +391,7 @@ function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  preview: { gap: spacing.sm, marginTop: spacing.sm },
   storyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatarBadge: {
     position: 'absolute',

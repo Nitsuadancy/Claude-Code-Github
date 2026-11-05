@@ -3,14 +3,14 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChefCard, VerifiedSeal } from '@/components/chef';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
 import { NATIVE_DRIVER } from '@/components/motion';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
-import { formatRating, isOpenNow, RestaurantCover } from '@/components/restaurant-card';
+import { CoverGallery, formatRating, isOpenNow } from '@/components/restaurant-card';
 import {
   BackButton,
   Badge,
@@ -40,6 +40,7 @@ export default function RestaurantDetail() {
   const restaurant = useRestaurant(id);
   const { state, dispatch } = useStore();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [scrollY] = useState(() => new Animated.Value(0));
   const reviews = useReviews(id);
@@ -115,12 +116,7 @@ export default function RestaurantDetail() {
               { scale: scrollY.interpolate({ inputRange: [-200, 0], outputRange: [1.5, 1], extrapolateRight: 'clamp' }) },
             ],
           }}>
-          <RestaurantCover restaurant={restaurant} style={styles.hero} monogramSize={120} />
-          <LinearGradient
-            colors={['rgba(10,9,7,0.5)', 'transparent', colors.bg]}
-            locations={[0, 0.4, 1]}
-            style={StyleSheet.absoluteFill}
-          />
+          <CoverGallery restaurant={restaurant} width={width} height={HERO_HEIGHT} />
         </Animated.View>
 
         <View style={styles.body}>

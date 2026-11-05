@@ -112,6 +112,7 @@ describe('orders', () => {
     status: 'placed',
     statusHistory: [{ status: 'placed', at: '2026-11-05T12:00:00.000Z' }],
     chefNote: '',
+    customerNote: '',
     createdAt: '2026-11-05T12:00:00.000Z',
     estimatedReadyAt: '2026-11-05T12:30:00.000Z',
     scheduledFor: null,

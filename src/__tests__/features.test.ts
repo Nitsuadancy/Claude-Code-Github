@@ -24,6 +24,7 @@ function order(partial: Partial<Order>): Order {
     status: 'placed',
     statusHistory: [],
     chefNote: '',
+    customerNote: '',
     createdAt: new Date(2026, 10, 5, 12).toISOString(),
     estimatedReadyAt: new Date(2026, 10, 5, 12, 30).toISOString(),
     scheduledFor: null,

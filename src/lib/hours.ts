@@ -30,8 +30,14 @@ export function toMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-/** "13:30" -> "1:30 PM" */
+export function isValidTime(time: string): boolean {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time);
+  return !!match && Number(match[1]) <= 23 && Number(match[2]) <= 59;
+}
+
+/** "13:30" -> "1:30 PM". Unset or invalid times show as "—". */
 export function formatTime(time: string): string {
+  if (!isValidTime(time)) return '—';
   const total = toMinutes(time);
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
@@ -57,6 +63,8 @@ export interface Schedule {
  * (e.g. 20:00-02:00): the early-morning part belongs to the previous day's shift.
  */
 export function isOpenAt(schedule: Schedule, now: Date): boolean {
+  // A kitchen that hasn't set its hours yet is never open.
+  if (!isValidTime(schedule.openTime) || !isValidTime(schedule.closeTime)) return false;
   const open = toMinutes(schedule.openTime);
   const close = toMinutes(schedule.closeTime);
   if (open === close) return false;

@@ -69,6 +69,8 @@ describe('hours', () => {
     expect(formatTime('12:00')).toBe('12:00 PM');
     expect(formatTime('18:30')).toBe('6:30 PM');
     expect(TIME_SLOTS).toHaveLength(48);
+    expect(formatTime('')).toBe('—');
+    expect(isOpenAt({ workingDays: ['thursday'], openTime: '', closeTime: '' }, new Date())).toBe(false);
   });
 
   it('handles same-day hours', () => {

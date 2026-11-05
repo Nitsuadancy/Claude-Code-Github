@@ -36,6 +36,7 @@ export default function Cart() {
   const [when, setWhen] = useState<'asap' | 'later'>('asap');
   const [slot, setSlot] = useState<string | null>(null);
   const [slotSheet, setSlotSheet] = useState(false);
+  const [note, setNote] = useState('');
 
   if (!restaurant || state.cart.lines.length === 0) {
     return (
@@ -108,6 +109,7 @@ export default function Cart() {
         status: 'placed',
         statusHistory: [{ status: 'placed', at: createdAt }],
         chefNote: '',
+        customerNote: note.trim().slice(0, 280),
         createdAt,
         estimatedReadyAt: scheduledFor ?? estimateReadyAt(createdAt, restaurant.prepMinutes),
         scheduledFor,
@@ -168,6 +170,15 @@ export default function Cart() {
           value={address}
           onChangeText={setAddress}
           textContentType="fullStreetAddress"
+        />
+
+        <TextField
+          label="Note for the chef (optional)"
+          placeholder="Allergies, spice level, no onions…"
+          icon="message-text-outline"
+          value={note}
+          onChangeText={setNote}
+          maxLength={280}
         />
 
         <View style={{ gap: spacing.sm }}>

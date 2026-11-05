@@ -37,6 +37,7 @@ export function normalizeOrder(o: Order): Order {
     ...o,
     statusHistory: o.statusHistory?.length ? o.statusHistory : [{ status: 'placed', at: o.createdAt }],
     chefNote: o.chefNote ?? '',
+    customerNote: o.customerNote ?? '',
     estimatedReadyAt: o.estimatedReadyAt ?? estimateReadyAt(o.createdAt, DEFAULT_PREP_MINUTES),
     scheduledFor: o.scheduledFor ?? null,
   };
