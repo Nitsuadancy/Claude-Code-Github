@@ -435,10 +435,20 @@ export function Chip({
 }
 
 /** Small outlined label, e.g. "Open" or "Offer". */
-export function Badge({ label, tone = 'gold' }: { label: string; tone?: 'gold' | 'success' | 'muted' }) {
-  const color = tone === 'gold' ? colors.gold : tone === 'success' ? colors.success : colors.textMuted;
+export function Badge({
+  label,
+  tone = 'gold',
+  onPhoto,
+}: {
+  label: string;
+  tone?: 'gold' | 'success' | 'muted';
+  /** Sits on a photo: gets a dark glass backing so it stays legible. */
+  onPhoto?: boolean;
+}) {
+  const color =
+    tone === 'gold' ? colors.gold : tone === 'success' ? colors.success : onPhoto ? colors.text : colors.textMuted;
   return (
-    <View style={[styles.badge, { borderColor: color }]}>
+    <View style={[styles.badge, { borderColor: color }, onPhoto && styles.badgeOnPhoto]}>
       <Text style={[styles.badgeText, { color }]}>{label}</Text>
     </View>
   );
@@ -533,5 +543,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
+  badgeOnPhoto: { backgroundColor: 'rgba(10, 9, 7, 0.72)', borderColor: 'transparent', paddingVertical: 4, paddingHorizontal: 10 },
   badgeText: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
 });

@@ -11,6 +11,7 @@ import { VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { Badge } from './ui';
 import { Icon } from './icon';
+import { photoSource } from '@/lib/photo';
 
 
 /** "4.6 (128)", or "New" before the first rating. */
@@ -47,7 +48,12 @@ export function RestaurantCover({
   if (cover) {
     return (
       <View style={[style, { overflow: 'hidden' }]}>
-        <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />
+        <Image
+          source={photoSource(cover)}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={300}
+        />
       </View>
     );
   }
@@ -94,7 +100,7 @@ export function RestaurantCard({
         <RestaurantCover restaurant={restaurant} style={styles.cover} />
         <LinearGradient colors={['rgba(10,9,7,0.55)', 'transparent']} style={styles.coverFade} />
         <View style={styles.coverTop}>
-          {open ? <Badge label="Open now" tone="success" /> : <Badge label="Closed" tone="muted" />}
+          {open ? <Badge label="Open now" tone="success" onPhoto /> : <Badge label="Closed" tone="muted" onPhoto />}
         </View>
       </View>
       <View style={styles.info}>
@@ -280,7 +286,13 @@ export function CoverGallery({
         scrollEventThrottle={64}
         accessibilityLabel={`Photo ${index + 1} of ${covers.length}`}>
         {covers.map((uri) => (
-          <Image key={uri} source={{ uri }} style={{ width, height }} contentFit="cover" transition={250} />
+          <Image
+            key={uri}
+            source={photoSource(uri)}
+            style={{ width, height }}
+            contentFit="cover"
+            transition={300}
+          />
         ))}
       </ScrollView>
       {fade}

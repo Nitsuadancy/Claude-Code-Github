@@ -10,6 +10,7 @@ import { VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { RestaurantCover } from './restaurant-card';
 import { Icon } from './icon';
+import { photoSource } from '@/lib/photo';
 
 /** "Order again" card: the kitchen, what you had, and a one-tap reorder. */
 export function OrderAgainCard({
@@ -94,7 +95,7 @@ export function DishResult({
       onPress={onPress}
       style={styles.dish}>
       {item.photoUri ? (
-        <Image source={{ uri: item.photoUri }} style={styles.dishThumb} contentFit="cover" />
+        <Image source={photoSource(item.photoUri)} style={styles.dishThumb} contentFit="cover" />
       ) : (
         <View style={[styles.dishThumb, styles.dishIcon]}>
           <Icon name="silverware-variant" size={20} color={colors.gold} />

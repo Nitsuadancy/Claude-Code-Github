@@ -35,6 +35,7 @@ import { useDietProfile, useRestaurant, useReviews, useStore } from '@/state/sto
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
+import { photoSource } from '@/lib/photo';
 
 const HERO_HEIGHT = 320;
 
@@ -121,7 +122,7 @@ export default function RestaurantDetail() {
 
         <View style={styles.body}>
           <View style={styles.titleRow}>
-            {restaurant.logoUri ? <Image source={{ uri: restaurant.logoUri }} style={styles.logo} /> : null}
+            {restaurant.logoUri ? <Image source={photoSource(restaurant.logoUri)} style={styles.logo} /> : null}
             <View style={{ flex: 1, gap: 4 }}>
               <Eyebrow>{restaurant.cuisine}</Eyebrow>
               <View style={styles.nameRow}>
@@ -212,7 +213,7 @@ export default function RestaurantDetail() {
                       accessibilityRole="imagebutton"
                       accessibilityLabel={`Photo of ${item.name}. Show details`}
                       onPress={() => setOpenItemId(item.id)}>
-                      <Image source={{ uri: item.photoUri }} style={styles.thumb} contentFit="cover" />
+                      <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
                     </Pressable>
                   ) : null}
                   {canOrder && !soldOut ? (

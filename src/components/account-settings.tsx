@@ -120,6 +120,7 @@ export function AccountSettings({ showAddress }: { showAddress: boolean }) {
       <View style={styles.footer}>
         <Wordmark width={96} />
         <Text style={styles.version}>Version {Constants.expoConfig?.version ?? '0.1.0'} · Made with care</Text>
+        <Text style={styles.version}>Demo kitchen photos: Wikimedia Commons contributors (CC licenses)</Text>
       </View>
     </View>
   );

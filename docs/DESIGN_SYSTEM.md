@@ -38,10 +38,10 @@ buttons, use `onGold` (`#140F06`) for text.
 
 | Role | Font | Example |
 |---|---|---|
-| Display | Playfair Display SemiBold | "Tonight's table", restaurant and dish names |
-| Display italic | Playfair Display Italic | Chef bylines, taglines |
-| Eyebrow | Montserrat SemiBold, 10–11px, uppercase, letter-spaced, gold | "CURATED FOR YOU" |
-| Body | Montserrat Regular / Medium | Descriptions, fields, buttons |
+| Display | Cormorant Garamond SemiBold (sizes run ~15% larger) | "Tonight's table", restaurant and dish names |
+| Display italic | Cormorant Garamond Medium Italic | Chef bylines, taglines |
+| Eyebrow | Manrope SemiBold, 10–11px, uppercase, letter-spaced, gold | Only where the label carries information (cuisine, setup progress), never as decoration above every heading |
+| Body | Manrope Regular / Medium / SemiBold | Descriptions, fields, buttons |
 
 ## Components (`src/components/ui.tsx`)
 
@@ -73,8 +73,17 @@ buttons, use `onGold` (`#140F06`) for text.
 - Vibration (`src/lib/haptics.ts`) is reserved for moments that matter: a light tap when adding to the cart or changing order status, and a success pulse when an order is placed.
 - Every celebration can be skipped with a tap.
 
-Icons come from Material Community Icons (`@expo/vector-icons`), always outline style
-in gold or ivory.
+Icons are Lucide thin-line icons at one 1.6 stroke, through `src/components/icon.tsx`.
+Filled shapes are reserved for states (a filled heart, a gold seal). Dietary marks are
+menu-style letter codes (V, VG, GF, DF, H), not pictograms.
+
+## What keeps it from looking generated
+
+- **Photography leads.** Feed cards are rounded photos with text beneath, with no boxes or outlines. Gold outlines are only for selected or important elements.
+- **The logo's rays are a brand moment, not wallpaper.** They appear on welcome, sign-in, the order celebration and error pages only.
+- **No decorative labels.** A section is a serif title, with a quiet action at most.
+- **Real typography.** Cormorant's classical letterforms match the wordmark, with typographic quotation marks instead of icon quotes.
+- **Restrained placeholders.** A kitchen without photos shows a quiet gold monogram seal.
 
 ## Updating the logo
 

@@ -13,6 +13,7 @@ import type { DietaryTag, MenuItem } from '@/types';
 import { DietNote } from './diet';
 import { Body, Eyebrow, GoldButton, Heading } from './ui';
 import { Icon } from './icon';
+import { photoSource } from '@/lib/photo';
 
 
 /**
@@ -89,7 +90,7 @@ export function DishSheet({
           <ScrollView bounces={false}>
             <View style={styles.photo}>
               {item.photoUri ? (
-                <Image source={{ uri: item.photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <Image source={photoSource(item.photoUri)} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
                 <LinearGradient colors={['#221D13', '#0E0C09']} style={[StyleSheet.absoluteFill, styles.center]}>
                   <Icon name="silverware-variant" size={40} color={colors.gold} />

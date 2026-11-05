@@ -7,6 +7,7 @@ import type { Restaurant } from '@/types';
 
 import { Eyebrow } from './ui';
 import { Icon } from './icon';
+import { photoSource } from '@/lib/photo';
 
 /** Gold seal shown next to kitchens whose documents the Manna team has checked. */
 export function VerifiedSeal({ size = 16 }: { size?: number }) {
@@ -40,7 +41,7 @@ export function ChefAvatar({
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
       {photoUri ? (
-        <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={photoSource(photoUri)} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (
         <Text style={[styles.initials, { fontSize: size * 0.38 }]}>{initials || 'M'}</Text>
       )}

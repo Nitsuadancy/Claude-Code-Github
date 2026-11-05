@@ -16,7 +16,6 @@ const EVERY_DAY: Weekday[] = [
 ];
 
 const base = {
-  coverUris: [],
   documents: [],
   status: 'live' as const,
   acceptingOrders: true,
@@ -31,6 +30,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_cafe_parmesan',
+    coverUris: ['demo:lasagna', 'demo:caprese', 'demo:tiramisu'],
     name: 'Cafe Parmesan',
     chefName: 'Chef Marco',
     chefBio:
@@ -52,6 +52,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     menu: [
       dish({
         id: 'cp_lasagna',
+        photoUri: 'demo:lasagna',
         name: 'Grandma’s Lasagna',
         description: 'Eight layers of slow-simmered beef ragù, ricotta and mozzarella. Baked to order.',
         priceCents: 1499,
@@ -61,6 +62,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'cp_tiramisu',
+        photoUri: 'demo:tiramisu',
         section: 'Desserts',
         name: 'Tiramisu',
         description: 'Espresso-soaked ladyfingers with mascarpone cream and cocoa.',
@@ -70,6 +72,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'cp_caprese',
+        photoUri: 'demo:caprese',
         section: 'Sides',
         name: 'Caprese Salad',
         description: 'Fresh mozzarella, heirloom tomatoes, basil and aged balsamic.',
@@ -82,6 +85,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_momo_mania',
+    coverUris: ['demo:momo-chicken', 'demo:momo-veggie'],
     name: 'Momo Mania',
     chefName: 'Pema D.',
     chefBio:
@@ -103,6 +107,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     menu: [
       dish({
         id: 'mm_chicken_momo',
+        photoUri: 'demo:momo-chicken',
         name: 'Chicken Momo (10 pc)',
         description: 'Hand-pleated dumplings with a bright tomato-sesame achar.',
         priceCents: 1199,
@@ -112,6 +117,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'mm_veg_momo',
+        photoUri: 'demo:momo-veggie',
         name: 'Veggie Momo (10 pc)',
         description: 'Cabbage, carrot and paneer, steamed and served with achar.',
         priceCents: 1099,
@@ -123,6 +129,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_jacksons_deep_dish',
+    coverUris: ['demo:deep-dish', 'demo:deep-dish-pepperoni', 'demo:four-cheese'],
     name: 'Jackson’s Deep Dish',
     chefName: 'Mr. Jackson',
     chefBio:
@@ -144,6 +151,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     menu: [
       dish({
         id: 'jd_classic',
+        photoUri: 'demo:deep-dish',
         name: 'Famous Deep-Dish Pie',
         description: 'Buttery crust, fennel sausage and chunky tomato sauce. Serves 2–3.',
         priceCents: 2299,
@@ -152,6 +160,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'jd_cheese',
+        photoUri: 'demo:four-cheese',
         name: 'Four-Cheese Deep Dish',
         description: 'Mozzarella, provolone, parmesan and fontina.',
         priceCents: 1999,
@@ -164,6 +173,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_green_bowl',
+    coverUris: ['demo:falafel-bowl', 'demo:meal-prep'],
     name: 'The Green Bowl',
     chefName: 'Aisha K.',
     chefBio:
@@ -185,6 +195,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     menu: [
       dish({
         id: 'gb_falafel',
+        photoUri: 'demo:falafel-bowl',
         name: 'Falafel Power Bowl',
         description: 'Herb falafel, lemony quinoa, hummus and quick-pickled onions.',
         priceCents: 1349,
@@ -193,6 +204,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'gb_weekly',
+        photoUri: 'demo:meal-prep',
         name: 'Weekly Meal Prep (5 meals)',
         description: 'Five rotating plant-based lunches, delivered Monday.',
         priceCents: 5499,
@@ -205,6 +217,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_sunrise_plates',
+    coverUris: ['demo:shrimp-grits', 'demo:biscuits-gravy'],
     name: 'Sunrise Plates',
     chefName: 'Denise R.',
     chefBio:
@@ -226,6 +239,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     menu: [
       dish({
         id: 'sp_biscuits',
+        photoUri: 'demo:biscuits-gravy',
         name: 'Biscuits & Gravy',
         description: 'Flaky buttermilk biscuits under peppery sausage gravy.',
         priceCents: 999,
@@ -233,6 +247,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'sp_shrimp_grits',
+        photoUri: 'demo:shrimp-grits',
         name: 'Shrimp & Grits',
         description: 'Stone-ground grits, Cajun shrimp, scallions and a little heat.',
         priceCents: 1499,
@@ -245,6 +260,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_susies_sweets',
+    coverUris: ['demo:peach-cobbler', 'demo:cookies'],
     name: 'Susie’s Sweets',
     chefName: 'Mrs. Susie',
     chefBio:
@@ -266,6 +282,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     menu: [
       dish({
         id: 'ss_peach_cobbler',
+        photoUri: 'demo:peach-cobbler',
         name: 'Peach Cobbler',
         description: 'Family recipe, served warm with a crisp sugar crust. Feeds 4.',
         priceCents: 1599,
@@ -275,6 +292,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'ss_cookies',
+        photoUri: 'demo:cookies',
         name: 'Brown Butter Cookies (6)',
         description: 'Chewy, salted, with dark chocolate chunks.',
         priceCents: 899,
