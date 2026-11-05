@@ -55,3 +55,8 @@ export const ORDER_HEADLINE: Record<OrderStatus, string> = {
   completed: 'Delivered. Enjoy!',
   declined: 'The kitchen couldn’t take this order',
 };
+
+/** "Nov 5" in the device's locale. */
+export function formatMonthDay(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}

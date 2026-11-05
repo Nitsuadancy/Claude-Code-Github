@@ -135,6 +135,12 @@ describe('browse', () => {
     expect(offers.every((r) => r.hasOffer)).toBe(true);
   });
 
+  it('shows only kitchens open right now', () => {
+    const thursdayMorning = new Date(2026, 10, 5, 8, 0);
+    const open = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, openNow: true }, thursdayMorning);
+    expect(open.map((r) => r.name)).toEqual(['Sunrise Plates']);
+  });
+
   it('sorts by rating and flags new kitchens', () => {
     const byRating = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, sort: 'rating' }, now);
     for (let i = 1; i < byRating.length; i++) {

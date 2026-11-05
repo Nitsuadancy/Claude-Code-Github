@@ -14,6 +14,9 @@ then expand. Each phase ends with something real people can use.
 - [x] Dish photos, dietary tags (vegan, halal…) and declared allergens
 - [x] Daily dish limits ("Only 3 left today") and typical prep time
 - [x] Order confirmation moment, live tracking timeline and chef notes to customers
+- [x] Motion: press-scale cards, staggered fade-ins, parallax restaurant hero with a sticky header
+- [x] "Order again" with one-tap reorder, favorites row, "Open now" filter, dish search results
+- [x] Chef dashboard: today's prep list and a 7-day earnings chart
 
 ## Phase 1: Real accounts and shared data
 

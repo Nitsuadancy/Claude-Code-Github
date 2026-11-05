@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 
 import { CoachMarks } from '@/components/coach-marks';
+import { DishResult, MiniKitchenCard, OrderAgainCard } from '@/components/home-rows';
+import { FadeIn } from '@/components/motion';
 import { OptionSheet } from '@/components/option-sheet';
 import { FeaturedCard, isOpenNow, RestaurantCard } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
@@ -28,7 +30,7 @@ import {
   webNoOutline,
 } from '@/components/ui';
 import { CATEGORIES } from '@/data/categories';
-import { notify } from '@/lib/alert';
+import { confirmAction, notify } from '@/lib/alert';
 import {
   allCuisineTags,
   type BrowseFilters,
@@ -36,9 +38,12 @@ import {
   DEFAULT_FILTERS,
   type SortOption,
 } from '@/lib/browse';
+import * as haptics from '@/lib/haptics';
+import { formatTime } from '@/lib/hours';
+import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
 import { useAllRestaurants, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
-import type { Restaurant } from '@/types';
+import type { Order, Restaurant } from '@/types';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'recommended', label: 'Recommended' },
@@ -92,6 +97,39 @@ export default function FoodieHome() {
   const firstName = state.user?.name.split(' ')[0];
   const searching = filters.query.trim().length > 0;
   const open = (r: Restaurant) => router.push({ pathname: '/restaurant/[id]', params: { id: r.id } });
+  const userId = state.user?.id ?? '';
+  const againOrders = useMemo(() => recentKitchenOrders(state.orders, userId), [state.orders, userId]);
+  const favorites = useMemo(
+    () => restaurants.filter((r) => r.status === 'live' && state.favoriteRestaurantIds.includes(r.id)),
+    [restaurants, state.favoriteRestaurantIds],
+  );
+  const dishMatches = useMemo(() => searchDishes(restaurants, filters.query), [restaurants, filters.query]);
+  const byId = (id: string) => restaurants.find((r) => r.id === id);
+
+  const reorder = (order: Order) => {
+    const kitchen = byId(order.restaurantId);
+    if (!kitchen) return;
+    if (!isOpenNow(kitchen, new Date())) {
+      notify('Kitchen closed', `${kitchen.name} isn’t taking orders right now. Opens at ${formatTime(kitchen.openTime)}.`);
+      return;
+    }
+    const { lines, missing } = buildReorder(order, kitchen, state.orders, new Date());
+    if (!lines.length) {
+      notify('Not available today', 'Those dishes are sold out or off the menu right now.');
+      return;
+    }
+    const go = () => {
+      haptics.success();
+      dispatch({ type: 'replaceCart', restaurantId: kitchen.id, lines });
+      if (missing.length) notify('Almost everything', `Couldn’t add all of: ${missing.join(', ')}.`);
+      router.navigate('/foodie/cart');
+    };
+    if (state.cart.lines.length && state.cart.restaurantId !== kitchen.id) {
+      confirmAction('Replace your cart?', 'Your cart has food from another kitchen.', 'Replace', go, 'Keep cart');
+      return;
+    }
+    go();
+  };
 
   const header = (
     <View style={{ gap: spacing.xl }}>
@@ -146,8 +184,35 @@ export default function FoodieHome() {
         </View>
       </View>
 
+      {searching && dishMatches.length ? (
+        <FadeIn style={{ gap: spacing.xs }}>
+          <SectionHeader eyebrow={`${dishMatches.length} ${dishMatches.length === 1 ? 'dish' : 'dishes'}`} title="Dishes" />
+          {dishMatches.map(({ item, restaurant }) => (
+            <DishResult key={`${restaurant.id}:${item.id}`} item={item} restaurant={restaurant} onPress={() => open(restaurant)} />
+          ))}
+        </FadeIn>
+      ) : null}
+
+      {!searching && againOrders.length ? (
+        <FadeIn style={{ gap: spacing.md }}>
+          <SectionHeader eyebrow="Your regulars" title="Order again" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+            style={{ marginHorizontal: -spacing.lg }}>
+            {againOrders.map((o) => {
+              const kitchen = byId(o.restaurantId);
+              return kitchen ? (
+                <OrderAgainCard key={o.id} order={o} restaurant={kitchen} onOpen={() => open(kitchen)} onReorder={() => reorder(o)} />
+              ) : null;
+            })}
+          </ScrollView>
+        </FadeIn>
+      ) : null}
+
       {!searching && featured.length ? (
-        <View style={{ gap: spacing.md }}>
+        <FadeIn delay={80} style={{ gap: spacing.md }}>
           <SectionHeader eyebrow="Curated for you" title="Tonight’s table" />
           <ScrollView
             horizontal
@@ -160,10 +225,26 @@ export default function FoodieHome() {
               <FeaturedCard key={r.id} restaurant={r} width={width * 0.68} onPress={() => open(r)} />
             ))}
           </ScrollView>
-        </View>
+        </FadeIn>
       ) : null}
 
-      <View style={{ gap: spacing.md }}>
+      {!searching && favorites.length ? (
+        <FadeIn delay={120} style={{ gap: spacing.md }}>
+          <SectionHeader eyebrow="Saved" title="Your favorites" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+            style={{ marginHorizontal: -spacing.lg }}>
+            {favorites.map((r) => (
+              <MiniKitchenCard key={r.id} restaurant={r} onPress={() => open(r)} />
+            ))}
+          </ScrollView>
+        </FadeIn>
+      ) : null}
+
+      {!searching ? (
+      <FadeIn delay={160} style={{ gap: spacing.md }}>
         <SectionHeader eyebrow="Explore" title="Fuel your food desire" />
         <ScrollView
           horizontal
@@ -190,7 +271,8 @@ export default function FoodieHome() {
             );
           })}
         </ScrollView>
-      </View>
+      </FadeIn>
+      ) : null}
 
       <View style={{ gap: spacing.md }}>
         <SectionHeader
@@ -218,6 +300,7 @@ export default function FoodieHome() {
             selected={filters.cuisines.length > 0}
             onPress={() => setSheet('cuisines')}
           />
+          <Chip label="Open now" selected={filters.openNow} onPress={() => update({ openNow: !filters.openNow })} />
           <Chip
             label="Rated 4.5+"
             selected={filters.minRating !== null}
@@ -241,14 +324,19 @@ export default function FoodieHome() {
         contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}
         ItemSeparatorComponent={() => <View style={{ height: spacing.lg }} />}
         keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => (
-          <RestaurantCard
-            restaurant={item}
-            now={now}
-            favorite={state.favoriteRestaurantIds.includes(item.id)}
-            onToggleFavorite={() => dispatch({ type: 'toggleFavorite', restaurantId: item.id })}
-            onPress={() => open(item)}
-          />
+        renderItem={({ item, index }) => (
+          <FadeIn index={index} delay={200}>
+            <RestaurantCard
+              restaurant={item}
+              now={now}
+              favorite={state.favoriteRestaurantIds.includes(item.id)}
+              onToggleFavorite={() => {
+                haptics.tap();
+                dispatch({ type: 'toggleFavorite', restaurantId: item.id });
+              }}
+              onPress={() => open(item)}
+            />
+          </FadeIn>
         )}
         ListEmptyComponent={
           <View style={styles.empty}>

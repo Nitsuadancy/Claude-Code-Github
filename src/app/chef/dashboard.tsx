@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-nat
 
 import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
+import { PrepList, WeeklyChart } from '@/components/chef-insights';
 import { OrderCard } from '@/components/order-card';
 import {
   Body,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui';
 import * as haptics from '@/lib/haptics';
 import { formatTime, isOpenAt } from '@/lib/hours';
+import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
 import { NEXT_STATUSES } from '@/state/reducer';
@@ -40,6 +42,8 @@ export default function ChefDashboard() {
     .filter((o) => o.status === 'completed' && new Date(o.createdAt).toDateString() === today)
     .reduce((sum, o) => sum + o.subtotalCents, 0);
   const inHours = isOpenAt(restaurant, new Date());
+  const prep = prepList(state.orders, restaurant.id);
+  const week = weeklyEarnings(state.orders, restaurant.id, new Date());
   const live = restaurant.acceptingOrders && inHours;
 
   return (
@@ -143,6 +147,15 @@ export default function ChefDashboard() {
             />
           </OrderCard>
         ))}
+
+        {prep.length ? (
+          <>
+            <SectionHeader eyebrow="On the stove" title="Today’s prep list" />
+            <PrepList items={prep} />
+          </>
+        ) : null}
+
+        <WeeklyChart days={week} />
 
         <SectionHeader eyebrow="Your kitchen" title="Manage" />
         <View style={styles.list}>

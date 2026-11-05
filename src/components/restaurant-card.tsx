@@ -8,6 +8,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
 import { VerifiedSeal } from './chef';
+import { PressableScale } from './motion';
 import { Badge } from './ui';
 
 const RAYS = require('@/assets/images/rays.png');
@@ -68,11 +69,11 @@ export function RestaurantCard({
 }) {
   const open = isOpenNow(restaurant, now);
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, ${formatRating(restaurant, true)}, ${open ? 'open now' : 'closed'}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}>
+      style={styles.card}>
       <View>
         <RestaurantCover restaurant={restaurant} style={styles.cover} />
         <LinearGradient colors={['transparent', 'rgba(10,9,7,0.85)']} style={styles.coverFade} />
@@ -120,7 +121,7 @@ export function RestaurantCard({
           ) : null}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -135,11 +136,11 @@ export function FeaturedCard({
   width: number;
 }) {
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.featured, { width }, pressed && { opacity: 0.9 }]}>
+      style={[styles.featured, { width }]}>
       <RestaurantCover restaurant={restaurant} style={StyleSheet.absoluteFill} monogramSize={88} />
       <LinearGradient colors={['transparent', 'rgba(10,9,7,0.95)']} style={styles.featuredFade} />
       <View style={styles.featuredInfo}>
@@ -157,7 +158,7 @@ export function FeaturedCard({
           <Text style={styles.meta}>~{restaurant.prepMinutes} min</Text>
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

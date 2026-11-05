@@ -1,5 +1,7 @@
 import type { CategoryId, Restaurant } from '@/types';
 
+import { isOpenAt } from './hours';
+
 export type SortOption = 'recommended' | 'rating' | 'newest' | 'name';
 
 export interface BrowseFilters {
@@ -9,6 +11,7 @@ export interface BrowseFilters {
   minRating: number | null;
   offersOnly: boolean;
   newOnly: boolean;
+  openNow: boolean;
   sort: SortOption;
 }
 
@@ -19,6 +22,7 @@ export const DEFAULT_FILTERS: BrowseFilters = {
   minRating: null,
   offersOnly: false,
   newOnly: false,
+  openNow: false,
   sort: 'recommended',
 };
 
@@ -68,6 +72,7 @@ export function browseRestaurants(
     if (filters.minRating !== null && r.rating < filters.minRating) return false;
     if (filters.offersOnly && !r.hasOffer) return false;
     if (filters.newOnly && !isNew(r, now)) return false;
+    if (filters.openNow && !(r.acceptingOrders && isOpenAt(r, now))) return false;
     return true;
   });
 

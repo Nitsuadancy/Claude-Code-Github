@@ -3,11 +3,12 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChefCard, VerifiedSeal } from '@/components/chef';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
+import { NATIVE_DRIVER } from '@/components/motion';
 import { formatRating, isOpenNow, RestaurantCover } from '@/components/restaurant-card';
 import {
   BackButton,
@@ -30,12 +31,15 @@ import { useRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
 
+const HERO_HEIGHT = 320;
+
 export default function RestaurantDetail() {
   const { id, preview } = useLocalSearchParams<{ id: string; preview?: string }>();
   const restaurant = useRestaurant(id);
   const { state, dispatch } = useStore();
   const insets = useSafeAreaInsets();
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [scrollY] = useState(() => new Animated.Value(0));
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -92,34 +96,27 @@ export default function RestaurantDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
-        <View>
+      <Animated.ScrollView
+        contentContainerStyle={{ paddingBottom: 140 }}
+        scrollEventThrottle={16}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: NATIVE_DRIVER,
+        })}>
+        <Animated.View
+          style={{
+            transform: [
+              // Gentle parallax: the photo drifts at half speed, and stretches when pulled down.
+              { translateY: scrollY.interpolate({ inputRange: [-200, 0, HERO_HEIGHT], outputRange: [-100, 0, HERO_HEIGHT / 2] }) },
+              { scale: scrollY.interpolate({ inputRange: [-200, 0], outputRange: [1.5, 1], extrapolateRight: 'clamp' }) },
+            ],
+          }}>
           <RestaurantCover restaurant={restaurant} style={styles.hero} monogramSize={120} />
           <LinearGradient
             colors={['rgba(10,9,7,0.5)', 'transparent', colors.bg]}
             locations={[0, 0.4, 1]}
             style={StyleSheet.absoluteFill}
           />
-          <View style={[styles.heroBar, { top: insets.top + spacing.sm }]}>
-            <BackButton />
-            {!isPreview ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
-                onPress={() => {
-                  haptics.tap();
-                  dispatch({ type: 'toggleFavorite', restaurantId: restaurant.id });
-                }}
-                style={styles.heroIcon}>
-                <MaterialCommunityIcons
-                  name={favorite ? 'heart' : 'heart-outline'}
-                  size={21}
-                  color={favorite ? colors.gold : colors.ivory}
-                />
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.body}>
           <View style={styles.titleRow}>
@@ -251,7 +248,38 @@ export default function RestaurantDetail() {
             );
           })}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Slim header that fades in once the hero scrolls away. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.stickyBg,
+          { height: insets.top + 64, opacity: scrollY.interpolate({ inputRange: [HERO_HEIGHT - 120, HERO_HEIGHT - 60], outputRange: [0, 1], extrapolate: 'clamp' }) },
+        ]}>
+        <Text style={[styles.stickyTitle, { marginTop: insets.top }]} numberOfLines={1}>
+          {restaurant.name}
+        </Text>
+      </Animated.View>
+      <View style={[styles.heroBar, { top: insets.top + spacing.sm }]} pointerEvents="box-none">
+        <BackButton />
+        {!isPreview ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
+            onPress={() => {
+              haptics.tap();
+              dispatch({ type: 'toggleFavorite', restaurantId: restaurant.id });
+            }}
+            style={styles.heroIcon}>
+            <MaterialCommunityIcons
+              name={favorite ? 'heart' : 'heart-outline'}
+              size={21}
+              color={favorite ? colors.gold : colors.ivory}
+            />
+          </Pressable>
+        ) : null}
+      </View>
 
       {canOrder && totals.itemCount > 0 ? (
         <LinearGradient
@@ -302,7 +330,20 @@ function Notice({ icon, text }: { icon: IconName; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  hero: { width: '100%', height: 320 },
+  hero: { width: '100%', height: HERO_HEIGHT },
+  stickyBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(10,9,7,0.96)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 72,
+  },
+  stickyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   heroBar: {
     position: 'absolute',
     left: spacing.lg,

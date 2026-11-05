@@ -59,6 +59,7 @@ export type Action =
     }
   | { type: 'setCartQuantity'; itemId: string; quantity: number }
   | { type: 'clearCart' }
+  | { type: 'replaceCart'; restaurantId: string; lines: Cart['lines'] }
   | { type: 'placeOrder'; order: Order }
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
   | { type: 'setOrderNote'; orderId: string; note: string }
@@ -179,6 +180,11 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case 'clearCart':
       return { ...state, cart: EMPTY_CART };
+
+    case 'replaceCart': {
+      const lines = action.lines.filter((l) => l.quantity > 0);
+      return { ...state, cart: lines.length ? { restaurantId: action.restaurantId, lines } : EMPTY_CART };
+    }
 
     case 'placeOrder':
       return { ...state, orders: [action.order, ...state.orders], cart: EMPTY_CART };

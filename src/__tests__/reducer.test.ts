@@ -80,6 +80,14 @@ describe('cart', () => {
     expect(none.cart.lines).toEqual([]);
   });
 
+  it('replaces the cart for one-tap reorder', () => {
+    let s = reducer(signedIn('foodie'), { type: 'addToCart', restaurantId: 'r1', itemId: 'a' });
+    s = reducer(s, { type: 'replaceCart', restaurantId: 'r2', lines: [{ itemId: 'x', quantity: 2 }, { itemId: 'y', quantity: 0 }] });
+    expect(s.cart).toEqual({ restaurantId: 'r2', lines: [{ itemId: 'x', quantity: 2 }] });
+    s = reducer(s, { type: 'replaceCart', restaurantId: 'r2', lines: [] });
+    expect(s.cart).toEqual({ restaurantId: null, lines: [] });
+  });
+
   it('starts a new cart when adding from a different kitchen', () => {
     let s = signedIn('foodie');
     s = reducer(s, { type: 'addToCart', restaurantId: 'r1', itemId: 'a' });
