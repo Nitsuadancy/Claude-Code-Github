@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -7,6 +6,7 @@ import { formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@
 import { formatSlot } from '@/lib/schedule';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order } from '@/types';
+import { Icon } from './icon';
 
 /** Gold progress bar across placed → accepted → preparing → ready → delivered. */
 export function OrderProgress({ order }: { order: Order }) {
@@ -49,13 +49,13 @@ export function OrderCard({
       {active ? <OrderProgress order={order} /> : null}
       {order.scheduledFor && active ? (
         <View style={styles.scheduled}>
-          <MaterialCommunityIcons name="calendar-clock" size={14} color={colors.gold} />
+          <Icon name="calendar-clock" size={14} color={colors.gold} />
           <Text style={styles.scheduledText}>Scheduled for {formatSlot(order.scheduledFor, new Date())}</Text>
         </View>
       ) : null}
       {order.customerNote ? (
         <View style={styles.request} accessibilityLabel={`Customer note: ${order.customerNote}`}>
-          <MaterialCommunityIcons name="message-alert-outline" size={16} color={colors.gold} />
+          <Icon name="message-alert-outline" size={16} color={colors.gold} />
           <Text style={styles.requestText}>“{order.customerNote}”</Text>
         </View>
       ) : null}
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  title: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  title: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory },
   total: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
   status: {
     fontFamily: fonts.semibold,
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     backgroundColor: colors.goldTint,
   },
-  requestText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 14, lineHeight: 20, color: colors.ivory },
+  requestText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 23, color: colors.ivory },
   scheduledText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
   segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.border },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint },

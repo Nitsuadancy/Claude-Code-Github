@@ -1,12 +1,13 @@
 import type { Allergen, DietaryTag } from '@/types';
 
-export const DIETARY_TAGS: { value: DietaryTag; label: string; icon: string }[] = [
-  { value: 'vegan', label: 'Vegan', icon: 'sprout' },
-  { value: 'vegetarian', label: 'Vegetarian', icon: 'leaf' },
-  { value: 'gluten-free', label: 'Gluten-free', icon: 'barley-off' },
-  { value: 'dairy-free', label: 'Dairy-free', icon: 'cow-off' },
-  { value: 'halal', label: 'Halal', icon: 'food-halal' },
-  { value: 'spicy', label: 'Spicy', icon: 'chili-mild' },
+/** `code` is the short mark restaurant menus print next to a dish. */
+export const DIETARY_TAGS: { value: DietaryTag; label: string; code: string }[] = [
+  { value: 'vegan', label: 'Vegan', code: 'VG' },
+  { value: 'vegetarian', label: 'Vegetarian', code: 'V' },
+  { value: 'gluten-free', label: 'Gluten-free', code: 'GF' },
+  { value: 'dairy-free', label: 'Dairy-free', code: 'DF' },
+  { value: 'halal', label: 'Halal', code: 'H' },
+  { value: 'spicy', label: 'Spicy', code: 'S' },
 ];
 
 /** The major food allergens chefs should declare. */

@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
@@ -35,6 +34,7 @@ import { digitsOnly, isValidZip } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { CategoryId, Weekday } from '@/types';
+import { Icon } from '@/components/icon';
 
 type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null;
 
@@ -159,7 +159,7 @@ export default function RestaurantInformation() {
                       const [uri] = await pickImages(1);
                       if (uri) update({ logoUri: uri });
                     }}>
-                    <MaterialCommunityIcons name="pencil-outline" size={20} color={colors.text} />
+                    <Icon name="pencil-outline" size={20} color={colors.text} />
                   </Pressable>
                 </View>
               ) : (
@@ -193,7 +193,7 @@ export default function RestaurantInformation() {
                       accessibilityLabel="Remove picture"
                       style={styles.remove}
                       onPress={() => update({ coverUris: draft.coverUris.filter((u) => u !== uri) })}>
-                      <MaterialCommunityIcons name="close" size={18} color={colors.text} />
+                      <Icon name="close" size={18} color={colors.text} />
                     </Pressable>
                   </View>
                 ))}
@@ -213,7 +213,7 @@ export default function RestaurantInformation() {
                   }}>
                   <ChefAvatar name={draft.chefName || 'Chef'} photoUri={draft.chefPhotoUri} size={76} />
                   <View style={styles.avatarBadge}>
-                    <MaterialCommunityIcons name="camera-plus-outline" size={14} color={colors.onGold} />
+                    <Icon name="camera-plus-outline" size={14} color={colors.onGold} />
                   </View>
                 </Pressable>
                 <Body muted style={{ flex: 1, fontSize: 13, lineHeight: 19 }}>
@@ -291,7 +291,7 @@ export default function RestaurantInformation() {
                           accessibilityState={{ checked: on }}
                           onPress={() => toggleDay(day)}
                           style={styles.day}>
-                          <MaterialCommunityIcons
+                          <Icon
                             name={on ? 'check-circle' : 'checkbox-blank-circle-outline'}
                             size={26}
                             color={on ? colors.gold : colors.border}
@@ -384,7 +384,7 @@ export default function RestaurantInformation() {
 function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.upload}>
-      <MaterialCommunityIcons name="image-plus" size={24} color={colors.gold} />
+      <Icon name="image-plus" size={24} color={colors.gold} />
       <Text style={styles.uploadText}>{label}</Text>
     </Pressable>
   );

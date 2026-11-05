@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -16,6 +15,7 @@ import { digitsOnly, newId } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
 import type { Allergen, DietaryTag, MenuItem } from '@/types';
+import { Icon } from '@/components/icon';
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -118,7 +118,7 @@ export default function MenuSetup() {
           <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
         ) : (
           <View style={styles.photoEmpty}>
-            <MaterialCommunityIcons name="camera-plus-outline" size={28} color={colors.gold} />
+            <Icon name="camera-plus-outline" size={28} color={colors.gold} />
             <Text style={styles.photoText}>Add a mouth-watering photo</Text>
             <Text style={styles.photoHint}>Natural light, close up, on a clean plate</Text>
           </View>
@@ -223,7 +223,7 @@ export default function MenuSetup() {
               accessibilityLabel={signature ? `${item.name} is your signature dish` : `Make ${item.name} your signature dish`}
               hitSlop={8}
               onPress={() => setMenu(draft.menu, item.id)}>
-              <MaterialCommunityIcons
+              <Icon
                 name={signature ? 'star' : 'star-outline'}
                 size={22}
                 color={signature ? colors.gold : colors.textFaint}
@@ -260,7 +260,7 @@ export default function MenuSetup() {
                 if (editingId === item.id) resetForm();
                 setMenu(draft.menu.filter((m) => m.id !== item.id));
               }}>
-              <MaterialCommunityIcons name="trash-can-outline" size={22} color={colors.danger} />
+              <Icon name="trash-can-outline" size={22} color={colors.danger} />
             </Pressable>
           </View>
         );
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   thumb: { width: 52, height: 52, borderRadius: radius.sm },
-  itemName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
+  itemName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   itemPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
   itemMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },

@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -28,6 +27,7 @@ import { resetTo } from '@/lib/navigation';
 import { digitsOnly, formatUsPhone, isValidUsPhone, newId } from '@/lib/validation';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 /**
  * Phone sign-in. Until the backend is connected this runs in demo mode:
@@ -126,7 +126,7 @@ export default function Login() {
                     accessibilityLabel={`Continue with ${name}`}
                     onPress={() => comingSoon(name)}
                     style={({ pressed }) => [styles.social, pressed && { borderColor: colors.gold }]}>
-                    <MaterialCommunityIcons name={icon} size={24} color={colors.ivory} />
+                    <Icon name={icon} size={24} color={colors.ivory} />
                   </Pressable>
                 ))}
               </View>

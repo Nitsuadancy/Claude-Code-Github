@@ -1,8 +1,7 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { type ComponentProps, type ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -20,8 +19,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, fonts, goldGlow, goldGradient, radius, spacing } from '@/theme';
+import { Icon, type IconName } from './icon';
 
-export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type { IconName } from './icon';
 
 const LOGO = require('@/assets/images/logo.png');
 const WORDMARK = require('@/assets/images/wordmark.png');
@@ -86,7 +86,8 @@ export function Heading({
       {...props}
       style={[
         styles.heading,
-        { fontSize: size, lineHeight: Math.round(size * 1.22) },
+        // Cormorant draws small for its size; scale it so `size` reads as intended.
+        { fontSize: Math.round(size * 1.15), lineHeight: Math.round(size * 1.15 * 1.12) },
         italic && { fontFamily: fonts.displayItalic },
         style,
       ]}
@@ -208,13 +209,13 @@ export function GoldButton({
   ) : (
     <View style={styles.row}>
       {icon ? (
-        <MaterialCommunityIcons name={icon} size={20} color={textColor} style={{ marginRight: spacing.sm }} />
+        <Icon name={icon} size={20} color={textColor} style={{ marginRight: spacing.sm }} />
       ) : null}
       <Text maxFontSizeMultiplier={1.3} style={[styles.buttonText, { color: textColor }]}>
         {title}
       </Text>
       {chevron ? (
-        <MaterialCommunityIcons name="arrow-right" size={18} color={textColor} style={{ marginLeft: spacing.sm }} />
+        <Icon name="arrow-right" size={18} color={textColor} style={{ marginLeft: spacing.sm }} />
       ) : null}
     </View>
   );
@@ -274,7 +275,7 @@ export function IconCircleButton({
         { width: size, height: size, borderRadius: size / 2 },
         pressed && { opacity: 0.7 },
       ]}>
-      <MaterialCommunityIcons name={icon} size={size * 0.48} color={colors.ivory} />
+      <Icon name={icon} size={size * 0.48} color={colors.ivory} />
       {dot ? <View style={styles.dot} /> : null}
     </Pressable>
   );
@@ -359,7 +360,7 @@ export function TextField({
           ]}
         />
         {icon ? (
-          <MaterialCommunityIcons name={icon} size={20} color={focused ? colors.gold : colors.textMuted} />
+          <Icon name={icon} size={20} color={focused ? colors.gold : colors.textMuted} />
         ) : null}
       </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -396,7 +397,7 @@ export function PickerField({
         <Text numberOfLines={1} style={[styles.input, { color: value ? colors.text : colors.textFaint }]}>
           {value ?? placeholder}
         </Text>
-        <MaterialCommunityIcons name={icon} size={20} color={colors.textMuted} />
+        <Icon name={icon} size={20} color={colors.textMuted} />
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
@@ -422,7 +423,7 @@ export function Chip({
       style={[styles.chip, selected && styles.chipSelected]}>
       <Text style={[styles.chipText, selected && { color: colors.gold }]}>{label}</Text>
       {icon ? (
-        <MaterialCommunityIcons
+        <Icon
           name={icon}
           size={16}
           color={selected ? colors.gold : colors.textMuted}

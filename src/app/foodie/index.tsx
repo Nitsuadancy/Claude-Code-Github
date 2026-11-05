@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -25,7 +24,6 @@ import {
   Eyebrow,
   Heading,
   IconCircleButton,
-  Rays,
   Screen,
   SectionHeader,
   webNoOutline,
@@ -48,6 +46,7 @@ import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights'
 import { useAllRestaurants, useDietProfile, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
+import { Icon } from '@/components/icon';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'recommended', label: 'Recommended' },
@@ -177,7 +176,7 @@ export default function FoodieHome() {
               <Text numberOfLines={1} style={styles.address}>
                 {address || 'Add your address'}
               </Text>
-              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.gold} />
+              <Icon name="chevron-down" size={18} color={colors.gold} />
             </View>
           </Pressable>
           <IconCircleButton
@@ -194,7 +193,7 @@ export default function FoodieHome() {
         </Heading>
 
         <View style={styles.search}>
-          <MaterialCommunityIcons name="magnify" size={22} color={colors.gold} />
+          <Icon name="magnify" size={22} color={colors.gold} />
           <TextInput
             value={filters.query}
             onChangeText={(query) => update({ query })}
@@ -212,10 +211,10 @@ export default function FoodieHome() {
           />
           {filters.query ? (
             <Pressable accessibilityLabel="Clear search" onPress={() => update({ query: '' })} hitSlop={8}>
-              <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
+              <Icon name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           ) : (
-            <MaterialCommunityIcons name="tune-variant" size={20} color={colors.textMuted} />
+            <Icon name="tune-variant" size={20} color={colors.textMuted} />
           )}
         </View>
       </View>
@@ -223,7 +222,7 @@ export default function FoodieHome() {
       {!searching && !searchFocused && !hasDietProfile(diet) && !state.dietNudgeDismissed ? (
         <FadeIn style={styles.nudge}>
           <View style={styles.nudgeIcon}>
-            <MaterialCommunityIcons name="leaf" size={20} color={colors.gold} />
+            <Icon name="leaf" size={20} color={colors.gold} />
           </View>
           <Pressable
             accessibilityRole="button"
@@ -238,7 +237,7 @@ export default function FoodieHome() {
             accessibilityLabel="Dismiss"
             hitSlop={10}
             onPress={() => dispatch({ type: 'dismissDietNudge' })}>
-            <MaterialCommunityIcons name="close" size={18} color={colors.textMuted} />
+            <Icon name="close" size={18} color={colors.textMuted} />
           </Pressable>
         </FadeIn>
       ) : null}
@@ -282,7 +281,7 @@ export default function FoodieHome() {
 
       {!searching && againOrders.length ? (
         <FadeIn style={{ gap: spacing.md }}>
-          <SectionHeader eyebrow="Your regulars" title="Order again" />
+          <SectionHeader title="Order again" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -300,7 +299,7 @@ export default function FoodieHome() {
 
       {!searching && featured.length ? (
         <FadeIn delay={80} style={{ gap: spacing.md }}>
-          <SectionHeader eyebrow="Curated for you" title="Tonight’s table" />
+          <SectionHeader title="Tonight’s table" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -317,7 +316,7 @@ export default function FoodieHome() {
 
       {!searching ? (
         <FadeIn delay={100} style={{ gap: spacing.md }}>
-          <SectionHeader eyebrow="Handpicked" title="Collections" />
+          <SectionHeader title="Collections" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -337,7 +336,7 @@ export default function FoodieHome() {
 
       {!searching && favorites.length ? (
         <FadeIn delay={120} style={{ gap: spacing.md }}>
-          <SectionHeader eyebrow="Saved" title="Your favorites" />
+          <SectionHeader title="Your favorites" />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -352,7 +351,7 @@ export default function FoodieHome() {
 
       {!searching ? (
       <FadeIn delay={160} style={{ gap: spacing.md }}>
-        <SectionHeader eyebrow="Explore" title="Fuel your food desire" />
+        <SectionHeader title="Fuel your food desire" />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -369,7 +368,7 @@ export default function FoodieHome() {
                 onPress={() => update({ category: selected ? null : c.id })}
                 style={styles.category}>
                 <View style={[styles.categoryRing, selected && styles.categoryRingOn]}>
-                  <MaterialCommunityIcons name={c.icon} size={28} color={selected ? colors.onGold : colors.gold} />
+                  <Icon name={c.icon} size={28} color={selected ? colors.onGold : colors.gold} />
                 </View>
                 <Text style={[styles.categoryLabel, selected && { color: colors.gold }]} numberOfLines={2}>
                   {c.label}
@@ -425,7 +424,6 @@ export default function FoodieHome() {
 
   return (
     <Screen edges={['top']}>
-      <Rays size={520} opacity={0.1} style={{ top: -300 }} />
       <FlatList
         data={results}
         keyExtractor={(r) => r.id}
@@ -450,7 +448,7 @@ export default function FoodieHome() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <MaterialCommunityIcons name="silverware-variant" size={40} color={colors.goldDeep} />
+            <Icon name="silverware-variant" size={40} color={colors.goldDeep} />
             <Body muted style={{ textAlign: 'center' }}>
               No kitchens match those filters yet.
             </Body>
@@ -552,7 +550,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nudgeTitle: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory },
+  nudgeTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   nudgeBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textMuted },
   suggest: {
     gap: spacing.lg,

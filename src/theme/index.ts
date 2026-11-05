@@ -38,13 +38,19 @@ export const colors = {
 export const goldGradient = ['#EBD08E', '#CDA558', '#A8853D'] as const;
 
 export const fonts = {
-  /** Serif display face for titles, restaurant and dish names. */
-  display: 'PlayfairDisplay_600SemiBold',
-  displayItalic: 'PlayfairDisplay_400Regular_Italic',
-  /** Sans serif for everything else. */
-  body: 'Montserrat_400Regular',
-  medium: 'Montserrat_500Medium',
-  semibold: 'Montserrat_600SemiBold',
+  /**
+   * Cormorant Garamond: a classical serif in the same family of letterforms as
+   * the MANNA wordmark. Used for titles, kitchen names and dish names.
+   * It draws small for its size, so serif sizes run about 15% larger.
+   */
+  display: 'CormorantGaramond_600SemiBold',
+  displayBold: 'CormorantGaramond_700Bold',
+  displayItalic: 'CormorantGaramond_500Medium_Italic',
+  /** Manrope: a clean, modern sans for everything else. */
+  body: 'Manrope_400Regular',
+  medium: 'Manrope_500Medium',
+  semibold: 'Manrope_600SemiBold',
+  bold: 'Manrope_700Bold',
 } as const;
 
 export const spacing = {

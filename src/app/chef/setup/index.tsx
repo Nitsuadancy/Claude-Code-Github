@@ -1,11 +1,11 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BackButton, Body, Eyebrow, GoldButton, Heading, Rays, Screen } from '@/components/ui';
+import { BackButton, Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
 import { completedSteps, currentStep, SETUP_STEPS, type SetupStep } from '@/lib/setup';
 import { useMyRestaurant } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 type SetupRoute =
   | '/chef/setup/information'
@@ -29,7 +29,6 @@ export default function SetupOverview() {
 
   return (
     <Screen>
-      <Rays size={520} opacity={0.14} style={{ top: -280 }} />
       <ScrollView contentContainerStyle={styles.content}>
         <BackButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/choose-role'))}
@@ -57,7 +56,7 @@ export default function SetupOverview() {
                       isDone && { backgroundColor: colors.gold },
                     ]}>
                     {isDone ? (
-                      <MaterialCommunityIcons name="check" size={18} color={colors.onGold} />
+                      <Icon name="check" size={18} color={colors.onGold} />
                     ) : (
                       <Text style={[styles.circleText, isCurrent && { color: colors.gold }]}>{i + 1}</Text>
                     )}
@@ -133,6 +132,6 @@ const styles = StyleSheet.create({
     marginTop: -spacing.sm,
   },
   stepHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, flexShrink: 1 },
+  stepTitle: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory, flexShrink: 1 },
   edit: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold, letterSpacing: 0.5 },
 });

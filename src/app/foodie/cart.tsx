@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -30,6 +29,7 @@ import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 export default function Cart() {
   const { state, dispatch } = useStore();
@@ -45,7 +45,7 @@ export default function Cart() {
     return (
       <Screen edges={['top']} style={styles.empty}>
         <View style={styles.emptyIcon}>
-          <MaterialCommunityIcons name="shopping-outline" size={30} color={colors.gold} />
+          <Icon name="shopping-outline" size={30} color={colors.gold} />
         </View>
         <Heading size={24} style={{ textAlign: 'center' }}>
           Your cart is empty
@@ -160,7 +160,7 @@ export default function Cart() {
                     onPress={() =>
                       dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: line.quantity - 1 })
                     }>
-                    <MaterialCommunityIcons name="minus" size={18} color={colors.gold} />
+                    <Icon name="minus" size={18} color={colors.gold} />
                   </Pressable>
                   <Text style={styles.qty}>{line.quantity}</Text>
                   <Pressable
@@ -170,7 +170,7 @@ export default function Cart() {
                     onPress={() =>
                       dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: line.quantity + 1 })
                     }>
-                    <MaterialCommunityIcons name="plus" size={18} color={colors.gold} />
+                    <Icon name="plus" size={18} color={colors.gold} />
                   </Pressable>
                 </View>
               </View>
@@ -311,7 +311,7 @@ function WhenOption({
       disabled={disabled}
       onPress={onPress}
       style={[styles.when, selected && styles.whenOn, disabled && { opacity: 0.45 }]}>
-      <MaterialCommunityIcons name={icon} size={20} color={selected ? colors.gold : colors.textMuted} />
+      <Icon name={icon} size={20} color={selected ? colors.gold : colors.textMuted} />
       <Text style={[styles.whenTitle, selected && { color: colors.ivory }]}>{title}</Text>
       <Text style={styles.whenDetail}>{detail}</Text>
     </Pressable>
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   },
   content: { padding: spacing.lg, gap: spacing.lg },
   line: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
-  itemName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
+  itemName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
   each: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   stepper: {
     flexDirection: 'row',
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   qty: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, minWidth: 14, textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   rowText: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
-  totalLabel: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  totalLabel: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory },
   totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold },
   note: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
   segment: { flexDirection: 'row', gap: spacing.sm },
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   tipOn: { borderColor: colors.gold, backgroundColor: colors.goldTint },
   tipPct: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
   tipAmt: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
-  tipNote: { fontFamily: fonts.displayItalic, fontSize: 13, color: colors.textMuted },
+  tipNote: { fontFamily: fonts.displayItalic, fontSize: 15, color: colors.textMuted },
   when: {
     flex: 1,
     gap: 4,

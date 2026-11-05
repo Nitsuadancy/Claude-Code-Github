@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -35,6 +34,7 @@ import { shareKitchen } from '@/lib/share';
 import { useDietProfile, useRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
+import { Icon } from '@/components/icon';
 
 const HERO_HEIGHT = 320;
 
@@ -186,7 +186,7 @@ export default function RestaurantDetail() {
                   style={({ pressed }) => [{ flex: 1, gap: 6 }, pressed && { opacity: 0.7 }]}>
                   {signature ? (
                     <View style={styles.signatureLabel}>
-                      <MaterialCommunityIcons name="star-four-points" size={11} color={colors.gold} />
+                      <Icon name="star-four-points" size={11} color={colors.gold} />
                       <Eyebrow style={{ fontSize: 10 }}>Signature</Eyebrow>
                     </View>
                   ) : null}
@@ -226,7 +226,7 @@ export default function RestaurantDetail() {
                             dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 });
                           }}
                           hitSlop={8}>
-                          <MaterialCommunityIcons name="minus" size={16} color={colors.gold} />
+                          <Icon name="minus" size={16} color={colors.gold} />
                         </Pressable>
                         <Text style={styles.qty}>{q}</Text>
                         <Pressable
@@ -235,7 +235,7 @@ export default function RestaurantDetail() {
                           disabled={atLimit}
                           onPress={() => add(item)}
                           hitSlop={8}>
-                          <MaterialCommunityIcons
+                          <Icon
                             name="plus"
                             size={16}
                             color={atLimit ? colors.textFaint : colors.gold}
@@ -252,7 +252,7 @@ export default function RestaurantDetail() {
                           item.photoUri && styles.onThumb,
                           pressed && { backgroundColor: colors.gold },
                         ]}>
-                        <MaterialCommunityIcons name="plus" size={20} color={colors.gold} />
+                        <Icon name="plus" size={20} color={colors.gold} />
                       </Pressable>
                     )
                   ) : null}
@@ -303,7 +303,7 @@ export default function RestaurantDetail() {
           accessibilityLabel={`Share ${restaurant.name}`}
           onPress={() => shareKitchen(restaurant)}
           style={[styles.heroIcon, { marginRight: spacing.sm }]}>
-          <MaterialCommunityIcons name="export-variant" size={20} color={colors.ivory} />
+          <Icon name="export-variant" size={20} color={colors.ivory} />
         </Pressable>
         {!isPreview ? (
           <Pressable
@@ -314,7 +314,7 @@ export default function RestaurantDetail() {
               dispatch({ type: 'toggleFavorite', restaurantId: restaurant.id });
             }}
             style={styles.heroIcon}>
-            <MaterialCommunityIcons
+            <Icon
               name={favorite ? 'heart' : 'heart-outline'}
               size={21}
               color={favorite ? colors.gold : colors.ivory}
@@ -357,7 +357,7 @@ export default function RestaurantDetail() {
 function Fact({ icon, label }: { icon: IconName; label: string }) {
   return (
     <View style={styles.fact}>
-      <MaterialCommunityIcons name={icon} size={15} color={colors.gold} />
+      <Icon name={icon} size={15} color={colors.gold} />
       <Text style={styles.factText}>{label}</Text>
     </View>
   );
@@ -366,7 +366,7 @@ function Fact({ icon, label }: { icon: IconName; label: string }) {
 function Notice({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.notice}>
-      <MaterialCommunityIcons name={icon} size={18} color={colors.gold} />
+      <Icon name={icon} size={18} color={colors.gold} />
       <Body style={{ flex: 1, fontSize: 14 }}>{text}</Body>
     </View>
   );
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     paddingLeft: 72,
     paddingRight: 120,
   },
-  stickyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  stickyTitle: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
   heroBar: {
     position: 'absolute',
     left: spacing.lg,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   logo: { width: 64, height: 64, borderRadius: radius.md, borderWidth: 1, borderColor: colors.hairline },
-  chef: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.textMuted },
+  chef: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.textMuted },
   facts: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   menuHeader: { gap: spacing.sm, marginTop: spacing.md },
   sectionTitle: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 23,
     color: colors.ivory,
     marginTop: spacing.lg,
     paddingBottom: spacing.sm,
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   signatureLabel: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  itemName: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
+  itemName: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
   itemMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   price: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold, letterSpacing: 0.4 },
   thumbWrap: { alignItems: 'center', justifyContent: 'center', minWidth: 44 },

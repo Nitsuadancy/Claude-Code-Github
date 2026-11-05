@@ -1,5 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -8,8 +6,8 @@ import { colors, fonts, radius, spacing } from '@/theme';
 
 import { PressableScale } from './motion';
 import type { IconName } from './ui';
+import { Icon } from './icon';
 
-const RAYS = require('@/assets/images/rays.png');
 
 /** Magazine-style tile for an editorial collection. */
 export function CollectionCard({
@@ -28,9 +26,8 @@ export function CollectionCard({
       onPress={onPress}
       style={styles.card}>
       <LinearGradient colors={['#2A2214', '#100D08']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <Image source={RAYS} style={styles.rays} contentFit="contain" />
       <View style={styles.icon}>
-        <MaterialCommunityIcons name={collection.icon as IconName} size={22} color={colors.gold} />
+        <Icon name={collection.icon as IconName} size={22} color={colors.gold} />
       </View>
       <View style={{ gap: 4 }}>
         <Text style={styles.eyebrow}>
@@ -51,12 +48,9 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.hairline,
     padding: spacing.md,
     justifyContent: 'space-between',
   },
-  rays: { position: 'absolute', width: 300, height: 300, right: -130, top: -130, opacity: 0.4 },
   icon: {
     width: 44,
     height: 44,
@@ -74,6 +68,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.gold,
   },
-  title: { fontFamily: fonts.display, fontSize: 24, color: colors.ivory },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 13, lineHeight: 18, color: colors.textMuted },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.ivory },
+  tagline: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 21, color: colors.textMuted },
 });

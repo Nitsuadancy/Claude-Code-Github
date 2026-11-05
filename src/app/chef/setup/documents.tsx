@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -12,6 +11,7 @@ import { DOCUMENT_TYPES, isDocumentsComplete } from '@/lib/setup';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { DocumentKind } from '@/types';
+import { Icon } from '@/components/icon';
 
 const MAX_DOC_BYTES = 5 * MAX_IMAGE_BYTES;
 
@@ -62,7 +62,7 @@ export default function RestaurantDocuments() {
         return (
           <View key={t.kind} style={[styles.card, doc && { borderColor: colors.gold }]}>
             <View style={styles.cardHeader}>
-              <MaterialCommunityIcons
+              <Icon
                 name={doc ? 'check-circle' : 'file-document-outline'}
                 size={26}
                 color={doc ? colors.gold : colors.textMuted}
@@ -84,12 +84,12 @@ export default function RestaurantDocuments() {
                   accessibilityLabel={`Remove ${t.title}`}
                   hitSlop={8}
                   onPress={() => update({ documents: draft.documents.filter((d) => d.kind !== t.kind) })}>
-                  <MaterialCommunityIcons name="close-circle-outline" size={22} color={colors.textMuted} />
+                  <Icon name="close-circle-outline" size={22} color={colors.textMuted} />
                 </Pressable>
               </View>
             ) : (
               <Pressable accessibilityRole="button" onPress={() => upload(t.kind)} style={styles.upload}>
-                <MaterialCommunityIcons name="upload" size={22} color={colors.gold} />
+                <Icon name="upload" size={22} color={colors.gold} />
                 <Text style={styles.uploadText}>Upload PDF or photo</Text>
               </Pressable>
             )}
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  cardTitle: { fontFamily: fonts.display, fontSize: 17, color: colors.text, flexShrink: 1 },
+  cardTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.text, flexShrink: 1 },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',

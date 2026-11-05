@@ -1,10 +1,10 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors, fonts, radius, spacing } from '@/theme';
 
 import { GoldButton, Heading } from './ui';
+import { Icon } from './icon';
 
 export interface Option<T extends string> {
   value: T;
@@ -70,7 +70,7 @@ export function OptionSheet<T extends string>({
                 onPress={() => toggle(item.value)}
                 style={({ pressed }) => [styles.option, pressed && { backgroundColor: colors.goldTint }]}>
                 <Text style={[styles.optionText, isSelected && { color: colors.gold }]}>{item.label}</Text>
-                {isSelected ? <MaterialCommunityIcons name="check" size={20} color={colors.gold} /> : null}
+                {isSelected ? <Icon name="check" size={20} color={colors.gold} /> : null}
               </Pressable>
             );
           }}

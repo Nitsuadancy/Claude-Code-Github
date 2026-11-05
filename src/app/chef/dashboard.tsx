@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
@@ -14,7 +13,6 @@ import {
   GoldButton,
   Heading,
   type IconName,
-  Rays,
   Screen,
   SectionHeader,
   TextField,
@@ -28,6 +26,7 @@ import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import { Icon } from '@/components/icon';
 
 export default function ChefDashboard() {
   const { state, dispatch } = useStore();
@@ -51,7 +50,6 @@ export default function ChefDashboard() {
 
   return (
     <Screen>
-      <Rays size={520} opacity={0.12} style={{ top: -300 }} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={{ gap: spacing.xs }}>
           <Eyebrow>Welcome back, {state.user?.name.split(' ')[0]}</Eyebrow>
@@ -64,7 +62,7 @@ export default function ChefDashboard() {
               </>
             ) : (
               <>
-                <MaterialCommunityIcons name="progress-clock" size={16} color={colors.textMuted} />
+                <Icon name="progress-clock" size={16} color={colors.textMuted} />
                 <Text style={styles.verifyText}>
                   Verification pending. The Manna team will review your documents.
                 </Text>
@@ -106,7 +104,7 @@ export default function ChefDashboard() {
         <SectionHeader eyebrow="Live" title="Incoming orders" />
         {active.length === 0 ? (
           <View style={styles.emptyCard}>
-            <MaterialCommunityIcons name="bell-ring-outline" size={22} color={colors.gold} />
+            <Icon name="bell-ring-outline" size={22} color={colors.gold} />
             <Body muted style={{ flex: 1, fontSize: 14 }}>
               No active orders. New orders appear here the moment they’re placed.
             </Body>
@@ -115,7 +113,7 @@ export default function ChefDashboard() {
         {active.map((order) => (
           <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'}>
             <View style={styles.deliver}>
-              <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textMuted} />
+              <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
               <Body muted style={{ flex: 1, fontSize: 13 }}>
                 {order.deliveryAddress}
               </Body>
@@ -153,14 +151,14 @@ export default function ChefDashboard() {
 
         {prep.length ? (
           <>
-            <SectionHeader eyebrow="On the stove" title="Today’s prep list" />
+            <SectionHeader title="Today’s prep list" />
             <PrepList items={prep} />
           </>
         ) : null}
 
         <WeeklyChart days={week} />
 
-        <SectionHeader eyebrow="What foodies say" title="Reviews" />
+        <SectionHeader title="Reviews" />
         {reviews.length ? (
           <>
             <RatingSummary restaurant={restaurant} />
@@ -176,14 +174,14 @@ export default function ChefDashboard() {
           </>
         ) : (
           <View style={styles.emptyCard}>
-            <MaterialCommunityIcons name="star-outline" size={22} color={colors.gold} />
+            <Icon name="star-outline" size={22} color={colors.gold} />
             <Body muted style={{ flex: 1, fontSize: 14 }}>
               After each delivery, customers are invited to rate their meal. Reviews will appear here.
             </Body>
           </View>
         )}
 
-        <SectionHeader eyebrow="Your kitchen" title="Manage" />
+        <SectionHeader title="Manage" />
         <View style={styles.list}>
           <LinkRow icon="book-open-variant" label="Menu" onPress={() => router.push('/chef/setup/menu')} />
           <LinkRow icon="storefront-outline" label="Restaurant details" onPress={() => router.push('/chef/setup/information')} />
@@ -208,7 +206,7 @@ export default function ChefDashboard() {
 
         {past.length ? (
           <>
-            <SectionHeader eyebrow="History" title="Past orders" />
+            <SectionHeader title="Past orders" />
             {past.map((order) => (
               <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'} />
             ))}
@@ -232,7 +230,7 @@ function NoteEditor({ note, onSave }: { note: string; onSave: (note: string) => 
           setEditing(true);
         }}
         style={styles.noteRow}>
-        <MaterialCommunityIcons name="message-text-outline" size={16} color={colors.gold} />
+        <Icon name="message-text-outline" size={16} color={colors.gold} />
         <Text style={[styles.noteText, !note && { color: colors.gold }]} numberOfLines={2}>
           {note ? `“${note}”` : 'Add a note for the customer'}
         </Text>
@@ -296,9 +294,9 @@ function LinkRow({
         !last && styles.linkRowBorder,
         pressed && { backgroundColor: colors.goldTint },
       ]}>
-      <MaterialCommunityIcons name={icon} size={20} color={colors.gold} />
+      <Icon name={icon} size={20} color={colors.gold} />
       <Text style={styles.linkText}>{label}</Text>
-      <MaterialCommunityIcons name={open ? 'chevron-up' : 'chevron-right'} size={20} color={colors.textFaint} />
+      <Icon name={open ? 'chevron-up' : 'chevron-right'} size={20} color={colors.textFaint} />
     </Pressable>
   );
 }
@@ -316,7 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
-  statusTitle: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
+  statusTitle: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
     flex: 1,
@@ -327,7 +325,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: 4,
   },
-  statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
+  statValue: { fontFamily: fonts.display, fontSize: 25, color: colors.ivory },
   statLabel: {
     fontFamily: fonts.semibold,
     fontSize: 10,

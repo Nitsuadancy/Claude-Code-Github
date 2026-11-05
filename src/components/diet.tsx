@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { allergenConflicts, conflictSentence, type DietProfile, dishFits } from '@/lib/diet';
@@ -8,6 +7,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Allergen, DietaryTag, MenuItem } from '@/types';
 
 import { Body, Card, Chip, Eyebrow, FieldLabel, Heading } from './ui';
+import { Icon } from './icon';
 
 /** "Fits your diet" in gold, or an allergy warning, for one dish. */
 export function DietNote({ item, profile }: { item: MenuItem; profile: DietProfile }) {
@@ -15,7 +15,7 @@ export function DietNote({ item, profile }: { item: MenuItem; profile: DietProfi
   if (warning) {
     return (
       <View style={styles.row} accessibilityLabel={`Allergy warning: ${warning}`}>
-        <MaterialCommunityIcons name="alert-circle-outline" size={14} color={colors.danger} />
+        <Icon name="alert-circle-outline" size={14} color={colors.danger} />
         <Text style={[styles.text, { color: colors.danger }]}>{warning}</Text>
       </View>
     );
@@ -23,7 +23,7 @@ export function DietNote({ item, profile }: { item: MenuItem; profile: DietProfi
   if (dishFits(item, profile)) {
     return (
       <View style={styles.row}>
-        <MaterialCommunityIcons name="check-decagram-outline" size={14} color={colors.gold} />
+        <Icon name="check-decagram-outline" size={14} color={colors.gold} />
         <Text style={[styles.text, { color: colors.gold }]}>Fits your diet</Text>
       </View>
     );
@@ -84,7 +84,7 @@ export function CartAllergyWarning({ names }: { names: string[] }) {
   if (!names.length) return null;
   return (
     <View style={styles.cartWarning} accessibilityRole="alert">
-      <MaterialCommunityIcons name="alert-outline" size={20} color={colors.danger} />
+      <Icon name="alert-outline" size={20} color={colors.danger} />
       <Text style={styles.cartWarningText}>
         {names.join(', ')} {names.length === 1 ? 'contains' : 'contain'} an allergen you avoid. Add a note for
         the chef or remove {names.length === 1 ? 'it' : 'them'}.

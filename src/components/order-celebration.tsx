@@ -1,10 +1,10 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/theme';
 
 import { Eyebrow } from './ui';
+import { Icon } from './icon';
 
 const RAYS = require('@/assets/images/rays.png');
 
@@ -58,7 +58,7 @@ export function OrderCelebration({
             style={[styles.rays, { opacity: progress, transform: [{ scale: raysScale }, { rotate }] }]}
           />
           <Animated.View style={[styles.check, { transform: [{ scale: checkScale }] }]}>
-            <MaterialCommunityIcons name="check" size={44} color={colors.onGold} />
+            <Icon name="check" size={44} color={colors.onGold} />
           </Animated.View>
         </View>
         <Animated.View style={{ opacity: textOpacity, alignItems: 'center', gap: spacing.sm }}>
@@ -86,6 +86,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontFamily: fonts.display, fontSize: 30, color: colors.ivory, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 34, color: colors.ivory, textAlign: 'center' },
   sub: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted, textAlign: 'center' },
 });

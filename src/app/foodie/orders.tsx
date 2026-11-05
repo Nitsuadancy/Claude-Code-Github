@@ -1,13 +1,13 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { OrderCard } from '@/components/order-card';
 import { Stars } from '@/components/reviews';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
-import { Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
+import { Body, GoldButton, Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 export default function Orders() {
   const { state } = useStore();
@@ -22,7 +22,6 @@ export default function Orders() {
         contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Eyebrow>Your table</Eyebrow>
             <Heading>Orders</Heading>
           </View>
         }
@@ -46,7 +45,7 @@ export default function Orders() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <MaterialCommunityIcons name="receipt-text-outline" size={30} color={colors.gold} />
+              <Icon name="receipt-text-outline" size={30} color={colors.gold} />
             </View>
             <Heading size={22} style={{ textAlign: 'center' }}>
               No orders yet

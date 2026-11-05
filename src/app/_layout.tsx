@@ -1,12 +1,14 @@
 import {
-  Montserrat_400Regular,
-  Montserrat_500Medium,
-  Montserrat_600SemiBold,
-} from '@expo-google-fonts/montserrat';
+  CormorantGaramond_500Medium_Italic,
+  CormorantGaramond_600SemiBold,
+  CormorantGaramond_700Bold,
+} from '@expo-google-fonts/cormorant-garamond';
 import {
-  PlayfairDisplay_400Regular_Italic,
-  PlayfairDisplay_600SemiBold,
-} from '@expo-google-fonts/playfair-display';
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+} from '@expo-google-fonts/manrope';
 import { useFonts } from 'expo-font';
 import { DarkTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -35,11 +37,13 @@ const navTheme = {
 function AppStack() {
   const { state } = useStore();
   const [fontsLoaded, fontError] = useFonts({
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    PlayfairDisplay_400Regular_Italic,
-    PlayfairDisplay_600SemiBold,
+    CormorantGaramond_500Medium_Italic,
+    CormorantGaramond_600SemiBold,
+    CormorantGaramond_700Bold,
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
   });
   const ready = state.hydrated && (fontsLoaded || !!fontError);
 

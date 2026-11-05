@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -9,6 +8,7 @@ import { resetTo } from '@/lib/navigation';
 import { completedSteps, SETUP_STEPS } from '@/lib/setup';
 import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 export default function Preview() {
   const { dispatch } = useStore();
@@ -59,7 +59,7 @@ export default function Preview() {
       <SectionTitle>Checklist</SectionTitle>
       {SETUP_STEPS.filter((s) => s.key !== 'preview').map((s) => (
         <View key={s.key} style={styles.check}>
-          <MaterialCommunityIcons
+          <Icon
             name={done[s.key] ? 'check-circle' : 'alert-circle-outline'}
             size={24}
             color={done[s.key] ? colors.success : colors.danger}
@@ -81,7 +81,7 @@ export default function Preview() {
           disabled={tip.done}
           onPress={() => router.push(tip.route)}
           style={styles.check}>
-          <MaterialCommunityIcons
+          <Icon
             name={tip.done ? 'check-circle' : 'star-four-points-outline'}
             size={22}
             color={tip.done ? colors.success : colors.gold}

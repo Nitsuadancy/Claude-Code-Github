@@ -1,15 +1,15 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { FadeIn } from '@/components/motion';
 import { RestaurantCard } from '@/components/restaurant-card';
-import { BackButton, Body, Eyebrow, GoldRule, Heading, type IconName, Rays, Screen } from '@/components/ui';
+import { BackButton, Body, Eyebrow, GoldRule, Heading, type IconName, Screen } from '@/components/ui';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import * as haptics from '@/lib/haptics';
 import { useAllRestaurants, useStore } from '@/state/store';
 import { colors, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 /** One editorial collection: a short intro and its kitchens. */
 export default function CollectionScreen() {
@@ -34,7 +34,6 @@ export default function CollectionScreen() {
 
   return (
     <Screen edges={['top']}>
-      <Rays size={560} opacity={0.22} style={{ top: -250 }} />
       <FlatList
         data={kitchens}
         keyExtractor={(r) => r.id}
@@ -44,7 +43,7 @@ export default function CollectionScreen() {
           <View style={styles.header}>
             <BackButton />
             <View style={styles.icon}>
-              <MaterialCommunityIcons name={collection.icon as IconName} size={30} color={colors.gold} />
+              <Icon name={collection.icon as IconName} size={30} color={colors.gold} />
             </View>
             <Eyebrow style={{ textAlign: 'center' }}>Collection</Eyebrow>
             <Heading size={36} style={{ textAlign: 'center' }}>

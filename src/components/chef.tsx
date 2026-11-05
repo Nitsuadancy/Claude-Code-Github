@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -7,11 +6,12 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
 import { Eyebrow } from './ui';
+import { Icon } from './icon';
 
 /** Gold seal shown next to kitchens whose documents the Manna team has checked. */
 export function VerifiedSeal({ size = 16 }: { size?: number }) {
   return (
-    <MaterialCommunityIcons
+    <Icon
       name="check-decagram"
       size={size}
       color={colors.gold}
@@ -73,7 +73,7 @@ export function ChefCard({ restaurant }: { restaurant: Restaurant }) {
           accessibilityRole={long ? 'button' : undefined}
           accessibilityHint={long ? (expanded ? 'Show less' : 'Read the full story') : undefined}>
           <View style={styles.quoteRow}>
-            <MaterialCommunityIcons name="format-quote-open" size={22} color={colors.goldDeep} />
+            <Text style={styles.quoteMark} accessible={false}>“</Text>
             <Text style={styles.bio} numberOfLines={expanded || !long ? undefined : 3}>
               {bio}
             </Text>
@@ -105,14 +105,15 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  name: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory },
   verified: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
   quoteRow: { flexDirection: 'row', gap: spacing.sm },
+  quoteMark: { fontFamily: fonts.display, fontSize: 48, lineHeight: 48, color: colors.gold, marginTop: -6 },
   bio: {
     flex: 1,
     fontFamily: fonts.displayItalic,
-    fontSize: 16,
-    lineHeight: 25,
+    fontSize: 18,
+    lineHeight: 29,
     color: colors.text,
   },
   more: {

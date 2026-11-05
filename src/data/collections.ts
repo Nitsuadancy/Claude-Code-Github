@@ -18,7 +18,7 @@ export const COLLECTIONS: Collection[] = [
     id: 'sunday-supper',
     title: 'Sunday Supper',
     tagline: 'Slow-cooked comfort, made to share at the table.',
-    icon: 'pot-steam-outline',
+    icon: 'cooking-pot',
     categories: ['cottage-kitchen'],
   },
   {
@@ -33,7 +33,7 @@ export const COLLECTIONS: Collection[] = [
     id: 'sweet-endings',
     title: 'Sweet Endings',
     tagline: 'Cobblers, cookies and cakes from neighborhood bakers.',
-    icon: 'cupcake',
+    icon: 'croissant',
     categories: ['bakery', 'sweet-tooth'],
   },
   {

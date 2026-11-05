@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,6 +9,7 @@ import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 import { GoldButton, Heading, type IconName, TextField, Wordmark } from './ui';
+import { Icon } from './icon';
 
 /** Profile editing plus role switching and sign out; shared by Foodie and Chef. */
 export function AccountSettings({ showAddress }: { showAddress: boolean }) {
@@ -141,9 +141,9 @@ function Row({
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.goldTint }]}>
-      <MaterialCommunityIcons name={icon} size={20} color={danger ? colors.danger : colors.gold} />
+      <Icon name={icon} size={20} color={danger ? colors.danger : colors.gold} />
       <Text style={[styles.rowText, danger && { color: colors.danger }]}>{label}</Text>
-      {!danger ? <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textFaint} /> : null}
+      {!danger ? <Icon name="chevron-right" size={20} color={colors.textFaint} /> : null}
     </Pressable>
   );
 }
@@ -160,8 +160,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.surface,
   },
-  initials: { fontFamily: fonts.display, fontSize: 24, color: colors.gold },
-  role: { fontFamily: fonts.displayItalic, fontSize: 15, color: colors.textMuted },
+  initials: { fontFamily: fonts.display, fontSize: 28, color: colors.gold },
+  role: { fontFamily: fonts.displayItalic, fontSize: 17, color: colors.textMuted },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14 },
   list: {
     borderWidth: 1,

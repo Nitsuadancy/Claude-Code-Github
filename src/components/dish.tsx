@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -12,11 +11,14 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { DietaryTag, MenuItem } from '@/types';
 
 import { DietNote } from './diet';
-import { Body, Eyebrow, GoldButton, Heading, type IconName } from './ui';
+import { Body, Eyebrow, GoldButton, Heading } from './ui';
+import { Icon } from './icon';
 
-const RAYS = require('@/assets/images/rays.png');
 
-/** Small gold icons for vegan, gluten-free, halal and so on. */
+/**
+ * Dietary marks as restaurant menus print them: small letter codes (V, VG,
+ * GF…) in a fine gold outline, with full labels where there's room.
+ */
 export function DietaryIcons({ tags, withLabels }: { tags: DietaryTag[]; withLabels?: boolean }) {
   const shown = DIETARY_TAGS.filter((t) => tags.includes(t.value));
   if (!shown.length) return null;
@@ -25,11 +27,13 @@ export function DietaryIcons({ tags, withLabels }: { tags: DietaryTag[]; withLab
       {shown.map((t) =>
         withLabels ? (
           <View key={t.value} style={styles.dietPill}>
-            <MaterialCommunityIcons name={t.icon as IconName} size={14} color={colors.gold} />
+            <Text style={styles.code}>{t.code}</Text>
             <Text style={styles.dietText}>{t.label}</Text>
           </View>
         ) : (
-          <MaterialCommunityIcons key={t.value} name={t.icon as IconName} size={15} color={colors.gold} />
+          <Text key={t.value} style={styles.codeBox}>
+            {t.code}
+          </Text>
         ),
       )}
     </View>
@@ -42,7 +46,7 @@ export function StockNote({ remaining }: { remaining: number | null }) {
   if (!label) return null;
   return (
     <View style={styles.stock}>
-      <MaterialCommunityIcons
+      <Icon
         name={remaining === 0 ? 'clock-outline' : 'fire'}
         size={13}
         color={remaining === 0 ? colors.textMuted : colors.gold}
@@ -88,12 +92,11 @@ export function DishSheet({
                 <Image source={{ uri: item.photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
                 <LinearGradient colors={['#221D13', '#0E0C09']} style={[StyleSheet.absoluteFill, styles.center]}>
-                  <Image source={RAYS} style={styles.rays} contentFit="contain" />
-                  <MaterialCommunityIcons name="silverware-variant" size={40} color={colors.gold} />
+                  <Icon name="silverware-variant" size={40} color={colors.gold} />
                 </LinearGradient>
               )}
               <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} style={styles.close}>
-                <MaterialCommunityIcons name="close" size={20} color={colors.ivory} />
+                <Icon name="close" size={20} color={colors.ivory} />
               </Pressable>
             </View>
             <View style={styles.body}>
@@ -104,7 +107,7 @@ export function DishSheet({
               <DietaryIcons tags={item.dietary} withLabels />
               {allergens ? (
                 <View style={styles.allergens}>
-                  <MaterialCommunityIcons name="alert-outline" size={16} color={colors.gold} />
+                  <Icon name="alert-outline" size={16} color={colors.gold} />
                   <Text style={styles.allergenText}>{allergens}</Text>
                 </View>
               ) : null}
@@ -140,7 +143,7 @@ export function DishSheet({
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
-  dietRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, alignItems: 'center' },
+  dietRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, alignItems: 'center' },
   dietPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,6 +155,19 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   dietText: { fontFamily: fonts.medium, fontSize: 12, color: colors.text },
+  code: { fontFamily: fonts.bold, fontSize: 10, letterSpacing: 0.6, color: colors.gold },
+  codeBox: {
+    fontFamily: fonts.bold,
+    fontSize: 9,
+    letterSpacing: 0.6,
+    color: colors.gold,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    overflow: 'hidden',
+  },
   stock: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stockText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold, letterSpacing: 0.3 },
   backdrop: { flex: 1, backgroundColor: colors.overlay },
@@ -166,7 +182,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photo: { height: 260, backgroundColor: colors.surfaceRaised },
-  rays: { position: 'absolute', width: 320, height: 320, opacity: 0.35 },
   close: {
     position: 'absolute',
     top: spacing.md,

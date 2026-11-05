@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  total: { fontFamily: fonts.display, fontSize: 26, color: colors.ivory },
+  total: { fontFamily: fonts.display, fontSize: 30, color: colors.ivory },
   best: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
   chart: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-end' },
   col: { flex: 1, alignItems: 'center', gap: 6 },
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  countText: { fontFamily: fonts.display, fontSize: 18, color: colors.gold },
-  prepName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
+  countText: { fontFamily: fonts.display, fontSize: 21, color: colors.gold },
+  prepName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
   prepMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
 });

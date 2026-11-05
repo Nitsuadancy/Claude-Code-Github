@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,12 +8,13 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant, Review } from '@/types';
 
 import { Chip, Eyebrow, GoldButton, Heading, TextField } from './ui';
+import { Icon } from './icon';
 
 export function Stars({ value, size = 14 }: { value: number; size?: number }) {
   return (
     <View style={styles.stars} accessibilityLabel={`${value} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <MaterialCommunityIcons
+        <Icon
           key={i}
           name={value >= i ? 'star' : value >= i - 0.5 ? 'star-half-full' : 'star-outline'}
           size={size}
@@ -102,7 +102,7 @@ export function RateOrderSheet({
                   haptics.tap();
                   setStars(i);
                 }}>
-                <MaterialCommunityIcons
+                <Icon
                   name={stars >= i ? 'star' : 'star-outline'}
                   size={42}
                   color={stars >= i ? colors.gold : colors.borderStrong}
@@ -151,7 +151,7 @@ export function RateOrderSheet({
 const styles = StyleSheet.create({
   stars: { flexDirection: 'row', gap: 1 },
   summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  big: { fontFamily: fonts.display, fontSize: 44, color: colors.ivory, lineHeight: 52 },
+  big: { fontFamily: fonts.display, fontSize: 51, color: colors.ivory, lineHeight: 60 },
   count: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
   card: {
     width: 280,
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   when: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint },
-  text: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 22, color: colors.text },
+  text: { fontFamily: fonts.displayItalic, fontSize: 17, lineHeight: 25, color: colors.text },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     fontFamily: fonts.medium,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong },
   sub: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted, marginTop: -spacing.sm },
   pickRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  starLabel: { fontFamily: fonts.displayItalic, fontSize: 17, color: colors.gold, textAlign: 'center' },
+  starLabel: { fontFamily: fonts.displayItalic, fontSize: 20, color: colors.gold, textAlign: 'center' },
   tagPick: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center' },
   privacy: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint, textAlign: 'center' },
 });

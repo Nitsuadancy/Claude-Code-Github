@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -7,6 +6,7 @@ import { resetTo } from '@/lib/navigation';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Role } from '@/types';
+import { Icon } from '@/components/icon';
 
 const OPTIONS: { role: Role; title: string; tagline: string; body: string; icon: IconName }[] = [
   {
@@ -57,7 +57,7 @@ export default function ChooseRole() {
                 style={[styles.card, selected && styles.cardSelected]}>
                 <View style={styles.cardTop}>
                   <View style={[styles.iconRing, selected && { borderColor: colors.gold }]}>
-                    <MaterialCommunityIcons name={o.icon} size={26} color={colors.gold} />
+                    <Icon name={o.icon} size={26} color={colors.gold} />
                   </View>
                   <View style={[styles.radio, selected && styles.radioOn]}>
                     {selected ? <View style={styles.radioDot} /> : null}
@@ -113,6 +113,6 @@ const styles = StyleSheet.create({
   },
   radioOn: { borderColor: colors.gold },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.gold },
+  tagline: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.gold },
   footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
 });

@@ -1,15 +1,15 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { FadeIn, PressableScale } from '@/components/motion';
-import { BackButton, Body, Eyebrow, Heading, type IconName, Screen } from '@/components/ui';
+import { BackButton, Body, Heading, type IconName, Screen } from '@/components/ui';
 import { type ActivityItem, buildActivity } from '@/lib/activity';
 import { formatClock } from '@/lib/orders';
 import { relativeDay } from '@/lib/reviews';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 const ICONS: Record<ActivityItem['kind'], IconName> = {
   placed: 'receipt-text-outline',
@@ -43,7 +43,6 @@ export default function Activity() {
         ListHeaderComponent={
           <View style={styles.header}>
             <BackButton />
-            <Eyebrow>Updates</Eyebrow>
             <Heading>Activity</Heading>
           </View>
         }
@@ -57,7 +56,7 @@ export default function Activity() {
                 onPress={() => router.push({ pathname: '/order/[id]', params: { id: item.orderId } })}
                 style={[styles.item, fresh && styles.fresh]}>
                 <View style={[styles.icon, item.kind === 'note' && { borderColor: colors.gold }]}>
-                  <MaterialCommunityIcons
+                  <Icon
                     name={ICONS[item.kind]}
                     size={20}
                     color={item.kind === 'declined' ? colors.danger : colors.gold}
@@ -82,7 +81,7 @@ export default function Activity() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <MaterialCommunityIcons name="bell-outline" size={28} color={colors.gold} />
+              <Icon name="bell-outline" size={28} color={colors.gold} />
             </View>
             <Heading size={22} style={{ textAlign: 'center' }}>
               All quiet for now
@@ -120,9 +119,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory },
+  title: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   body: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, lineHeight: 18 },
-  note: { fontFamily: fonts.displayItalic, fontSize: 14, color: colors.text },
+  note: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.text },
   when: { fontFamily: fonts.medium, fontSize: 11, color: colors.textFaint, marginTop: 2 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold, marginTop: 6 },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },

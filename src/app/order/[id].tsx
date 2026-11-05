@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,7 +14,6 @@ import {
   Eyebrow,
   GoldButton,
   Heading,
-  Rays,
   Screen,
 } from '@/components/ui';
 import * as haptics from '@/lib/haptics';
@@ -26,6 +24,7 @@ import { formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
+import { Icon } from '@/components/icon';
 
 /** Live tracking for one order, with a celebration when it was just placed. */
 export default function OrderTracking() {
@@ -58,7 +57,6 @@ export default function OrderTracking() {
 
   return (
     <Screen>
-      <Rays size={520} opacity={0.12} style={{ top: -300 }} />
       <ScrollView contentContainerStyle={styles.content}>
         <BackButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/foodie/orders'))}
@@ -69,7 +67,7 @@ export default function OrderTracking() {
           <Heading size={30}>{ORDER_HEADLINE[order.status]}</Heading>
           {isActive(order.status) ? (
             <View style={styles.eta}>
-              <MaterialCommunityIcons name="timer-sand" size={16} color={colors.gold} />
+              <Icon name="timer-sand" size={16} color={colors.gold} />
               <Text style={styles.etaText}>
                 {order.scheduledFor
                   ? `Scheduled for ${formatSlot(order.scheduledFor, new Date())}`
@@ -95,7 +93,7 @@ export default function OrderTracking() {
                       </Pulse>
                     ) : (
                       <View style={[styles.dot, done && styles.dotDone]}>
-                        {done ? <MaterialCommunityIcons name="check" size={12} color={colors.onGold} /> : null}
+                        {done ? <Icon name="check" size={12} color={colors.onGold} /> : null}
                       </View>
                     )}
                     {!last ? <View style={[styles.line, i < current && { backgroundColor: colors.gold }]} /> : null}
@@ -182,7 +180,7 @@ export default function OrderTracking() {
             <Text style={styles.totalValue}>{formatCents(order.totalCents)}</Text>
           </View>
           <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.xs }]}>
-            <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.textMuted} />
+            <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
             <Body muted style={{ flex: 1, fontSize: 13 }}>
               {order.deliveryAddress}
             </Body>
@@ -270,13 +268,13 @@ const styles = StyleSheet.create({
     borderColor: colors.gold,
     backgroundColor: colors.goldTint,
   },
-  rateTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  rateTitle: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
   thanks: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   thanksText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
-  noteText: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 24, color: colors.ivory },
+  noteText: { fontFamily: fonts.displayItalic, fontSize: 18, lineHeight: 28, color: colors.ivory },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
   fee: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
-  totalLabel: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  totalLabel: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
   totalValue: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
 });

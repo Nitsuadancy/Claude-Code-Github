@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { AccountSettings } from '@/components/account-settings';
 import { DietPreferences } from '@/components/diet';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
-import { Eyebrow, Heading, Screen } from '@/components/ui';
+import { Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -21,7 +21,6 @@ export default function Profile() {
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl, paddingBottom: TAB_BAR_SPACE + spacing.lg }}
           keyboardShouldPersistTaps="handled">
           <View style={{ gap: spacing.xs }}>
-            <Eyebrow>Your account</Eyebrow>
             <Heading>Profile</Heading>
           </View>
           <View style={styles.stats}>
@@ -59,7 +58,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   stat: { flex: 1, alignItems: 'center', gap: 4, paddingHorizontal: 4 },
-  value: { fontFamily: fonts.display, fontSize: 24, color: colors.ivory },
+  value: { fontFamily: fonts.display, fontSize: 28, color: colors.ivory },
   label: {
     fontFamily: fonts.semibold,
     fontSize: 9,

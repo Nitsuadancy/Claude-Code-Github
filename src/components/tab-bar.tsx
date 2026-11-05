@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -7,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 import type { IconName } from './ui';
+import { Icon } from './icon';
 
 const TAB_META: Record<string, { label: string; icon: IconName; activeIcon: IconName }> = {
   index: { label: 'Discover', icon: 'compass-outline', activeIcon: 'compass' },
@@ -56,7 +56,7 @@ export function MannaTabBar({
               onPress={onPress}
               style={styles.item}>
               <View>
-                <MaterialCommunityIcons
+                <Icon
                   name={focused ? meta.activeIcon : meta.icon}
                   size={24}
                   color={focused ? colors.gold : colors.textMuted}

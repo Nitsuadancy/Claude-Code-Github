@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -10,6 +9,7 @@ import type { MenuItem, Order, Restaurant } from '@/types';
 import { VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { RestaurantCover } from './restaurant-card';
+import { Icon } from './icon';
 
 /** "Order again" card: the kitchen, what you had, and a one-tap reorder. */
 export function OrderAgainCard({
@@ -50,7 +50,7 @@ export function OrderAgainCard({
         hitSlop={6}
         style={({ pressed }) => [styles.reorder, pressed && { backgroundColor: colors.gold }]}>
         {({ pressed }) => (
-          <MaterialCommunityIcons name="replay" size={18} color={pressed ? colors.onGold : colors.gold} />
+          <Icon name="replay" size={18} color={pressed ? colors.onGold : colors.gold} />
         )}
       </Pressable>
     </View>
@@ -97,7 +97,7 @@ export function DishResult({
         <Image source={{ uri: item.photoUri }} style={styles.dishThumb} contentFit="cover" />
       ) : (
         <View style={[styles.dishThumb, styles.dishIcon]}>
-          <MaterialCommunityIcons name="silverware-variant" size={20} color={colors.gold} />
+          <Icon name="silverware-variant" size={20} color={colors.gold} />
         </View>
       )}
       <View style={{ flex: 1, gap: 2 }}>
@@ -122,13 +122,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.sm + 2,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   againMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   againCover: { width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden' },
-  againName: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory },
+  againName: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   againSummary: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, lineHeight: 16 },
   againDate: { fontFamily: fonts.semibold, fontSize: 9, letterSpacing: 1.4, color: colors.gold, textTransform: 'uppercase' },
   reorder: {
@@ -144,13 +142,11 @@ const styles = StyleSheet.create({
     width: 150,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   miniCover: { width: '100%', height: 96 },
   miniInfo: { padding: spacing.sm + 2, gap: 2 },
-  miniName: { fontFamily: fonts.display, fontSize: 15, color: colors.ivory, flexShrink: 1 },
+  miniName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory, flexShrink: 1 },
   miniCuisine: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
   dish: {
     flexDirection: 'row',
@@ -168,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dishName: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory },
+  dishName: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   dishKitchen: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   dishPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
 });

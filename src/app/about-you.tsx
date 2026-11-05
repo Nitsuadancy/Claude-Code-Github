@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackButton, Body, Eyebrow, GoldButton, Heading, Rays, Screen, TextField } from '@/components/ui';
+import { BackButton, Body, GoldButton, Heading, Screen, TextField } from '@/components/ui';
 import { resetTo } from '@/lib/navigation';
 import { formatE164UsPhone, isValidEmail } from '@/lib/validation';
 import { useStore } from '@/state/store';
@@ -26,7 +26,6 @@ export default function AboutYou() {
 
   return (
     <Screen>
-      <Rays size={480} opacity={0.12} style={{ top: -260 }} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <BackButton
@@ -36,7 +35,6 @@ export default function AboutYou() {
             }}
           />
           <View style={styles.header}>
-            <Eyebrow>Almost there</Eyebrow>
             <Heading>Please tell us{'\n'}about yourself</Heading>
             <Body muted>So chefs know who they’re cooking for.</Body>
           </View>

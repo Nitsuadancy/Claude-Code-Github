@@ -1,4 +1,3 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
@@ -11,8 +10,8 @@ import type { Restaurant } from '@/types';
 import { VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { Badge } from './ui';
+import { Icon } from './icon';
 
-const RAYS = require('@/assets/images/rays.png');
 
 /** "4.6 (128)", or "New" before the first rating. */
 export function formatRating(r: Restaurant, long = false): string {
@@ -54,9 +53,15 @@ export function RestaurantCover({
   }
   const initial = restaurant.name.trim().charAt(0).toUpperCase() || 'M';
   return (
-    <LinearGradient colors={['#221D13', '#0E0C09']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style, styles.monogramWrap]}>
-      <Image source={RAYS} style={styles.monogramRays} contentFit="contain" />
-      <Text style={[styles.monogram, { fontSize: monogramSize, lineHeight: monogramSize * 1.2 }]}>{initial}</Text>
+    <LinearGradient colors={['#1F1A12', '#0E0C09']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style, styles.monogramWrap]}>
+      {/* A quiet seal, like a monogram pressed into a menu card, until the chef adds photos. */}
+      <View
+        style={[
+          styles.seal,
+          { width: monogramSize * 1.5, height: monogramSize * 1.5, borderRadius: monogramSize * 0.75 },
+        ]}>
+        <Text style={[styles.monogram, { fontSize: monogramSize * 0.8, lineHeight: monogramSize }]}>{initial}</Text>
+      </View>
     </LinearGradient>
   );
 }
@@ -85,9 +90,9 @@ export function RestaurantCard({
       accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, ${formatRating(restaurant, true)}, ${open ? 'open now' : 'closed'}`}
       onPress={onPress}
       style={styles.card}>
-      <View>
+      <View style={styles.coverWrap}>
         <RestaurantCover restaurant={restaurant} style={styles.cover} />
-        <LinearGradient colors={['transparent', 'rgba(10,9,7,0.85)']} style={styles.coverFade} />
+        <LinearGradient colors={['rgba(10,9,7,0.55)', 'transparent']} style={styles.coverFade} />
         <View style={styles.coverTop}>
           {open ? <Badge label="Open now" tone="success" /> : <Badge label="Closed" tone="muted" />}
         </View>
@@ -103,7 +108,7 @@ export function RestaurantCard({
           {restaurant.verified ? <VerifiedSeal /> : null}
         </View>
         <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
+          <Icon name="star" size={14} color={colors.gold} />
           <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta} numberOfLines={1}>
@@ -131,7 +136,7 @@ export function RestaurantCard({
         hitSlop={10}
         onPress={onToggleFavorite}
         style={[styles.heart, styles.heartPosition]}>
-        <MaterialCommunityIcons
+        <Icon
           name={favorite ? 'heart' : 'heart-outline'}
           size={20}
           color={favorite ? colors.gold : colors.ivory}
@@ -168,7 +173,7 @@ export function FeaturedCard({
           {restaurant.verified ? <VerifiedSeal /> : null}
         </View>
         <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="star" size={14} color={colors.gold} />
+          <Icon name="star" size={14} color={colors.gold} />
           <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
           <Text style={styles.metaDot}>·</Text>
           <Text style={styles.meta}>~{restaurant.prepMinutes} min</Text>
@@ -179,15 +184,11 @@ export function FeaturedCard({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
+  // Feed cards are photo-led: no box, just an image with rounded corners and text beneath.
+  card: {},
+  coverWrap: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surface },
   cover: { width: '100%', aspectRatio: 16 / 9 },
-  coverFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%' },
+  coverFade: { position: 'absolute', left: 0, right: 0, top: 0, height: '45%' },
   coverTop: {
     position: 'absolute',
     top: spacing.md,
@@ -209,9 +210,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   monogramWrap: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  monogramRays: { position: 'absolute', width: 340, height: 340, opacity: 0.35 },
-  monogram: { fontFamily: fonts.display, color: colors.ivory },
-  info: { padding: spacing.md, paddingTop: spacing.sm + 2, gap: 4 },
+  seal: { borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
+  monogram: { fontFamily: fonts.display, color: colors.gold },
+  info: { paddingHorizontal: 2, paddingTop: spacing.sm + 4, gap: 4 },
   cuisine: {
     fontFamily: fonts.semibold,
     fontSize: 10,
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.gold,
   },
-  name: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
+  name: { fontFamily: fonts.display, fontSize: 24, color: colors.ivory },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
@@ -229,8 +230,6 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.hairline,
     justifyContent: 'flex-end',
     backgroundColor: colors.surface,
   },

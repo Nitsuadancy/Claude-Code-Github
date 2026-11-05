@@ -1,9 +1,5 @@
-import type { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { ComponentProps } from 'react';
-
+import type { IconName } from '@/components/icon';
 import type { CategoryId } from '@/types';
-
-type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export interface Category {
   id: CategoryId;
@@ -16,7 +12,7 @@ export const CATEGORIES: Category[] = [
   { id: 'vegan', label: 'Vegan', icon: 'sprout' },
   { id: 'cottage-kitchen', label: 'Cottage Kitchen', icon: 'home-heart' },
   { id: 'foodie-adventures', label: 'Foodie Adventures', icon: 'map-marker-radius' },
-  { id: 'bakery', label: 'Bakery', icon: 'cupcake' },
+  { id: 'bakery', label: 'Bakery', icon: 'croissant' },
   { id: 'meal-preppers', label: 'Meal Preppers', icon: 'food-takeout-box' },
   { id: 'global-flavors', label: 'Global Flavors', icon: 'earth' },
   { id: 'sweet-tooth', label: 'Sweet Tooth', icon: 'ice-cream' },

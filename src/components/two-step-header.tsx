@@ -1,7 +1,7 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/theme';
+import { Icon } from './icon';
 
 /** "① Restaurant details —— ② Location & hours" progress header. */
 export function TwoStepHeader({ step, labels }: { step: 1 | 2; labels: [string, string] }) {
@@ -24,7 +24,7 @@ function Step({ n, label, state }: { n: number; label: string; state: 'current' 
           state === 'done' && { backgroundColor: colors.gold },
         ]}>
         {state === 'done' ? (
-          <MaterialCommunityIcons name="check" size={16} color={colors.onGold} />
+          <Icon name="check" size={16} color={colors.onGold} />
         ) : (
           <Text style={[styles.n, state === 'current' && { color: colors.gold }]}>{n}</Text>
         )}
