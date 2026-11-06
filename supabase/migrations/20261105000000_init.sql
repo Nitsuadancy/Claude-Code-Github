@@ -185,6 +185,17 @@ create table public.favorites (
   primary key (customer_id, restaurant_id)
 );
 
+-- Reviews people flag as abusive, false or not about a real order. The team
+-- checks each one within 24 hours (App Store guideline 1.2).
+create table public.review_reports (
+  id uuid primary key default gen_random_uuid(),
+  review_id uuid not null references public.reviews (id) on delete cascade,
+  reporter_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  reason text not null default '' check (char_length(reason) <= 280),
+  created_at timestamptz not null default now(),
+  unique (review_id, reporter_id)
+);
+
 -- ---------------------------------------------------------------------------
 -- Helpers
 -- ---------------------------------------------------------------------------
@@ -283,6 +294,7 @@ alter table public.order_lines enable row level security;
 alter table public.order_status_events enable row level security;
 alter table public.reviews enable row level security;
 alter table public.favorites enable row level security;
+alter table public.review_reports enable row level security;
 
 create policy "own profile" on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
@@ -335,10 +347,17 @@ create policy "status events follow orders" on public.order_status_events
   ));
 
 create policy "reviews of live kitchens are public" on public.reviews
-  for select using (exists (select 1 from public.restaurants r where r.id = restaurant_id and r.status = 'live'));
+  for select using (
+    public.is_admin() or exists (select 1 from public.restaurants r where r.id = restaurant_id and r.status = 'live')
+  );
 
 create policy "own favorites" on public.favorites
   for all using (customer_id = auth.uid()) with check (customer_id = auth.uid());
+
+create policy "people report reviews" on public.review_reports
+  for insert with check (reporter_id = auth.uid());
+create policy "reporters and admins read reports" on public.review_reports
+  for select using (reporter_id = auth.uid() or public.is_admin());
 
 -- ---------------------------------------------------------------------------
 -- Functions the app calls
@@ -547,6 +566,25 @@ begin
 end;
 $$;
 
+-- Admin: take down a review that breaks the rules, and take it out of the rating.
+create function public.remove_review(p_review_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  r public.reviews;
+begin
+  if not public.is_admin() then
+    raise exception 'Only the Manna team can remove reviews' using errcode = '42501';
+  end if;
+  delete from public.reviews where id = p_review_id returning * into r;
+  if not found then
+    raise exception 'Review not found';
+  end if;
+  update public.restaurants
+    set rating_sum = greatest(rating_sum - r.stars, 0), rating_count = greatest(rating_count - 1, 0)
+    where id = r.restaurant_id;
+end;
+$$;
+
 -- Deletes a person's account from inside the app (Apple requires this).
 -- Their details, favorites, kitchen listing, address and documents are
 -- removed; order and review records stay for the kitchens' bookkeeping,
@@ -561,6 +599,7 @@ begin
     raise exception 'Sign in first' using errcode = '42501';
   end if;
   delete from public.favorites where customer_id = me;
+  delete from public.review_reports where reporter_id = me;
   delete from public.restaurant_addresses a using public.restaurants r
     where a.restaurant_id = r.id and r.owner_id = me;
   delete from public.restaurant_documents d using public.restaurants r
@@ -588,6 +627,8 @@ grant execute on function public.set_order_status(uuid, public.order_status) to 
 grant execute on function public.set_chef_note(uuid, text) to authenticated;
 grant execute on function public.add_review(uuid, integer, text[], text) to authenticated;
 grant execute on function public.approve_restaurant(uuid) to authenticated;
+revoke all on function public.remove_review(uuid) from public;
+grant execute on function public.remove_review(uuid) to authenticated;
 revoke all on function public.delete_my_account() from public;
 grant execute on function public.delete_my_account() to authenticated;
 
@@ -598,3 +639,4 @@ grant insert, update, delete on public.profiles, public.restaurants, public.rest
 -- Signed-out visitors never need a kitchen's street address.
 revoke select on public.restaurant_addresses from anon;
 grant insert on public.grower_waitlist to anon, authenticated;
+grant insert on public.review_reports to authenticated;

@@ -41,8 +41,21 @@ export function RatingSummary({ restaurant }: { restaurant: Restaurant }) {
   );
 }
 
-/** A review. `wide` fills its column; otherwise it is sized for a horizontal row. */
-export function ReviewCard({ review, now, wide }: { review: Review; now: Date; wide?: boolean }) {
+/**
+ * A review. `wide` fills its column; otherwise it is sized for a horizontal row.
+ * With `onReport`, a quiet Report link lets people flag reviews that break the rules.
+ */
+export function ReviewCard({
+  review,
+  now,
+  wide,
+  onReport,
+}: {
+  review: Review;
+  now: Date;
+  wide?: boolean;
+  onReport?: () => void;
+}) {
   return (
     <View style={[styles.card, wide && styles.wide]}>
       <View style={styles.cardHeader}>
@@ -59,7 +72,18 @@ export function ReviewCard({ review, now, wide }: { review: Review; now: Date; w
           ))}
         </View>
       ) : null}
-      <Text style={styles.author}>— {review.customerName}</Text>
+      <View style={styles.cardFoot}>
+        <Text style={styles.author}>— {review.customerName}</Text>
+        {onReport ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Report review by ${review.customerName}`}
+            hitSlop={10}
+            onPress={onReport}>
+            <Text style={styles.report}>Report</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -180,6 +204,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   author: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
+  cardFoot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  report: { fontFamily: fonts.medium, fontSize: 12, color: colors.textFaint },
   backdrop: { flex: 1, backgroundColor: colors.overlay },
   sheet: {
     maxHeight: '90%',

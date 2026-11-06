@@ -105,9 +105,9 @@ export function useReviews(restaurantId: string | undefined): Review[] {
   return useMemo(
     () =>
       [...state.reviews, ...SAMPLE_REVIEWS]
-        .filter((r) => r.restaurantId === restaurantId)
+        .filter((r) => r.restaurantId === restaurantId && !state.reportedReviewIds.includes(r.id))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [state.reviews, restaurantId],
+    [state.reviews, state.reportedReviewIds, restaurantId],
   );
 }
 

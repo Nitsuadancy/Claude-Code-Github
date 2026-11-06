@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.mannaapp.manna",
       "supportsTablet": false,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Manna uses your photos so you can add your restaurant logo and food pictures."
+        "NSPhotoLibraryUsageDescription": "Manna uses your photos so you can add pictures of your kitchen and your food.",
+        "NSPhotoLibraryAddUsageDescription": "Manna saves your Instagram Story card to your photos when you choose Save Image."
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -44,7 +45,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Manna uses your photos so you can add your restaurant logo and food pictures."
+          "photosPermission": "Manna uses your photos so you can add pictures of your kitchen and your food."
         }
       ],
       "expo-font",
@@ -54,6 +55,6 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#0A0907"
+    "backgroundColor": "#0B0B0B"
   }
 }

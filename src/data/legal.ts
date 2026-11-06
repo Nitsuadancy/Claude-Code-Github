@@ -35,7 +35,7 @@ export const PRIVACY_POLICY: LegalDocument = {
       body: [
         '- Account details: your mobile number, name and email.',
         '- Preferences: your neighborhood, and the diets and allergens you choose to tell us about.',
-        '- Orders: what you order, from which kitchen, pickup times, notes to the chef, tips, and your reviews.',
+        '- Orders: what you order, from which kitchen, pickup times, notes to the chef, tips, your reviews and any reviews you report.',
         '- For kitchens: your kitchen details, menu, photos, pickup address, opening hours, and the documents you upload for verification, such as a food handler certificate and ID.',
         '- Payments: handled by our payment provider. Manna does not store full card numbers.',
         '- Device information: app version, device type and crash reports, so we can fix problems.',
@@ -142,7 +142,8 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'Reviews and content',
       body: [
-        'Reviews must be honest and about a real order. You keep ownership of what you post, and you allow Manna to show it in the app and to promote Manna. We may remove content that breaks these terms.',
+        'Reviews must be honest and about a real order. You keep ownership of what you post, and you allow Manna to show it in the app and to promote Manna.',
+        'Manna has no tolerance for abusive or objectionable content. Anyone can report a review from the app. We check every report within 24 hours, remove content that breaks these terms, and may close the account that posted it.',
       ],
     },
     {

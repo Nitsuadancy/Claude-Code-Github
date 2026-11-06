@@ -33,6 +33,8 @@ export interface AppState {
   dietNudgeDismissed: boolean;
   /** Set once someone on this device joins the Farmer & Artisan waitlist. */
   growerApplication: GrowerApplication | null;
+  /** Reviews this person reported. They are hidden here and sent to Manna's team to check. */
+  reportedReviewIds: string[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -54,6 +56,7 @@ export const INITIAL_STATE: AppState = {
   recentSearches: [],
   dietNudgeDismissed: false,
   growerApplication: null,
+  reportedReviewIds: [],
 };
 
 export type Action =
@@ -84,6 +87,7 @@ export type Action =
   | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
+  | { type: 'reportReview'; reviewId: string }
   | { type: 'markActivitySeen'; at: string }
   | { type: 'rememberSearch'; query: string }
   | { type: 'clearSearches' }
@@ -280,6 +284,10 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case 'clearSearches':
       return { ...state, recentSearches: [] };
+
+    case 'reportReview':
+      if (state.reportedReviewIds.includes(action.reviewId)) return state;
+      return { ...state, reportedReviewIds: [...state.reportedReviewIds, action.reviewId] };
 
     case 'markActivitySeen':
       return { ...state, activitySeenAt: action.at };

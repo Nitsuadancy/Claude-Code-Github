@@ -266,3 +266,13 @@ describe('editing a kitchen', () => {
     expect(storedKitchen({ ...state, user: null })).toBeUndefined();
   });
 });
+
+describe('reporting a review', () => {
+  it('remembers each report once and survives an old saved state without the field', () => {
+    let s = reducer(INITIAL_STATE, { type: 'hydrate', state: { recentSearches: ['jam'] } });
+    expect(s.reportedReviewIds).toEqual([]);
+    s = reducer(s, { type: 'reportReview', reviewId: 'r1' });
+    s = reducer(s, { type: 'reportReview', reviewId: 'r1' });
+    expect(s.reportedReviewIds).toEqual(['r1']);
+  });
+});

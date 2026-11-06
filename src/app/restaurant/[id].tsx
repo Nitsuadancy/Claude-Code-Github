@@ -317,7 +317,20 @@ export default function RestaurantDetail() {
               <View style={styles.reviews}>
                 <RatingSummary restaurant={restaurant} />
                 {reviews.slice(0, 20).map((r) => (
-                  <ReviewCard key={r.id} review={r} now={now} wide />
+                  <ReviewCard
+                    key={r.id}
+                    review={r}
+                    now={now}
+                    wide
+                    onReport={() =>
+                      confirmAction(
+                        'Report this review?',
+                        'Report reviews that are abusive, false or not about a real order. We hide it for you, and Manna’s team checks every report within 24 hours.',
+                        'Report',
+                        () => dispatch({ type: 'reportReview', reviewId: r.id }),
+                      )
+                    }
+                  />
                 ))}
               </View>
             ) : (

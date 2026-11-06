@@ -18,6 +18,7 @@ import {
   SectionHeader,
   TextField,
 } from '@/components/ui';
+import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
@@ -195,7 +196,19 @@ export default function ChefDashboard() {
               contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
               style={{ marginHorizontal: -spacing.lg }}>
               {reviews.slice(0, 5).map((r) => (
-                <ReviewCard key={r.id} review={r} now={new Date()} />
+                <ReviewCard
+                  key={r.id}
+                  review={r}
+                  now={new Date()}
+                  onReport={() =>
+                    confirmAction(
+                      'Report this review?',
+                      'Report reviews that are abusive, false or not about a real order. Manna’s team checks every report within 24 hours and removes reviews that break the rules.',
+                      'Report',
+                      () => dispatch({ type: 'reportReview', reviewId: r.id }),
+                    )
+                  }
+                />
               ))}
             </ScrollView>
           </>

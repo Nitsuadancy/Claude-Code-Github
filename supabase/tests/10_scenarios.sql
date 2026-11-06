@@ -147,6 +147,19 @@ select pg_temp.check((select customer_name = 'Bea F.' from public.reviews), 'rev
 select pg_temp.check((select rating_sum = 5 and rating_count = 1 from public.restaurants), 'rating updated');
 select pg_temp.expect_error($$ select public.add_review((select id from first_order), 4, '{}', 'Again') $$, 'duplicate key');
 
+-- Reporting and removing reviews -----------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+insert into public.review_reports (review_id, reason) values ((select id from public.reviews), 'Not a real order');
+select pg_temp.check((select count(*) = 1 from public.review_reports), 'reporter sees their report');
+select pg_temp.expect_error($$ insert into public.review_reports (review_id) values ((select id from public.reviews)) $$, 'duplicate key');
+select pg_temp.expect_error($$ select public.remove_review((select id from public.reviews)) $$, 'only the manna team');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select count(*) = 0 from public.review_reports), 'others cannot see who reported');
+select pg_temp.act_as(null);
+select pg_temp.expect_error($$ insert into public.review_reports (review_id) values ((select id from public.reviews)) $$, 'permission denied');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) = 1 from public.review_reports), 'admins see reports');
+
 -- Opening hours, including overnight shifts ----------------------------------
 reset role;
 update public.restaurants set working_days = array['thursday'], open_time = '20:00', close_time = '02:00';
@@ -169,5 +182,12 @@ select pg_temp.check((select status = 'draft' and not accepting_orders from publ
 select pg_temp.check((select count(*) = 0 from public.restaurant_addresses), 'address removed');
 select pg_temp.act_as(null);
 select pg_temp.expect_error($$ select public.delete_my_account() $$, 'permission denied');
+
+-- The team takes down a reported review ----------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select public.remove_review((select id from public.reviews));
+select pg_temp.check((select count(*) = 0 from public.reviews), 'review removed');
+select pg_temp.check((select count(*) = 0 from public.review_reports), 'its reports go with it');
+select pg_temp.check((select rating_sum = 0 and rating_count = 0 from public.restaurants), 'rating recomputed');
 
 select 'All Manna database checks passed' as result;

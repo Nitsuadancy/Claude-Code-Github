@@ -13,7 +13,8 @@ connected to it yet. The app still stores everything on the device (see
 | `restaurants`, `menu_items` | Kitchens and dishes. Customers only see kitchens that are **live**. |
 | `restaurant_documents` | Permits and certificates. Only the chef and the Manna team can see them. |
 | `orders`, `order_lines`, `order_status_events` | Orders, the dishes in them (with the price at the time), and the tracking timeline. |
-| `reviews`, `favorites` | One review per delivered order. Each customer's favorite kitchens. |
+| `reviews`, `favorites` | One review per picked-up order. Each customer's favorite kitchens. |
+| `review_reports` | Reviews people flag. Only the reporter and admins can read them; `remove_review()` takes a review down and out of the rating. |
 
 **Rules enforced by the database, not the app:**
 
