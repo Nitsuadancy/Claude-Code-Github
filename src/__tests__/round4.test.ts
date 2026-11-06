@@ -178,7 +178,7 @@ describe('menu sections', () => {
       [dish('cake', 'Desserts'), dish('soup'), dish('pasta', 'Mains'), dish('tea', 'Drinks'), dish('sig', 'Mains')],
       'sig',
     );
-    expect(groups.map((g) => g.title)).toEqual([null, 'Mains', 'Desserts', 'Drinks', 'More']);
+    expect(groups.map((g) => g.title)).toEqual([null, 'Mains', 'Desserts', 'Drinks', 'Also on the menu']);
     expect(groups[1].items.map((i) => i.id)).toEqual(['pasta']);
   });
 

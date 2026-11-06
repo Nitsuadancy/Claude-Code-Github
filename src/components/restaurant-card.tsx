@@ -9,7 +9,6 @@ import type { Restaurant } from '@/types';
 
 import { VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
-import { Badge } from './ui';
 import { Icon } from './icon';
 import { photoSource } from '@/lib/photo';
 
@@ -72,7 +71,18 @@ export function RestaurantCover({
   );
 }
 
-/** Full-width card for the "All Kitchens" feed. */
+/** "Jamaican · Bakery" from "Jamaican • Bakery". */
+function cuisineLine(r: Restaurant): string {
+  return r.cuisine.replace(/\s*•\s*/g, ' · ');
+}
+
+/** "Open now" or "Opens 10:00 AM", for the line under a kitchen's name. */
+function hoursLine(r: Restaurant, open: boolean): string {
+  if (open) return `Open · ready in ~${r.prepMinutes} min`;
+  return hasHours(r) ? `Opens ${formatTime(r.openTime)}` : 'Hours not set';
+}
+
+/** Feed entry: a photo, then the kitchen's name, the chef's byline and one line of facts. */
 export function RestaurantCard({
   restaurant,
   favorite,
@@ -91,68 +101,52 @@ export function RestaurantCard({
   // readers and browsers treat them as two separate controls.
   return (
     <View>
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, ${formatRating(restaurant, true)}, ${open ? 'open now' : 'closed'}`}
-      onPress={onPress}
-      style={styles.card}>
-      <View style={styles.coverWrap}>
-        <RestaurantCover restaurant={restaurant} style={styles.cover} />
-        <LinearGradient colors={['rgba(10,9,7,0.55)', 'transparent']} style={styles.coverFade} />
-        <View style={styles.coverTop}>
-          {open ? <Badge label="Open now" tone="success" onPhoto /> : <Badge label="Closed" tone="muted" onPhoto />}
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}, ${formatRating(restaurant, true)}, ${open ? 'open now' : 'closed'}`}
+        onPress={onPress}>
+        <View style={styles.coverWrap}>
+          <RestaurantCover restaurant={restaurant} style={styles.cover} />
         </View>
-      </View>
-      <View style={styles.info}>
-        <Text style={styles.cuisine} numberOfLines={1}>
-          {restaurant.cuisine}
-        </Text>
-        <View style={styles.nameRow}>
-          <Text style={[styles.name, { flexShrink: 1 }]} numberOfLines={1}>
-            {restaurant.name}
+        <View style={styles.info}>
+          <View style={styles.nameRow}>
+            <Text style={[styles.name, { flexShrink: 1 }]} numberOfLines={1}>
+              {restaurant.name}
+            </Text>
+            {restaurant.verified ? <VerifiedSeal /> : null}
+            {restaurant.hasOffer ? <Text style={styles.offer}>Offer</Text> : null}
+          </View>
+          <Text style={styles.byline} numberOfLines={1}>
+            {restaurant.chefName}
+            {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
           </Text>
-          {restaurant.verified ? <VerifiedSeal /> : null}
+          <View style={styles.metaRow}>
+            <Text style={[styles.meta, open && { color: colors.success }]} numberOfLines={1}>
+              {hoursLine(restaurant, open)}
+            </Text>
+            <Text style={styles.metaDot}>·</Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              {cuisineLine(restaurant)}
+            </Text>
+            <Text style={styles.metaDot}>·</Text>
+            <Icon name="star" size={11} color={colors.gold} />
+            <Text style={[styles.meta, styles.noShrink]}>{formatRating(restaurant)}</Text>
+          </View>
         </View>
-        <View style={styles.metaRow}>
-          <Icon name="star" size={14} color={colors.gold} />
-          <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {open
-              ? `~${restaurant.prepMinutes} min`
-              : hasHours(restaurant)
-                ? `Opens ${formatTime(restaurant.openTime)}`
-                : 'Hours not set'}
-          </Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            by {restaurant.chefName}
-          </Text>
-          {restaurant.hasOffer ? (
-            <View style={{ marginLeft: 'auto' }}>
-              <Badge label="Offer" />
-            </View>
-          ) : null}
-        </View>
-      </View>
-    </PressableScale>
+      </PressableScale>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={favorite ? `Remove ${restaurant.name} from favorites` : `Add ${restaurant.name} to favorites`}
         hitSlop={10}
         onPress={onToggleFavorite}
         style={[styles.heart, styles.heartPosition]}>
-        <Icon
-          name={favorite ? 'heart' : 'heart-outline'}
-          size={20}
-          color={favorite ? colors.gold : colors.ivory}
-        />
+        <Icon name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.gold : colors.ivory} />
       </Pressable>
     </View>
   );
 }
 
-/** Tall card for the horizontal "Tonight's table" carousel. */
+/** Portrait photo with the name beneath, for the horizontal "Tonight’s table" row. */
 export function FeaturedCard({
   restaurant,
   onPress,
@@ -167,80 +161,55 @@ export function FeaturedCard({
       accessibilityRole="button"
       accessibilityLabel={`${restaurant.name}, ${restaurant.cuisine}`}
       onPress={onPress}
-      style={[styles.featured, { width }]}>
-      <RestaurantCover restaurant={restaurant} style={StyleSheet.absoluteFill} monogramSize={88} />
-      <LinearGradient colors={['transparent', 'rgba(10,9,7,0.95)']} style={styles.featuredFade} />
-      <View style={styles.featuredInfo}>
-        <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
-        <View style={styles.nameRow}>
-          <Text style={[styles.name, { fontSize: 22, flexShrink: 1 }]} numberOfLines={2}>
-            {restaurant.name}
-          </Text>
-          {restaurant.verified ? <VerifiedSeal /> : null}
-        </View>
-        <View style={styles.metaRow}>
-          <Icon name="star" size={14} color={colors.gold} />
-          <Text style={[styles.meta, styles.noShrink]} numberOfLines={1}>{formatRating(restaurant)}</Text>
-          <Text style={styles.metaDot}>·</Text>
-          <Text style={styles.meta}>~{restaurant.prepMinutes} min</Text>
-        </View>
+      style={{ width, gap: spacing.sm + 2 }}>
+      <View style={[styles.coverWrap, { width, height: width * 1.25 }]}>
+        <RestaurantCover restaurant={restaurant} style={StyleSheet.absoluteFill} monogramSize={80} />
+      </View>
+      <View style={{ gap: 3 }}>
+        <Text style={[styles.name, { fontSize: 19 }]} numberOfLines={1}>
+          {restaurant.name}
+        </Text>
+        <Text style={styles.byline} numberOfLines={1}>
+          {restaurant.chefName}
+          {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
+        </Text>
       </View>
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  // Feed cards are photo-led: no box, just an image with rounded corners and text beneath.
-  card: {},
-  coverWrap: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surface },
-  cover: { width: '100%', aspectRatio: 16 / 9 },
-  coverFade: { position: 'absolute', left: 0, right: 0, top: 0, height: '45%' },
-  coverTop: {
-    position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
-    right: spacing.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  heartPosition: { position: 'absolute', top: spacing.md - 6, right: spacing.md },
+  // Feed entries are photo-led: no box, just an image and type beneath it.
+  coverWrap: { borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface },
+  cover: { width: '100%', aspectRatio: 3 / 2 },
+  heartPosition: { position: 'absolute', top: spacing.sm + 2, right: spacing.sm + 2 },
   heart: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(10,9,7,0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,245,224,0.18)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(10,9,7,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   monogramWrap: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   seal: { borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   monogram: { fontFamily: fonts.display, color: colors.gold },
-  info: { paddingHorizontal: 2, paddingTop: spacing.sm + 4, gap: 4 },
-  cuisine: {
-    fontFamily: fonts.semibold,
-    fontSize: 10,
-    letterSpacing: 1.8,
-    textTransform: 'uppercase',
-    color: colors.gold,
-  },
-  name: { fontFamily: fonts.display, fontSize: 24, color: colors.ivory },
+  info: { paddingTop: spacing.md - 2, gap: 3 },
+  name: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, flexShrink: 1 },
-  metaDot: { color: colors.textFaint, fontSize: 12 },
-  noShrink: { flexShrink: 0 },
-  featured: {
-    height: 250,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    backgroundColor: colors.surface,
+  byline: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.gold },
+  offer: {
+    marginLeft: 'auto',
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: colors.gold,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.goldDeep,
   },
-  featuredFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '65%' },
-  featuredInfo: { padding: spacing.md, gap: 4 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
+  meta: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, flexShrink: 1 },
+  metaDot: { color: colors.textFaint, fontSize: 13 },
+  noShrink: { flexShrink: 0 },
 });
 
 /**

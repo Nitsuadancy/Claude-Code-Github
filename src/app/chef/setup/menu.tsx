@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   thumb: { width: 52, height: 52, borderRadius: radius.sm },
-  itemName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  itemName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   itemPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
   itemMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },

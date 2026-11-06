@@ -81,6 +81,17 @@ export function isOpenAt(schedule: Schedule, now: Date): boolean {
   return false;
 }
 
+/** "Every day", "Tue–Sun" for a run of days, or "Mon, Wed, Fri". */
+export function formatDays(days: Weekday[]): string {
+  const idx = WEEKDAYS.map((d, i) => (days.includes(d) ? i : -1)).filter((i) => i >= 0);
+  if (idx.length === 0) return 'No days set';
+  if (idx.length === 7) return 'Every day';
+  const short = (i: number) => capitalize(WEEKDAYS[i]).slice(0, 3);
+  const consecutive = idx.every((v, k) => k === 0 || v === idx[k - 1] + 1);
+  if (consecutive && idx.length >= 3) return `${short(idx[0])}–${short(idx[idx.length - 1])}`;
+  return idx.map(short).join(', ');
+}
+
 export function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }

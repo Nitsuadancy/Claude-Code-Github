@@ -1,14 +1,12 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import type { Collection } from '@/data/collections';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { colors, fonts, spacing } from '@/theme';
 
-import { PressableScale } from './motion';
 import { CraftIcon } from './craft-icon';
+import { PressableScale } from './motion';
 
-
-/** Magazine-style tile for an editorial collection. */
+/** An editorial collection: a fine rule, its craft icon, a title and a line of italic. */
 export function CollectionCard({
   collection,
   count,
@@ -24,49 +22,27 @@ export function CollectionCard({
       accessibilityLabel={`${collection.title}. ${collection.tagline} ${count} kitchens`}
       onPress={onPress}
       style={styles.card}>
-      <LinearGradient colors={['#2A2214', '#100D08']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <View style={styles.icon}>
-        <CraftIcon name={collection.icon} size={22} color={colors.gold} />
-      </View>
-      <View style={{ gap: 4 }}>
-        <Text style={styles.eyebrow}>
-          Collection · {count} {count === 1 ? 'kitchen' : 'kitchens'}
-        </Text>
-        <Text style={styles.title}>{collection.title}</Text>
-        <Text style={styles.tagline} numberOfLines={2}>
-          {collection.tagline}
-        </Text>
-      </View>
+      <CraftIcon name={collection.icon} size={26} color={colors.gold} />
+      <Text style={styles.title}>{collection.title}</Text>
+      <Text style={styles.tagline} numberOfLines={2}>
+        {collection.tagline}
+      </Text>
+      <Text style={styles.count}>
+        {count} {count === 1 ? 'kitchen' : 'kitchens'}
+      </Text>
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 230,
-    height: 200,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    padding: spacing.md,
-    justifyContent: 'space-between',
+    width: 196,
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderStrong,
   },
-  icon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(10,9,7,0.5)',
-  },
-  eyebrow: {
-    fontFamily: fonts.semibold,
-    fontSize: 9,
-    letterSpacing: 1.8,
-    textTransform: 'uppercase',
-    color: colors.gold,
-  },
-  title: { fontFamily: fonts.display, fontSize: 28, color: colors.ivory },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 21, color: colors.textMuted },
+  title: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, marginTop: spacing.xs },
+  tagline: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 20, color: colors.textMuted },
+  count: { fontFamily: fonts.medium, fontSize: 12, color: colors.gold },
 });

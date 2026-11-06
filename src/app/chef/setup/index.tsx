@@ -132,6 +132,6 @@ const styles = StyleSheet.create({
     marginTop: -spacing.sm,
   },
   stepHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepTitle: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory, flexShrink: 1 },
+  stepTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, flexShrink: 1 },
   edit: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold, letterSpacing: 0.5 },
 });

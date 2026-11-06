@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     backgroundColor: colors.surfaceRaised,
   },
-  title: { fontFamily: fonts.display, fontSize: 26, lineHeight: 30, color: colors.ivory },
+  title: { fontFamily: fonts.display, fontSize: 22, lineHeight: 26, color: colors.ivory },
   message: { fontFamily: fonts.body, fontSize: 14, lineHeight: 21, color: colors.textMuted },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
 });

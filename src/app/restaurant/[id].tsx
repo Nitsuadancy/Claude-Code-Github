@@ -13,18 +13,15 @@ import { RatingSummary, ReviewCard } from '@/components/reviews';
 import { CoverGallery, formatRating, isOpenNow } from '@/components/restaurant-card';
 import {
   BackButton,
-  Badge,
   Body,
-  Eyebrow,
   GoldButton,
-  GoldRule,
   Heading,
   type IconName,
   Screen,
 } from '@/components/ui';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
-import { capitalize, formatTime, WEEKDAYS } from '@/lib/hours';
+import { formatDays, formatTime } from '@/lib/hours';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
@@ -97,9 +94,7 @@ export default function RestaurantDetail() {
     doAdd();
   };
 
-  const days = WEEKDAYS.filter((d) => restaurant.workingDays.includes(d))
-    .map((d) => capitalize(d).slice(0, 3))
-    .join(' · ');
+  const days = formatDays(restaurant.workingDays);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -123,28 +118,30 @@ export default function RestaurantDetail() {
         <View style={styles.body}>
           <View style={styles.titleRow}>
             {restaurant.logoUri ? <Image source={photoSource(restaurant.logoUri)} style={styles.logo} /> : null}
-            <View style={{ flex: 1, gap: 4 }}>
-              <Eyebrow>{restaurant.cuisine}</Eyebrow>
+            <View style={{ flex: 1, gap: 6 }}>
               <View style={styles.nameRow}>
-                <Heading size={32} style={{ flexShrink: 1 }}>
+                <Heading size={34} style={{ flexShrink: 1 }}>
                   {restaurant.name}
                 </Heading>
-                {restaurant.verified ? <VerifiedSeal size={20} /> : null}
+                {restaurant.verified ? <VerifiedSeal size={18} /> : null}
               </View>
-              <Text style={styles.chef}>by {restaurant.chefName}</Text>
+              <Text style={styles.chef}>
+                {restaurant.chefName}
+                {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
+              </Text>
             </View>
           </View>
 
           <View style={styles.facts}>
+            <Text style={styles.factText}>{restaurant.cuisine.replace(/\s*•\s*/g, ' · ')}</Text>
             <Fact icon="star" label={formatRating(restaurant)} />
-            <View style={styles.factDivider} />
-            <Fact icon="timer-sand" label={`~${restaurant.prepMinutes} min`} />
-            <View style={styles.factDivider} />
-            <Badge label={open ? 'Open now' : 'Closed'} tone={open ? 'success' : 'muted'} />
+            <Text style={[styles.factText, { color: open ? colors.success : colors.textMuted }]}>
+              {open ? `Open · ready in ~${restaurant.prepMinutes} min` : 'Closed now'}
+            </Text>
           </View>
           <Text style={styles.days}>
-            {restaurant.neighborhood ? `Pickup in ${restaurant.neighborhood} · ` : ''}
-            {days} · {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
+            {days}, {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
+            {restaurant.neighborhood ? ` · Pickup in ${restaurant.neighborhood}` : ''}
           </Text>
 
           {isPreview ? (
@@ -163,8 +160,9 @@ export default function RestaurantDetail() {
           {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
 
           <View style={styles.menuHeader}>
-            <Eyebrow>The menu</Eyebrow>
-            <GoldRule width={28} />
+            <View style={styles.menuRule} />
+            <Text style={styles.menuTitle}>Menu</Text>
+            <View style={styles.menuRule} />
           </View>
           {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
           {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
@@ -177,49 +175,31 @@ export default function RestaurantDetail() {
             const atLimit = left !== null && q >= left;
             const signature = item.id === restaurant.signatureItemId;
             return (
-              <View
-                key={item.id}
-                style={[styles.item, signature && styles.signature, soldOut && { opacity: 0.5 }]}>
+              <View key={item.id} style={[styles.item, soldOut && { opacity: 0.5 }]}>
                 {/* Details and the add buttons are separate controls, not nested ones. */}
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
                   onPress={() => setOpenItemId(item.id)}
-                  style={({ pressed }) => [{ flex: 1, gap: 6 }, pressed && { opacity: 0.7 }]}>
-                  {signature ? (
-                    <View style={styles.signatureLabel}>
-                      <Icon name="star-four-points" size={11} color={colors.gold} />
-                      <Eyebrow style={{ fontSize: 10 }}>Signature</Eyebrow>
-                    </View>
-                  ) : null}
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  {item.description ? (
-                    <Body muted numberOfLines={2} style={{ fontSize: 13, lineHeight: 19 }}>
-                      {item.description}
-                    </Body>
-                  ) : null}
-                  <View style={styles.itemMeta}>
-                    <Text style={styles.price}>
-                      {item.available ? formatCents(item.priceCents) : 'Unavailable'}
+                  style={({ pressed }) => [{ gap: 4 }, pressed && { opacity: 0.7 }]}>
+                  {signature ? <Text style={styles.signatureLabel}>The chef’s signature</Text> : null}
+                  <View style={styles.nameLine}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.leader} numberOfLines={1} ellipsizeMode="clip" accessible={false}>
+                      {LEADER}
                     </Text>
-                    <DietaryIcons tags={item.dietary} />
+                    <Text style={styles.price}>{item.available ? menuPrice(item.priceCents) : 'Unavailable'}</Text>
                   </View>
-                  <StockNote remaining={item.available ? left : null} />
+                  {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
                   <DietNote item={item} profile={diet} />
                 </Pressable>
-
-                <View style={styles.thumbWrap}>
-                  {item.photoUri ? (
-                    <Pressable
-                      accessibilityRole="imagebutton"
-                      accessibilityLabel={`Photo of ${item.name}. Show details`}
-                      onPress={() => setOpenItemId(item.id)}>
-                      <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
-                    </Pressable>
-                  ) : null}
+                <View style={styles.itemFoot}>
+                  <DietaryIcons tags={item.dietary} />
+                  <StockNote remaining={item.available ? left : null} />
+                  <View style={{ flex: 1 }} />
                   {canOrder && !soldOut ? (
                     q > 0 ? (
-                      <View style={[styles.stepper, item.photoUri && styles.onThumb]}>
+                      <View style={styles.stepper}>
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel={`Remove one ${item.name}`}
@@ -227,8 +207,8 @@ export default function RestaurantDetail() {
                             haptics.tap();
                             dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 });
                           }}
-                          hitSlop={8}>
-                          <Icon name="minus" size={16} color={colors.gold} />
+                          hitSlop={10}>
+                          <Icon name="minus" size={15} color={colors.gold} />
                         </Pressable>
                         <Text style={styles.qty}>{q}</Text>
                         <Pressable
@@ -236,12 +216,8 @@ export default function RestaurantDetail() {
                           accessibilityLabel={`Add one ${item.name}`}
                           disabled={atLimit}
                           onPress={() => add(item)}
-                          hitSlop={8}>
-                          <Icon
-                            name="plus"
-                            size={16}
-                            color={atLimit ? colors.textFaint : colors.gold}
-                          />
+                          hitSlop={10}>
+                          <Icon name="plus" size={15} color={atLimit ? colors.textFaint : colors.gold} />
                         </Pressable>
                       </View>
                     ) : (
@@ -249,12 +225,10 @@ export default function RestaurantDetail() {
                         accessibilityRole="button"
                         accessibilityLabel={`Add ${item.name} to cart`}
                         onPress={() => add(item)}
-                        style={({ pressed }) => [
-                          styles.addButton,
-                          item.photoUri && styles.onThumb,
-                          pressed && { backgroundColor: colors.gold },
-                        ]}>
-                        <Icon name="plus" size={20} color={colors.gold} />
+                        hitSlop={8}
+                        style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.6 }]}>
+                        <Icon name="plus" size={14} color={colors.gold} />
+                        <Text style={styles.addText}>Add</Text>
                       </Pressable>
                     )
                   ) : null}
@@ -267,10 +241,7 @@ export default function RestaurantDetail() {
 
           {reviews.length ? (
             <View style={styles.reviews}>
-              <View style={styles.menuHeader}>
-                <Eyebrow>What neighbors say</Eyebrow>
-                <GoldRule width={28} />
-              </View>
+              <Heading size={24}>What neighbors say</Heading>
               <RatingSummary restaurant={restaurant} />
               <ScrollView
                 horizontal
@@ -283,6 +254,10 @@ export default function RestaurantDetail() {
               </ScrollView>
             </View>
           ) : null}
+          <Text style={styles.finePrint}>
+            Made in a cottage food operation that is not subject to Florida’s food safety regulations. Tell{' '}
+            {restaurant.chefName.replace(/\.$/, '')} about allergies in your order note.
+          </Text>
         </View>
       </Animated.ScrollView>
 
@@ -356,10 +331,18 @@ export default function RestaurantDetail() {
   );
 }
 
+/** Dot leaders between a dish and its price, as on a printed menu. Clipped to fit. */
+const LEADER = ' . '.repeat(60);
+
+/** Menu prices without the dollar sign: "28" or "15.99". */
+function menuPrice(cents: number): string {
+  return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
+}
+
 function Fact({ icon, label }: { icon: IconName; label: string }) {
   return (
     <View style={styles.fact}>
-      <Icon name={icon} size={15} color={colors.gold} />
+      <Icon name={icon} size={13} color={colors.gold} />
       <Text style={styles.factText}>{label}</Text>
     </View>
   );
@@ -368,8 +351,8 @@ function Fact({ icon, label }: { icon: IconName; label: string }) {
 function Notice({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={styles.notice}>
-      <Icon name={icon} size={18} color={colors.gold} />
-      <Body style={{ flex: 1, fontSize: 14 }}>{text}</Body>
+      <Icon name={icon} size={16} color={colors.gold} />
+      <Text style={styles.noticeText}>{text}</Text>
     </View>
   );
 }
@@ -389,7 +372,7 @@ const styles = StyleSheet.create({
     paddingLeft: 72,
     paddingRight: 120,
   },
-  stickyTitle: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
+  stickyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   heroBar: {
     position: 'absolute',
     left: spacing.lg,
@@ -401,9 +384,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'rgba(20, 18, 14, 0.85)',
+    backgroundColor: 'rgba(10, 9, 7, 0.62)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -411,83 +392,62 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   logo: { width: 64, height: 64, borderRadius: radius.md, borderWidth: 1, borderColor: colors.hairline },
-  chef: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.textMuted },
-  facts: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    flexWrap: 'wrap',
-  },
-  fact: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chef: { fontFamily: fonts.displayItalic, fontSize: 19, color: colors.gold },
+  facts: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap', marginTop: spacing.xs },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
-  factDivider: { width: 1, height: 14, backgroundColor: colors.border },
-  days: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, letterSpacing: 0.4, marginTop: -spacing.sm },
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.goldTint,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    padding: spacing.md,
-    borderRadius: radius.md,
-  },
-  menuHeader: { gap: spacing.sm, marginTop: spacing.md },
+  days: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, marginTop: -spacing.sm },
+  notice: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  noticeText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 22, color: colors.text },
+  menuHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
+  menuRule: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.borderStrong },
+  menuTitle: { fontFamily: fonts.display, fontSize: 26, color: colors.ivory },
   sectionTitle: {
-    fontFamily: fonts.display,
-    fontSize: 23,
-    color: colors.ivory,
+    fontFamily: fonts.displayItalic,
+    fontSize: 19,
+    color: colors.gold,
+    textAlign: 'center',
     marginTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.hairline,
+    marginBottom: spacing.xs,
   },
   reviews: { gap: spacing.md, marginTop: spacing.lg },
-  item: {
+  item: { gap: spacing.sm, paddingVertical: spacing.md },
+  signatureLabel: { fontFamily: fonts.displayItalic, fontSize: 15, color: colors.gold },
+  nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
+  itemName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, flexShrink: 1 },
+  leader: { flex: 1, minWidth: 16, fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, overflow: 'hidden' },
+  price: { fontFamily: fonts.medium, fontSize: 16, color: colors.ivory },
+  description: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 22, color: colors.textMuted, paddingRight: spacing.xl },
+  itemFoot: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 32 },
+  addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md + 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  signature: {
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.sm,
+  },
+  addText: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold },
+  finePrint: {
+    fontFamily: fonts.displayItalic,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textFaint,
+    textAlign: 'center',
+    marginTop: spacing.xl,
     paddingHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  signatureLabel: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  itemName: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
-  itemMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  price: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold, letterSpacing: 0.4 },
-  thumbWrap: { alignItems: 'center', justifyContent: 'center', minWidth: 44 },
-  thumb: { width: 96, height: 96, borderRadius: radius.md },
-  onThumb: { position: 'absolute', bottom: -10, backgroundColor: colors.surface },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm + 2,
+    gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.gold,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm + 4,
-    minHeight: 40,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 34,
   },
   qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory, minWidth: 12, textAlign: 'center' },
   footer: {

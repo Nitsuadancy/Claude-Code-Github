@@ -77,7 +77,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       dish({
         id: 'cp_loaf',
         photoUri: 'demo:country-loaf',
-        section: 'Bread',
+        section: 'Breads',
         name: 'Rustic Country Loaf',
         description: 'Naturally leavened over three days, with a deep, crackling crust.',
         priceCents: 1100,

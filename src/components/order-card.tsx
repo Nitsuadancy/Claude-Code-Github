@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { formatCents } from '@/lib/money';
-import { formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import { formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL, orderNumber } from '@/lib/orders';
 import { formatSlot } from '@/lib/schedule';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order } from '@/types';
@@ -39,6 +39,7 @@ export function OrderCard({
     <View style={[styles.card, active && { borderColor: colors.hairline }]}>
       <View style={styles.header}>
         <View style={{ flex: 1, gap: 2 }}>
+          <Text style={styles.number}>No. {orderNumber(order.id)}</Text>
           <Text style={[styles.status, { color: statusColor }]}>{ORDER_STATUS_LABEL[order.status]}</Text>
           <Text style={styles.title} numberOfLines={1}>
             {title}
@@ -76,20 +77,16 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     padding: spacing.md + 2,
     gap: spacing.sm + 2,
     backgroundColor: colors.surface,
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  title: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory },
-  total: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
-  status: {
-    fontFamily: fonts.semibold,
-    fontSize: 10,
-    letterSpacing: 1.8,
-    textTransform: 'uppercase',
-  },
+  title: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  total: { fontFamily: fonts.mono, fontSize: 14, color: colors.ivory },
+  number: { fontFamily: fonts.mono, fontSize: 11, color: colors.textFaint },
+  status: { fontFamily: fonts.medium, fontSize: 13 },
   progress: { flexDirection: 'row', gap: 4 },
   scheduled: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   request: {
@@ -97,12 +94,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.sm,
     padding: spacing.sm + 2,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.goldTint,
+    borderLeftWidth: 0,
   },
-  requestText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 23, color: colors.ivory },
+  requestText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 14, lineHeight: 21, color: colors.ivory },
   scheduledText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
   segment: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.border },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint },

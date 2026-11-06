@@ -6,19 +6,18 @@ import { ChefAvatar } from '@/components/chef';
 import { Pulse } from '@/components/motion';
 import { OrderCelebration } from '@/components/order-celebration';
 import { RateOrderSheet, Stars } from '@/components/reviews';
+import { Ticket } from '@/components/ticket';
 import {
   BackButton,
   Body,
   Card,
-  Divider,
   Eyebrow,
   GoldButton,
   Heading,
   Screen,
 } from '@/components/ui';
 import * as haptics from '@/lib/haptics';
-import { formatCents } from '@/lib/money';
-import { formatClock, isActive, isAddressShared, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import { formatClock, formatOrderTime, isActive, isAddressShared, orderNumber, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
 import { publicName } from '@/lib/reviews';
 import { formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
@@ -63,7 +62,9 @@ export default function OrderTracking() {
         />
 
         <View style={styles.header}>
-          <Eyebrow>{order.restaurantName}</Eyebrow>
+          <Text style={styles.ticketNo}>
+            No. {orderNumber(order.id)} · {order.restaurantName}
+          </Text>
           <Heading size={30}>{ORDER_HEADLINE[order.status]}</Heading>
           {isActive(order.status) ? (
             <View style={styles.eta}>
@@ -146,52 +147,29 @@ export default function OrderTracking() {
           </View>
         ) : null}
 
-        <Card>
-          <Eyebrow>Your order</Eyebrow>
-          {order.lines.map((l) => (
-            <View key={l.itemId} style={styles.row}>
-              <Text style={styles.line1}>
-                {l.quantity} × {l.name}
-              </Text>
-              <Text style={styles.line1}>{formatCents(l.priceCents * l.quantity)}</Text>
+        <Ticket
+          heading={`No. ${orderNumber(order.id)} · ${formatOrderTime(order.createdAt)}`}
+          items={order.lines.map((l) => ({ label: `${l.quantity} × ${l.name}`, cents: l.priceCents * l.quantity }))}
+          charges={[
+            { label: 'Subtotal', cents: order.subtotalCents },
+            { label: 'Movement fee', cents: order.movementFeeCents },
+            ...(order.deliveryFeeCents ? [{ label: 'Delivery', cents: order.deliveryFeeCents }] : []),
+            ...(order.tipCents ? [{ label: `Tip for ${chefName}`, cents: order.tipCents }] : []),
+          ]}
+          totalCents={order.totalCents}
+          footer={
+            <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
+              <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
+              <Body muted style={{ flex: 1, fontSize: 13 }}>
+                {isAddressShared(order.status) && order.pickupAddress
+                  ? `Pick up at ${order.pickupAddress}`
+                  : order.status === 'declined'
+                    ? 'No pickup needed.'
+                    : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
+              </Body>
             </View>
-          ))}
-          <Divider style={{ marginVertical: spacing.xs }} />
-          <View style={styles.row}>
-            <Text style={styles.fee}>Subtotal</Text>
-            <Text style={styles.fee}>{formatCents(order.subtotalCents)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.fee}>Movement fee</Text>
-            <Text style={styles.fee}>{formatCents(order.movementFeeCents)}</Text>
-          </View>
-          {order.deliveryFeeCents ? (
-            <View style={styles.row}>
-              <Text style={styles.fee}>Delivery</Text>
-              <Text style={styles.fee}>{formatCents(order.deliveryFeeCents)}</Text>
-            </View>
-          ) : null}
-          {order.tipCents ? (
-            <View style={styles.row}>
-              <Text style={styles.fee}>Tip for {chefName}</Text>
-              <Text style={styles.fee}>{formatCents(order.tipCents)}</Text>
-            </View>
-          ) : null}
-          <View style={styles.row}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCents(order.totalCents)}</Text>
-          </View>
-          <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.xs }]}>
-            <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
-            <Body muted style={{ flex: 1, fontSize: 13 }}>
-              {isAddressShared(order.status) && order.pickupAddress
-                ? `Pick up at ${order.pickupAddress}`
-                : order.status === 'declined'
-                  ? 'No pickup needed.'
-                  : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
-            </Body>
-          </View>
-        </Card>
+          }
+        />
 
         {restaurant ? (
           <GoldButton
@@ -233,6 +211,7 @@ export default function OrderTracking() {
 }
 
 const styles = StyleSheet.create({
+  ticketNo: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 0.4, color: colors.textMuted },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   header: { gap: spacing.sm, marginTop: spacing.sm },
   eta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -274,13 +253,13 @@ const styles = StyleSheet.create({
     borderColor: colors.gold,
     backgroundColor: colors.goldTint,
   },
-  rateTitle: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
+  rateTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   thanks: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   thanksText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
-  noteText: { fontFamily: fonts.displayItalic, fontSize: 18, lineHeight: 28, color: colors.ivory },
+  noteText: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 26, color: colors.ivory },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
   fee: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
-  totalLabel: { fontFamily: fonts.display, fontSize: 21, color: colors.ivory },
+  totalLabel: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   totalValue: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
 });

@@ -1,7 +1,8 @@
 import type { MenuItem } from '@/types';
 
 /** Sections chefs can file dishes under, in the order they appear on the menu. */
-export const MENU_SECTIONS = ['Specials', 'Mains', 'Sides', 'Desserts', 'Drinks'] as const;
+/** In menu order. The first six suit cottage kitchens; the rest are for licensed kitchens later. */
+export const MENU_SECTIONS = ['Specials', 'Breads', 'Pastries', 'Cakes', 'Cookies', 'Pantry', 'Mains', 'Sides', 'Desserts', 'Drinks'] as const;
 
 export interface MenuGroup {
   title: string | null;
@@ -27,7 +28,7 @@ export function groupMenu(menu: MenuItem[], signatureItemId?: string): MenuGroup
     if (items.length) groups.push({ title: section, items });
   }
   const unfiled = rest.filter((m) => !m.section || !(MENU_SECTIONS as readonly string[]).includes(m.section));
-  if (unfiled.length) groups.push({ title: 'More', items: unfiled });
+  if (unfiled.length) groups.push({ title: 'Also on the menu', items: unfiled });
   return groups;
 }
 

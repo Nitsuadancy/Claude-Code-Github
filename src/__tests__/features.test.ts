@@ -4,7 +4,8 @@ import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { allergenSentence } from '@/lib/dietary';
 import { remainingToday, soldToday, stockLabel } from '@/lib/limits';
 import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/migrate';
-import { estimateReadyAt, isAddressShared } from '@/lib/orders';
+import { formatDays } from '@/lib/hours';
+import { estimateReadyAt, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
 import { INITIAL_STATE, reducer } from '@/state/reducer';
 import type { Order, Restaurant } from '@/types';
@@ -170,5 +171,23 @@ describe('farmer and artisan waitlist', () => {
     expect(INITIAL_STATE.growerApplication).toBeNull();
     const s = reducer(INITIAL_STATE, { type: 'joinGrowerWaitlist', application });
     expect(s.growerApplication).toEqual(application);
+  });
+});
+
+describe('opening days', () => {
+  it('reads like a menu card', () => {
+    expect(formatDays(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])).toBe('Every day');
+    expect(formatDays(['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])).toBe('Tue–Sun');
+    expect(formatDays(['thursday', 'friday', 'saturday'])).toBe('Thu–Sat');
+    expect(formatDays(['monday', 'wednesday', 'friday'])).toBe('Mon, Wed, Fri');
+    expect(formatDays(['friday', 'saturday'])).toBe('Fri, Sat');
+  });
+});
+
+describe('order numbers', () => {
+  it('are four digits and stable for an order', () => {
+    expect(orderNumber('order_abc123')).toMatch(/^\d{4}$/);
+    expect(orderNumber('order_abc123')).toBe(orderNumber('order_abc123'));
+    expect(orderNumber('order_abc123')).not.toBe(orderNumber('order_abc124'));
   });
 });

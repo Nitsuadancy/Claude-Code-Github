@@ -15,10 +15,10 @@ const TAB_META: Record<string, { label: string; icon: IconName; activeIcon: Icon
   profile: { label: 'Profile', icon: 'account-outline', activeIcon: 'account' },
 };
 
-/** Height the floating bar occupies, so screens can pad their scroll content. */
-export const TAB_BAR_SPACE = 110;
+/** Height the bar occupies, so screens can pad their scroll content. */
+export const TAB_BAR_SPACE = 96;
 
-/** Floating dark-glass tab bar with a fine gold outline. */
+/** Edge-to-edge bar under a hairline; the current tab gets a short gold rule above it. */
 export function MannaTabBar({
   state,
   emitter,
@@ -29,8 +29,8 @@ export function MannaTabBar({
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-      <View style={styles.bar}>
+      style={styles.wrap}>
+      <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
         {Platform.OS === 'ios' ? (
           <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
         ) : null}
@@ -55,10 +55,11 @@ export function MannaTabBar({
               accessibilityLabel={badge ? `${meta.label}, ${badge} items` : meta.label}
               onPress={onPress}
               style={styles.item}>
+              <View style={[styles.indicator, focused && { backgroundColor: colors.gold }]} />
               <View>
                 <Icon
                   name={focused ? meta.activeIcon : meta.icon}
-                  size={24}
+                  size={22}
                   color={focused ? colors.gold : colors.textMuted}
                 />
                 {badge > 0 ? (
@@ -72,7 +73,6 @@ export function MannaTabBar({
                 style={[styles.label, { color: focused ? colors.ivory : colors.textMuted }]}>
                 {meta.label}
               </Text>
-              <View style={[styles.indicator, focused && { backgroundColor: colors.gold }]} />
             </Pressable>
           );
         })}
@@ -82,32 +82,24 @@ export function MannaTabBar({
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.md },
+  wrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bar: {
     flexDirection: 'row',
     overflow: 'hidden',
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(20,18,14,0.72)' : 'rgba(20,18,14,0.97)',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    paddingTop: 10,
-    paddingBottom: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(10,9,7,0.82)' : colors.bg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.borderStrong,
   },
-  item: { flex: 1, alignItems: 'center', gap: 3, minHeight: 50, justifyContent: 'center' },
-  label: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 0.4 },
-  indicator: { width: 4, height: 4, borderRadius: 2, marginTop: 2, backgroundColor: 'transparent' },
+  item: { flex: 1, alignItems: 'center', gap: 4, minHeight: 56 },
+  label: { fontFamily: fonts.medium, fontSize: 11 },
+  indicator: { width: 22, height: 2, marginBottom: 8, backgroundColor: 'transparent' },
   badge: {
     position: 'absolute',
     top: -4,
     right: -10,
     minWidth: 17,
     height: 17,
-    borderRadius: 9,
+    borderRadius: radius.pill,
     paddingHorizontal: 4,
     backgroundColor: colors.gold,
     alignItems: 'center',

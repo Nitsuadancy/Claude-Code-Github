@@ -2,10 +2,9 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, radius, spacing } from '@/theme';
+import { colors, fonts, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
-import { Eyebrow } from './ui';
 import { Icon } from './icon';
 import { photoSource } from '@/lib/photo';
 
@@ -49,39 +48,37 @@ export function ChefAvatar({
   );
 }
 
-/** "Meet the chef": portrait, story and the verified seal. Long stories expand on tap. */
+/** The chef's story as a pull quote, signed with their portrait. Long stories expand on tap. */
 export function ChefCard({ restaurant }: { restaurant: Restaurant }) {
   const [expanded, setExpanded] = useState(false);
   const bio = restaurant.chefBio.trim();
-  const long = bio.length > 160;
+  const long = bio.length > 180;
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        <ChefAvatar name={restaurant.chefName} photoUri={restaurant.chefPhotoUri} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Eyebrow>Meet the chef</Eyebrow>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{restaurant.chefName}</Text>
-            {restaurant.verified ? <VerifiedSeal /> : null}
-          </View>
-          {restaurant.verified ? <Text style={styles.verified}>Verified kitchen</Text> : null}
-        </View>
-      </View>
       {bio ? (
         <Pressable
           disabled={!long}
           onPress={() => setExpanded((e) => !e)}
           accessibilityRole={long ? 'button' : undefined}
           accessibilityHint={long ? (expanded ? 'Show less' : 'Read the full story') : undefined}>
-          <View style={styles.quoteRow}>
-            <Text style={styles.quoteMark} accessible={false}>“</Text>
-            <Text style={styles.bio} numberOfLines={expanded || !long ? undefined : 3}>
-              {bio}
-            </Text>
-          </View>
+          <Text style={styles.bio} numberOfLines={expanded || !long ? undefined : 4}>
+            “{bio}”
+          </Text>
           {long ? <Text style={styles.more}>{expanded ? 'Show less' : 'Read more'}</Text> : null}
         </Pressable>
       ) : null}
+      <View style={styles.header}>
+        <ChefAvatar name={restaurant.chefName} photoUri={restaurant.chefPhotoUri} size={40} />
+        <View style={{ flex: 1, gap: 1 }}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{restaurant.chefName}</Text>
+            {restaurant.verified ? <VerifiedSeal size={14} /> : null}
+          </View>
+          <Text style={styles.verified}>
+            {[restaurant.neighborhood, restaurant.verified ? 'Verified kitchen' : null].filter(Boolean).join(' · ')}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -89,7 +86,7 @@ export function ChefCard({ restaurant }: { restaurant: Restaurant }) {
 const styles = StyleSheet.create({
   avatar: {
     borderWidth: 1,
-    borderColor: colors.gold,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
@@ -97,31 +94,27 @@ const styles = StyleSheet.create({
   },
   initials: { fontFamily: fonts.display, color: colors.gold },
   card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.md,
     gap: spacing.md,
+    paddingVertical: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.borderStrong,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory },
+  name: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   verified: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
-  quoteRow: { flexDirection: 'row', gap: spacing.sm },
-  quoteMark: { fontFamily: fonts.display, fontSize: 48, lineHeight: 48, color: colors.gold, marginTop: -6 },
   bio: {
     flex: 1,
     fontFamily: fonts.displayItalic,
-    fontSize: 18,
-    lineHeight: 29,
-    color: colors.text,
+    fontSize: 21,
+    lineHeight: 30,
+    color: colors.ivory,
   },
   more: {
     fontFamily: fonts.semibold,
     fontSize: 13,
     color: colors.gold,
-    marginTop: spacing.xs,
-    marginLeft: 30,
+    marginTop: spacing.sm,
   },
 });

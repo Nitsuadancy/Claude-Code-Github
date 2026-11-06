@@ -3,14 +3,12 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CartAllergyWarning } from '@/components/diet';
+import { Ticket } from '@/components/ticket';
 import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { OptionSheet } from '@/components/option-sheet';
 import {
   Body,
-  Card,
-  Divider,
-  Eyebrow,
   FieldLabel,
   GoldButton,
   Heading,
@@ -129,19 +127,18 @@ export default function Cart() {
     <Screen edges={['top']}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}>
         <View style={{ gap: spacing.xs }}>
-          <Eyebrow>Your order from</Eyebrow>
+          <Heading>Your order</Heading>
           <Pressable
             accessibilityRole="link"
             onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id } })}>
-            <Heading>{restaurant.name}</Heading>
+            <Text style={styles.kitchen}>from {restaurant.name}</Text>
           </Pressable>
         </View>
 
-        <Card>
+        <View>
           {totals.lines.map((line, i) => (
             <View key={line.itemId}>
-              {i > 0 ? <Divider style={{ marginBottom: spacing.sm }} /> : null}
-              <View style={styles.line}>
+              <View style={[styles.line, i > 0 && styles.lineRule]}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.itemName}>{line.name}</Text>
                   <Text style={styles.each}>{formatCents(line.priceCents)} each</Text>
@@ -170,7 +167,7 @@ export default function Cart() {
               </View>
             </View>
           ))}
-        </Card>
+        </View>
 
         <View style={styles.pickup}>
           <Icon name="map-marker-outline" size={20} color={colors.gold} />
@@ -248,19 +245,19 @@ export default function Cart() {
           <Text style={styles.tipNote}>100% of your tip goes to {chefFirst}.</Text>
         </View>
 
-        <Card>
-          <Row label="Subtotal" value={formatCents(totals.subtotalCents)} />
-          <Row label="Movement fee (5%)" value={formatCents(totals.movementFeeCents)} />
-          {tip ? <Row label={`Tip for ${restaurant.chefName}`} value={formatCents(tip)} /> : null}
-          <Divider style={{ marginVertical: spacing.xs }} />
-          <View style={styles.row}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCents(grandTotal)}</Text>
-          </View>
-          <Text style={styles.movement}>
-            Manna’s only fee is this 5%. {chefFirst} keeps every dollar of the menu price.
-          </Text>
-        </Card>
+        <Ticket
+          charges={[
+            { label: 'Subtotal', cents: totals.subtotalCents },
+            { label: 'Movement fee (5%)', cents: totals.movementFeeCents },
+            ...(tip ? [{ label: `Tip for ${chefFirst}`, cents: tip }] : []),
+          ]}
+          totalCents={grandTotal}
+          footer={
+            <Text style={styles.movement}>
+              Manna’s only fee is this 5%. {chefFirst} keeps every dollar of the menu price.
+            </Text>
+          }
+        />
 
         <GoldButton
           title={mode === 'later' ? `Schedule pickup · ${formatCents(grandTotal)}` : `Place order · ${formatCents(grandTotal)}`}
@@ -317,14 +314,6 @@ function WhenOption({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowText}>{label}</Text>
-      <Text style={styles.rowText}>{value}</Text>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
@@ -339,7 +328,9 @@ const styles = StyleSheet.create({
   },
   content: { padding: spacing.lg, gap: spacing.lg },
   line: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
-  itemName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
+  kitchen: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.gold },
+  lineRule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: spacing.md, marginTop: spacing.sm },
+  itemName: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
   each: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   stepper: {
     flexDirection: 'row',
@@ -347,14 +338,14 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     minHeight: 40,
   },
   qty: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, minWidth: 14, textAlign: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   rowText: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
-  totalLabel: { fontFamily: fonts.display, fontSize: 23, color: colors.ivory },
+  totalLabel: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
   totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold },
   note: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
   segment: { flexDirection: 'row', gap: spacing.sm },
@@ -374,7 +365,7 @@ const styles = StyleSheet.create({
   tipOn: { borderColor: colors.gold, backgroundColor: colors.goldTint },
   tipPct: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
   tipAmt: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
-  tipNote: { fontFamily: fonts.displayItalic, fontSize: 15, color: colors.textMuted },
+  tipNote: { fontFamily: fonts.displayItalic, fontSize: 14, color: colors.textMuted },
   when: {
     flex: 1,
     gap: 4,
@@ -399,6 +390,6 @@ const styles = StyleSheet.create({
   },
   pickupTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory },
   pickupBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
-  movement: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 20, color: colors.textMuted, marginTop: spacing.xs },
+  movement: { fontFamily: fonts.displayItalic, fontSize: 14, lineHeight: 18, color: colors.textMuted, marginTop: spacing.xs },
   clear: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 14 },
 });

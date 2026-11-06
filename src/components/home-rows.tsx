@@ -49,10 +49,8 @@ export function OrderAgainCard({
         accessibilityLabel={`Reorder from ${restaurant.name}`}
         onPress={onReorder}
         hitSlop={6}
-        style={({ pressed }) => [styles.reorder, pressed && { backgroundColor: colors.gold }]}>
-        {({ pressed }) => (
-          <Icon name="replay" size={18} color={pressed ? colors.onGold : colors.gold} />
-        )}
+        style={({ pressed }) => [styles.reorder, pressed && { opacity: 0.6 }]}>
+        <Text style={styles.reorderText}>Reorder</Text>
       </Pressable>
     </View>
   );
@@ -127,28 +125,16 @@ const styles = StyleSheet.create({
   },
   againMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   againCover: { width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden' },
-  againName: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  againName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   againSummary: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, lineHeight: 16 },
-  againDate: { fontFamily: fonts.semibold, fontSize: 9, letterSpacing: 1.4, color: colors.gold, textTransform: 'uppercase' },
-  reorder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mini: {
-    width: 150,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-  },
-  miniCover: { width: '100%', height: 96 },
-  miniInfo: { padding: spacing.sm + 2, gap: 2 },
-  miniName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory, flexShrink: 1 },
-  miniCuisine: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
+  againDate: { fontFamily: fonts.mono, fontSize: 11, color: colors.textFaint },
+  reorder: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs },
+  reorderText: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold },
+  mini: { width: 150, gap: spacing.sm },
+  miniCover: { width: '100%', height: 110, borderRadius: radius.md, overflow: 'hidden' },
+  miniInfo: { gap: 2 },
+  miniName: { fontFamily: fonts.display, fontSize: 16, color: colors.ivory, flexShrink: 1 },
+  miniCuisine: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   dish: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -165,7 +151,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dishName: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
+  dishName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   dishKitchen: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
-  dishPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
+  dishPrice: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
 });

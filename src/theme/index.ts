@@ -39,18 +39,22 @@ export const goldGradient = ['#EBD08E', '#CDA558', '#A8853D'] as const;
 
 export const fonts = {
   /**
-   * Cormorant Garamond: a classical serif in the same family of letterforms as
-   * the MANNA wordmark. Used for titles, kitchen names and dish names.
-   * It draws small for its size, so serif sizes run about 15% larger.
+   * Gloock: a high-contrast display serif with the presence of a fine-dining
+   * menu. Titles, kitchen names and dish names. It has one weight.
    */
-  display: 'CormorantGaramond_600SemiBold',
-  displayBold: 'CormorantGaramond_700Bold',
-  displayItalic: 'CormorantGaramond_500Medium_Italic',
-  /** Manrope: a clean, modern sans for everything else. */
-  body: 'Manrope_400Regular',
-  medium: 'Manrope_500Medium',
-  semibold: 'Manrope_600SemiBold',
-  bold: 'Manrope_700Bold',
+  display: 'Gloock_400Regular',
+  displayBold: 'Gloock_400Regular',
+  /** Newsreader italic: chef bylines, dish descriptions, quotes. */
+  displayItalic: 'Newsreader_400Regular_Italic',
+  serif: 'Newsreader_400Regular',
+  /** Instrument Sans: the interface. */
+  body: 'InstrumentSans_400Regular',
+  medium: 'InstrumentSans_500Medium',
+  semibold: 'InstrumentSans_600SemiBold',
+  bold: 'InstrumentSans_700Bold',
+  /** DM Mono: order tickets, order numbers and pickup times, like a kitchen printer. */
+  mono: 'DMMono_400Regular',
+  monoMedium: 'DMMono_500Medium',
 } as const;
 
 export const spacing = {
@@ -62,10 +66,11 @@ export const spacing = {
   xxl: 48,
 } as const;
 
+/** Near-square corners, like printed menus and tickets. Pills only for avatars. */
 export const radius = {
-  sm: 8,
-  md: 14,
-  lg: 22,
+  sm: 2,
+  md: 4,
+  lg: 6,
   pill: 999,
 } as const;
 

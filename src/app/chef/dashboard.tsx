@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
-  statusTitle: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
+  statusTitle: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
     flex: 1,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: 4,
   },
-  statValue: { fontFamily: fonts.display, fontSize: 25, color: colors.ivory },
+  statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
   statLabel: {
     fontFamily: fonts.semibold,
     fontSize: 10,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   pickup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap' },
   action: {
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.lg,
     minHeight: 44,
     justifyContent: 'center',

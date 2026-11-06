@@ -1,14 +1,12 @@
-import {
-  CormorantGaramond_500Medium_Italic,
-  CormorantGaramond_600SemiBold,
-  CormorantGaramond_700Bold,
-} from '@expo-google-fonts/cormorant-garamond';
-import {
-  Manrope_400Regular,
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-} from '@expo-google-fonts/manrope';
+import { DMMono_400Regular } from '@expo-google-fonts/dm-mono/400Regular';
+import { DMMono_500Medium } from '@expo-google-fonts/dm-mono/500Medium';
+import { Gloock_400Regular } from '@expo-google-fonts/gloock/400Regular';
+import { InstrumentSans_400Regular } from '@expo-google-fonts/instrument-sans/400Regular';
+import { InstrumentSans_500Medium } from '@expo-google-fonts/instrument-sans/500Medium';
+import { InstrumentSans_600SemiBold } from '@expo-google-fonts/instrument-sans/600SemiBold';
+import { InstrumentSans_700Bold } from '@expo-google-fonts/instrument-sans/700Bold';
+import { Newsreader_400Regular } from '@expo-google-fonts/newsreader/400Regular';
+import { Newsreader_400Regular_Italic } from '@expo-google-fonts/newsreader/400Regular_Italic';
 import { useFonts } from 'expo-font';
 import { DarkTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -38,13 +36,15 @@ const navTheme = {
 function AppStack() {
   const { state } = useStore();
   const [fontsLoaded, fontError] = useFonts({
-    CormorantGaramond_500Medium_Italic,
-    CormorantGaramond_600SemiBold,
-    CormorantGaramond_700Bold,
-    Manrope_400Regular,
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
+    Gloock_400Regular,
+    Newsreader_400Regular,
+    Newsreader_400Regular_Italic,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    InstrumentSans_700Bold,
+    DMMono_400Regular,
+    DMMono_500Medium,
   });
   const ready = state.hydrated && (fontsLoaded || !!fontError);
 

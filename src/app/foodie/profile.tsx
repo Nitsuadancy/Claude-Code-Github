@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   stat: { flex: 1, alignItems: 'center', gap: 4, paddingHorizontal: 4 },
-  value: { fontFamily: fonts.display, fontSize: 28, color: colors.ivory },
+  value: { fontFamily: fonts.display, fontSize: 24, color: colors.ivory },
   label: {
     fontFamily: fonts.semibold,
     fontSize: 9,

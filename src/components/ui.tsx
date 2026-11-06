@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { type ReactNode, useState } from 'react';
 import {
@@ -18,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, goldGlow, goldGradient, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 import { Icon, type IconName } from './icon';
 
 export type { IconName } from './icon';
@@ -86,8 +85,7 @@ export function Heading({
       {...props}
       style={[
         styles.heading,
-        // Cormorant draws small for its size; scale it so `size` reads as intended.
-        { fontSize: Math.round(size * 1.15), lineHeight: Math.round(size * 1.15 * 1.12) },
+        { fontSize: size, lineHeight: Math.round(size * 1.1), letterSpacing: size >= 26 ? -0.4 : 0 },
         italic && { fontFamily: fonts.displayItalic },
         style,
       ]}
@@ -95,7 +93,7 @@ export function Heading({
   );
 }
 
-/** Small spaced-out gold caps that label a section ("TONIGHT'S TABLE"). */
+/** A quiet label above or beside a title, e.g. "7 kitchens". Use only when it carries information. */
 export function Eyebrow({ style, ...props }: TextProps) {
   return <Text maxFontSizeMultiplier={1.3} {...props} style={[styles.eyebrow, style]} />;
 }
@@ -104,7 +102,7 @@ export function Body({ style, muted, ...props }: TextProps & { muted?: boolean }
   return <Text {...props} style={[styles.body, muted && { color: colors.textMuted }, style]} />;
 }
 
-/** Eyebrow + serif title, with an optional action on the right. */
+/** A serif section title with an optional quiet label and an action on the right. */
 export function SectionHeader({
   eyebrow,
   title,
@@ -120,7 +118,7 @@ export function SectionHeader({
     <View style={[styles.sectionHeader, style]}>
       <View style={{ flex: 1, gap: 4 }}>
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-        <Heading size={24}>{title}</Heading>
+        <Heading size={22}>{title}</Heading>
       </View>
       {action}
     </View>
@@ -130,7 +128,7 @@ export function SectionHeader({
 /** Smaller serif title used inside forms. */
 export function SectionTitle({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
   return (
-    <Heading size={22} style={[{ marginTop: spacing.md }, style]}>
+    <Heading size={20} style={[{ marginTop: spacing.md }, style]}>
       {children}
     </Heading>
   );
@@ -204,6 +202,12 @@ export function GoldButton({
 }) {
   const primary = variant === 'primary';
   const textColor = primary ? colors.onGold : variant === 'outline' ? colors.ivory : colors.gold;
+  const surface =
+    variant === 'primary'
+      ? { backgroundColor: colors.gold }
+      : variant === 'outline'
+        ? { borderWidth: 1, borderColor: colors.borderStrong }
+        : null;
   const content = loading ? (
     <ActivityIndicator color={textColor} />
   ) : (
@@ -215,7 +219,7 @@ export function GoldButton({
         {title}
       </Text>
       {chevron ? (
-        <Icon name="arrow-right" size={18} color={textColor} style={{ marginLeft: spacing.sm }} />
+        <Icon name="arrow-right" size={16} color={textColor} style={{ marginLeft: spacing.sm }} />
       ) : null}
     </View>
   );
@@ -228,25 +232,11 @@ export function GoldButton({
       disabled={disabled || loading}
       style={({ pressed }) => [
         fullWidth ? { alignSelf: 'stretch' } : { alignSelf: 'center', minWidth: 220 },
-        // The radius keeps the glow's shape round on web, where shadows follow the box.
-        primary && !disabled && [goldGlow, { borderRadius: radius.pill }],
         disabled && { opacity: 0.4 },
         pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
         style,
       ]}>
-      {primary ? (
-        <LinearGradient
-          colors={goldGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.button}>
-          {content}
-        </LinearGradient>
-      ) : (
-        <View style={[styles.button, variant === 'outline' && { borderWidth: 1, borderColor: colors.gold }]}>
-          {content}
-        </View>
-      )}
+      <View style={[styles.button, surface]}>{content}</View>
     </Pressable>
   );
 }
@@ -422,12 +412,12 @@ export function Chip({
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
       style={[styles.chip, selected && styles.chipSelected]}>
-      <Text style={[styles.chipText, selected && { color: colors.gold }]}>{label}</Text>
+      <Text style={[styles.chipText, selected && { color: colors.ivory }]}>{label}</Text>
       {icon ? (
         <Icon
           name={icon}
           size={16}
-          color={selected ? colors.gold : colors.textMuted}
+          color={selected ? colors.ivory : colors.textMuted}
           style={{ marginLeft: 4 }}
         />
       ) : null}
@@ -435,7 +425,7 @@ export function Chip({
   );
 }
 
-/** Small outlined label, e.g. "Open" or "Offer". */
+/** A small status mark: a colored dot and a word, e.g. "Open now" or "Offer". */
 export function Badge({
   label,
   tone = 'gold',
@@ -449,8 +439,9 @@ export function Badge({
   const color =
     tone === 'gold' ? colors.gold : tone === 'success' ? colors.success : onPhoto ? colors.text : colors.textMuted;
   return (
-    <View style={[styles.badge, { borderColor: color }, onPhoto && styles.badgeOnPhoto]}>
-      <Text style={[styles.badgeText, { color }]}>{label}</Text>
+    <View style={[styles.badge, onPhoto && styles.badgeOnPhoto]}>
+      <View style={[styles.badgeDot, { backgroundColor: color }]} />
+      <Text style={[styles.badgeText, { color: onPhoto ? colors.ivory : color }]}>{label}</Text>
     </View>
   );
 }
@@ -463,34 +454,29 @@ export const styles = StyleSheet.create({
   raysWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   heading: { fontFamily: fonts.display, color: colors.ivory },
   eyebrow: {
-    fontFamily: fonts.semibold,
-    fontSize: 11,
-    letterSpacing: 2.4,
-    textTransform: 'uppercase',
-    color: colors.gold,
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    letterSpacing: 0.1,
+    color: colors.textMuted,
   },
   body: { fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: colors.text },
   sectionHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.sm,
   },
   button: {
-    minHeight: 54,
-    borderRadius: radius.pill,
+    minHeight: 52,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-  buttonText: { fontFamily: fonts.semibold, fontSize: 15, letterSpacing: 0.6 },
+  buttonText: { fontFamily: fonts.semibold, fontSize: 13, letterSpacing: 1.6, textTransform: 'uppercase' },
   circleButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'rgba(20, 18, 14, 0.85)',
+    backgroundColor: 'rgba(10, 9, 7, 0.62)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -503,14 +489,14 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.gold,
   },
-  link: { fontFamily: fonts.semibold, color: colors.gold, fontSize: 14, letterSpacing: 0.3 },
-  label: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted, letterSpacing: 0.3 },
+  link: { fontFamily: fonts.medium, color: colors.gold, fontSize: 14, textDecorationLine: 'underline', textDecorationColor: colors.goldDeep },
+  label: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
   field: {
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -531,19 +517,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: colors.surface,
   },
-  chipSelected: { borderColor: colors.gold, backgroundColor: colors.goldTint },
-  chipText: { fontFamily: fonts.medium, color: colors.text, fontSize: 13 },
-  badge: {
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  badgeOnPhoto: { backgroundColor: 'rgba(10, 9, 7, 0.72)', borderColor: 'transparent', paddingVertical: 4, paddingHorizontal: 10 },
-  badgeText: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase' },
+  chipSelected: { borderColor: colors.ivory, backgroundColor: colors.surfaceRaised },
+  chipText: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 13 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  badgeDot: { width: 6, height: 6, borderRadius: 3 },
+  badgeOnPhoto: { backgroundColor: 'rgba(10, 9, 7, 0.7)', borderRadius: radius.sm, paddingVertical: 5, paddingHorizontal: 9 },
+  badgeText: { fontFamily: fonts.medium, fontSize: 12 },
 });

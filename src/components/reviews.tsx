@@ -151,7 +151,7 @@ export function RateOrderSheet({
 const styles = StyleSheet.create({
   stars: { flexDirection: 'row', gap: 1 },
   summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  big: { fontFamily: fonts.display, fontSize: 51, color: colors.ivory, lineHeight: 60 },
+  big: { fontFamily: fonts.display, fontSize: 44, color: colors.ivory, lineHeight: 60 },
   count: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
   card: {
     width: 280,
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   when: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint },
-  text: { fontFamily: fonts.displayItalic, fontSize: 17, lineHeight: 25, color: colors.text },
+  text: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 23, color: colors.text },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     fontFamily: fonts.medium,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     color: colors.gold,
     borderWidth: 1,
     borderColor: colors.hairline,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     paddingHorizontal: 8,
     paddingVertical: 3,
     overflow: 'hidden',
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderStrong },
   sub: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted, marginTop: -spacing.sm },
   pickRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  starLabel: { fontFamily: fonts.displayItalic, fontSize: 20, color: colors.gold, textAlign: 'center' },
+  starLabel: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.gold, textAlign: 'center' },
   tagPick: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'center' },
   privacy: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint, textAlign: 'center' },
 });

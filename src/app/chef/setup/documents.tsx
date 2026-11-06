@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  cardTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.text, flexShrink: 1 },
+  cardTitle: { fontFamily: fonts.display, fontSize: 17, color: colors.text, flexShrink: 1 },
   fileRow: {
     flexDirection: 'row',
     alignItems: 'center',

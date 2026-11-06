@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.surface,
   },
-  initials: { fontFamily: fonts.display, fontSize: 28, color: colors.gold },
-  role: { fontFamily: fonts.displayItalic, fontSize: 17, color: colors.textMuted },
+  initials: { fontFamily: fonts.display, fontSize: 24, color: colors.gold },
+  role: { fontFamily: fonts.displayItalic, fontSize: 15, color: colors.textMuted },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14 },
   list: {
     borderWidth: 1,

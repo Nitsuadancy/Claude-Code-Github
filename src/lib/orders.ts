@@ -27,6 +27,16 @@ export function isAddressShared(status: OrderStatus): boolean {
   return status !== 'placed' && status !== 'declined';
 }
 
+/** A short number to say at pickup, e.g. "0472". Stable for an order. */
+export function orderNumber(id: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return String((h >>> 0) % 10000).padStart(4, '0');
+}
+
 export function isActive(status: OrderStatus): boolean {
   return status !== 'completed' && status !== 'declined';
 }

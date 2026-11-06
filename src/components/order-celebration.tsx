@@ -86,6 +86,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontFamily: fonts.display, fontSize: 34, color: colors.ivory, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 29, color: colors.ivory, textAlign: 'center' },
   sub: { fontFamily: fonts.body, fontSize: 15, color: colors.textMuted, textAlign: 'center' },
 });

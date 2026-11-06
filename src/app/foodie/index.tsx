@@ -23,10 +23,10 @@ import {
   Chip,
   Eyebrow,
   Heading,
-  IconCircleButton,
   Screen,
   SectionHeader,
   webNoOutline,
+  Wordmark,
 } from '@/components/ui';
 import { CraftIcon } from '@/components/craft-icon';
 import { CATEGORIES } from '@/data/categories';
@@ -72,11 +72,17 @@ const COACH_STEPS = [
   },
 ];
 
-function greeting(now: Date): string {
+/** The front-page headline changes with the time of day. */
+function headline(now: Date, neighborhood: string): string {
   const h = now.getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 11) return `What’s baking in ${neighborhood}`;
+  if (h < 17) return `Fresh this afternoon in ${neighborhood}`;
+  return `Tonight in ${neighborhood}`;
+}
+
+/** "Thursday, November 6" */
+function dateline(now: Date): string {
+  return now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
 export default function FoodieHome() {
@@ -104,7 +110,6 @@ export default function FoodieHome() {
   );
   const update = (changes: Partial<BrowseFilters>) => setFilters((f) => ({ ...f, ...changes }));
   const neighborhood = state.user?.neighborhood || DEFAULT_NEIGHBORHOOD;
-  const firstName = state.user?.name.split(' ')[0];
   const searching = filters.query.trim().length > 0;
   const [searchFocused, setSearchFocused] = useState(false);
   const open = (r: Restaurant) => {
@@ -168,34 +173,33 @@ export default function FoodieHome() {
     <View style={{ gap: spacing.xl }}>
       <View style={{ gap: spacing.lg }}>
         <View style={styles.topRow}>
+          <Wordmark width={96} />
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Neighborhood: ${neighborhood}. Change`}
-            onPress={() => setSheet('neighborhood')}
-            style={{ flex: 1, gap: 2 }}>
-            <Eyebrow>Pickup near</Eyebrow>
-            <View style={styles.row}>
-              <Text numberOfLines={1} style={styles.address}>
-                {neighborhood}, {LAUNCH_CITY}
-              </Text>
-              <Icon name="chevron-down" size={18} color={colors.gold} />
-            </View>
+            accessibilityLabel={unseen ? `Activity, ${unseen} new` : 'Activity'}
+            hitSlop={10}
+            onPress={() => router.push('/activity')}>
+            <Icon name="bell-outline" size={22} color={colors.text} />
+            {unseen > 0 ? <View style={styles.bellDot} /> : null}
           </Pressable>
-          <IconCircleButton
-            icon="bell-outline"
-            label={unseen ? `Activity, ${unseen} new` : 'Activity'}
-            dot={unseen > 0}
-            onPress={() => router.push('/activity')}
-          />
         </View>
 
-        <Heading size={30}>
-          {greeting(now)}
-          {firstName ? `,\n${firstName}` : ''}
-        </Heading>
+        <View style={{ gap: spacing.sm }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Neighborhood: ${neighborhood}, ${LAUNCH_CITY}. Change`}
+            onPress={() => setSheet('neighborhood')}
+            style={styles.row}>
+            <Text style={styles.dateline} numberOfLines={1}>
+              {dateline(now)} · {neighborhood}, {LAUNCH_CITY}
+            </Text>
+            <Icon name="chevron-down" size={14} color={colors.textMuted} />
+          </Pressable>
+          <Heading size={34}>{headline(now, neighborhood)}</Heading>
+        </View>
 
         <View style={styles.search}>
-          <Icon name="magnify" size={22} color={colors.gold} />
+          <Icon name="magnify" size={20} color={colors.textMuted} />
           <TextInput
             value={filters.query}
             onChangeText={(query) => update({ query })}
@@ -203,13 +207,13 @@ export default function FoodieHome() {
             // Delay so a tap on a suggestion lands before the panel hides.
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
             onSubmitEditing={() => dispatch({ type: 'rememberSearch', query: filters.query })}
-            placeholder="Search meals, chefs or kitchens"
+            placeholder="Search dishes, kitchens or chefs"
             placeholderTextColor={colors.textFaint}
             selectionColor={colors.gold}
             keyboardAppearance="dark"
             style={styles.searchInput}
             returnKeyType="search"
-            accessibilityLabel="Search meals, chefs or kitchens"
+            accessibilityLabel="Search dishes, kitchens or chefs"
           />
           {filters.query ? (
             <Pressable accessibilityLabel="Clear search" onPress={() => update({ query: '' })} hitSlop={8}>
@@ -223,23 +227,21 @@ export default function FoodieHome() {
 
       {!searching && !searchFocused && !hasDietProfile(diet) && !state.dietNudgeDismissed ? (
         <FadeIn style={styles.nudge}>
-          <View style={styles.nudgeIcon}>
-            <Icon name="leaf" size={20} color={colors.gold} />
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Personalize your feed. Set your diet and allergies"
-            onPress={() => router.navigate('/foodie/profile')}
-            style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.nudgeTitle}>Personalize your feed</Text>
-            <Text style={styles.nudgeBody}>Tell us your diet and allergies. We’ll flag what fits and what to avoid.</Text>
-          </Pressable>
+          <Text style={styles.nudgeBody}>
+            Avoiding gluten or nuts?{' '}
+            <Text
+              accessibilityRole="link"
+              style={styles.nudgeLink}
+              onPress={() => router.navigate('/foodie/profile')}>
+              Set your diet and allergies
+            </Text>
+          </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Dismiss"
             hitSlop={10}
             onPress={() => dispatch({ type: 'dismissDietNudge' })}>
-            <Icon name="close" size={18} color={colors.textMuted} />
+            <Icon name="close" size={16} color={colors.textFaint} />
           </Pressable>
         </FadeIn>
       ) : null}
@@ -270,6 +272,33 @@ export default function FoodieHome() {
             </View>
           </View>
         </View>
+      ) : null}
+
+      {!searching ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: spacing.lg, paddingHorizontal: spacing.lg }}
+          style={{ marginHorizontal: -spacing.lg, marginTop: -spacing.sm }}>
+          {CATEGORIES.map((c) => {
+            const selected = filters.category === c.id;
+            return (
+              <Pressable
+                key={c.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={c.label}
+                onPress={() => update({ category: selected ? null : c.id })}
+                style={styles.category}>
+                <CraftIcon name={c.icon} size={30} color={selected ? colors.gold : colors.text} />
+                <Text style={[styles.categoryLabel, selected && { color: colors.gold }]} numberOfLines={1}>
+                  {c.label}
+                </Text>
+                <View style={[styles.categoryRule, selected && { backgroundColor: colors.gold }]} />
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       ) : null}
 
       {searching && dishMatches.length ? (
@@ -351,36 +380,6 @@ export default function FoodieHome() {
         </FadeIn>
       ) : null}
 
-      {!searching ? (
-      <FadeIn delay={160} style={{ gap: spacing.md }}>
-        <SectionHeader title="Fuel your food desire" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-          style={{ marginHorizontal: -spacing.lg }}>
-          {CATEGORIES.map((c) => {
-            const selected = filters.category === c.id;
-            return (
-              <Pressable
-                key={c.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                accessibilityLabel={c.label}
-                onPress={() => update({ category: selected ? null : c.id })}
-                style={styles.category}>
-                <View style={[styles.categoryRing, selected && styles.categoryRingOn]}>
-                  <CraftIcon name={c.icon} size={30} color={selected ? colors.onGold : colors.gold} />
-                </View>
-                <Text style={[styles.categoryLabel, selected && { color: colors.gold }]} numberOfLines={2}>
-                  {c.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </FadeIn>
-      ) : null}
 
       <View style={{ gap: spacing.md }}>
         <SectionHeader
@@ -498,18 +497,16 @@ export default function FoodieHome() {
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingTop: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  topRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  address: { fontFamily: fonts.medium, fontSize: 15, color: colors.text, flexShrink: 1 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
+  bellDot: { position: 'absolute', top: -1, right: -1, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.gold },
+  dateline: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted, flexShrink: 1 },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md + 2,
-    minHeight: 54,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderStrong,
+    minHeight: 48,
   },
   searchInput: {
     flex: 1,
@@ -520,54 +517,17 @@ const styles = StyleSheet.create({
     minWidth: 0,
     ...webNoOutline,
   },
-  category: { width: 76, alignItems: 'center', gap: spacing.sm },
-  categoryRing: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryRingOn: { backgroundColor: colors.gold, borderColor: colors.gold },
-  categoryLabel: {
-    fontFamily: fonts.medium,
-    fontSize: 11,
-    lineHeight: 14,
-    color: colors.text,
-    textAlign: 'center',
-  },
+  category: { alignItems: 'center', gap: spacing.sm, minWidth: 52, paddingTop: spacing.xs },
+  categoryLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted, textAlign: 'center' },
+  categoryRule: { height: 1.5, alignSelf: 'stretch', backgroundColor: 'transparent' },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg },
-  nudge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.goldTint,
-    marginTop: -spacing.md,
-  },
-  nudgeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nudgeTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
-  nudgeBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textMuted },
+  nudge: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: -spacing.md },
+  nudgeBody: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 22, color: colors.textMuted },
+  nudgeLink: { fontFamily: fonts.displayItalic, color: colors.gold, textDecorationLine: 'underline' },
   suggest: {
     gap: spacing.lg,
     padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.hairline,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     marginTop: -spacing.md,
   },

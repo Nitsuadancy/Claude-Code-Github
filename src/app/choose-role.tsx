@@ -127,6 +127,6 @@ const styles = StyleSheet.create({
   },
   radioOn: { borderColor: colors.gold },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.gold },
+  tagline: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.gold },
   footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
 });
