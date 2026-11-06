@@ -438,8 +438,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: fonts.semibold,
     fontSize: 12,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
     color: colors.text,
   },
   content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md, paddingBottom: spacing.xl },

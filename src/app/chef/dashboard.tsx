@@ -330,10 +330,8 @@ const styles = StyleSheet.create({
   statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
   statLabel: {
     fontFamily: fonts.semibold,
-    fontSize: 10,
-    letterSpacing: 1.6,
-    textTransform: 'uppercase',
-    color: colors.gold,
+    fontSize: 13,
+    color: colors.textMuted,
   },
   emptyCard: {
     flexDirection: 'row',

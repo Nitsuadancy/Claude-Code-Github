@@ -55,7 +55,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "build:web": "expo export --platform web",
+    "build:web": "expo export --platform web && node -e \"require('fs').copyFileSync('dist/+not-found.html','dist/404.html')\"",
     "check": "npm run typecheck && npm run lint && npm test -- --ci",
     "test:db": "supabase/tests/run.sh"
   },

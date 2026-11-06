@@ -42,7 +42,7 @@ export function FallbackScreen({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl, gap: spacing.md },
-  eyebrow: { fontSize: 11, letterSpacing: 2.4, textTransform: 'uppercase', color: colors.gold, fontWeight: '600' },
+  eyebrow: { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
   title: { fontSize: 30, color: colors.ivory, textAlign: 'center', fontWeight: '600', fontFamily: 'serif' },
   body: { fontSize: 15, lineHeight: 22, color: colors.textMuted, textAlign: 'center' },
 });

@@ -13,6 +13,12 @@ export default function Profile() {
   const orders = state.orders.filter((o) => o.customerId === userId && o.status !== 'declined').length;
   const kitchens = new Set(state.orders.filter((o) => o.customerId === userId).map((o) => o.restaurantId)).size;
   const reviews = state.reviews.filter((r) => r.customerId === userId).length;
+  const initials = (state.user?.name ?? '')
+    .split(' ')
+    .map((p) => p.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <Screen edges={['top']}>
@@ -20,8 +26,16 @@ export default function Profile() {
         <ScrollView
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl, paddingBottom: TAB_BAR_SPACE + spacing.lg }}
           keyboardShouldPersistTaps="handled">
-          <View style={{ gap: spacing.xs }}>
-            <Heading>Profile</Heading>
+          <View style={styles.identity}>
+            <View style={styles.avatar}>
+              <Text style={styles.initials}>{initials || 'M'}</Text>
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Heading size={28}>{state.user?.name || 'Your profile'}</Heading>
+              <Text style={styles.since}>
+                {state.user?.neighborhood ? `${state.user.neighborhood} · ` : ''}Foodie
+              </Text>
+            </View>
           </View>
           <View style={styles.stats}>
             <Stat value={orders} label={orders === 1 ? 'Order' : 'Orders'} />
@@ -30,7 +44,7 @@ export default function Profile() {
             <Stat value={reviews} label={reviews === 1 ? 'Review' : 'Reviews'} />
           </View>
           <DietPreferences />
-          <AccountSettings />
+          <AccountSettings showIdentity={false} />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
@@ -49,22 +63,29 @@ function Stat({ value, label }: { value: number; label: string }) {
 }
 
 const styles = StyleSheet.create({
+  identity: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: { fontFamily: fonts.semibold, fontSize: 22, color: colors.gold },
+  since: { fontFamily: fonts.medium, fontSize: 14, color: colors.textMuted },
   stats: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     paddingVertical: spacing.md,
   },
   stat: { flex: 1, alignItems: 'center', gap: 4, paddingHorizontal: 4 },
-  value: { fontFamily: fonts.display, fontSize: 24, color: colors.ivory },
+  value: { fontFamily: fonts.display, fontSize: 24, letterSpacing: -0.5, color: colors.ivory },
   label: {
     fontFamily: fonts.semibold,
-    fontSize: 9,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: colors.gold,
+    fontSize: 13,
+    color: colors.textMuted,
     textAlign: 'center',
   },
 });

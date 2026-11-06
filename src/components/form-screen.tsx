@@ -52,10 +52,9 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontFamily: fonts.semibold,
-    fontSize: 12,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    color: colors.text,
+    fontSize: 16,
+    letterSpacing: -0.2,
+    color: colors.ivory,
   },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
   footer: {

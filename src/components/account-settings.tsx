@@ -12,7 +12,7 @@ import { GoldButton, Heading, type IconName, TextField, Wordmark } from './ui';
 import { Icon } from './icon';
 
 /** Profile editing plus role switching and sign out; shared by Foodie and Chef. */
-export function AccountSettings() {
+export function AccountSettings({ showIdentity = true }: { showIdentity?: boolean } = {}) {
   const { state, dispatch } = useStore();
   const user = state.user;
   const [name, setName] = useState(user?.name ?? '');
@@ -50,15 +50,17 @@ export function AccountSettings() {
 
   return (
     <View style={{ gap: spacing.xl }}>
-      <View style={styles.identity}>
-        <View style={styles.avatar}>
-          <Text style={styles.initials}>{initials || 'M'}</Text>
+      {showIdentity ? (
+        <View style={styles.identity}>
+          <View style={styles.avatar}>
+            <Text style={styles.initials}>{initials || 'M'}</Text>
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Heading size={22}>{user.name || 'Your name'}</Heading>
+            <Text style={styles.role}>{user.role === 'chef' ? 'Culinary Entrepreneur' : 'Foodie'}</Text>
+          </View>
         </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Heading size={22}>{user.name || 'Your name'}</Heading>
-          <Text style={styles.role}>{user.role === 'chef' ? 'Culinary Entrepreneur' : 'Foodie'}</Text>
-        </View>
-      </View>
+      ) : null}
 
       <View style={{ gap: spacing.lg }}>
         <TextField label="Full name" icon="account-outline" value={name} onChangeText={setName} />

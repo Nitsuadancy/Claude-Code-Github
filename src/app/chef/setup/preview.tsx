@@ -102,5 +102,5 @@ export default function Preview() {
 const styles = StyleSheet.create({
   check: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 36 },
   checkText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
-  optional: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold },
+  optional: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textMuted },
 });

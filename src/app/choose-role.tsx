@@ -2,7 +2,11 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Body, Eyebrow, GoldButton, Heading, type IconName, Rays, Screen } from '@/components/ui';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { Eyebrow, GoldButton, Heading, type IconName, Rays, Screen } from '@/components/ui';
+import { photoSource } from '@/lib/photo';
 import { resetTo } from '@/lib/navigation';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -11,13 +15,14 @@ import { Icon } from '@/components/icon';
 
 type Choice = Role | 'grower';
 
-const OPTIONS: { role: Choice; title: string; tagline: string; body: string; icon: IconName }[] = [
+const OPTIONS: { role: Choice; title: string; tagline: string; body: string; icon: IconName; photo: string }[] = [
   {
     role: 'foodie',
     title: 'Foodie',
     tagline: 'Discover meals crafted with care.',
     body: 'Order from talented home chefs in your neighborhood.',
     icon: 'silverware-variant',
+    photo: 'demo:cinnamon-rolls',
   },
   {
     role: 'chef',
@@ -25,6 +30,7 @@ const OPTIONS: { role: Choice; title: string; tagline: string; body: string; ico
     tagline: 'Bring your dream restaurant to life.',
     body: 'Set your menu and your hours. No lease or storefront needed.',
     icon: 'chef-hat',
+    photo: 'demo:country-loaf',
   },
   {
     role: 'grower',
@@ -32,6 +38,7 @@ const OPTIONS: { role: Choice; title: string; tagline: string; body: string; ico
     tagline: 'Money stays in your zip code.',
     body: 'Sell farm-direct to neighbors and home cooks. Manna Mart opens soon: join the waitlist.',
     icon: 'wheat',
+    photo: 'demo:apricot-jam',
   },
 ];
 
@@ -69,19 +76,20 @@ export default function ChooseRole() {
                 accessibilityLabel={`${o.title}. ${o.tagline}`}
                 onPress={() => setRole(o.role)}
                 style={[styles.card, selected && styles.cardSelected]}>
-                <View style={styles.cardTop}>
-                  <View style={[styles.iconRing, selected && { borderColor: colors.gold }]}>
-                    <Icon name={o.icon} size={26} color={colors.gold} />
-                  </View>
-                  <View style={[styles.radio, selected && styles.radioOn]}>
-                    {selected ? <View style={styles.radioDot} /> : null}
-                  </View>
+                <Image source={photoSource(o.photo)} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <LinearGradient
+                  colors={['rgba(11,11,11,0.15)', 'rgba(11,11,11,0.88)']}
+                  locations={[0, 0.85]}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={[styles.radio, selected && styles.radioOn]}>
+                  {selected ? <Icon name="check" size={14} color={colors.bg} /> : null}
                 </View>
-                <Heading size={24}>{o.title}</Heading>
-                <Text style={styles.tagline}>{o.tagline}</Text>
-                <Body muted style={{ fontSize: 14 }}>
-                  {o.body}
-                </Body>
+                <View style={styles.cardText}>
+                  <Text style={styles.cardTitle}>{o.title}</Text>
+                  <Text style={styles.tagline}>{o.tagline}</Text>
+                  <Text style={styles.cardBody}>{o.body}</Text>
+                </View>
               </Pressable>
             );
           })}
@@ -98,35 +106,31 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.xl, paddingTop: spacing.xxl },
   header: { gap: spacing.sm },
   card: {
-    borderWidth: 1,
-    borderColor: colors.border,
+    height: 172,
     borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.xs,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+    borderWidth: 2,
+    borderColor: 'transparent',
     backgroundColor: colors.surface,
   },
-  cardSelected: { borderColor: colors.gold, backgroundColor: '#18140C' },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
-  iconRing: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cardSelected: { borderColor: colors.ivory },
+  cardText: { padding: spacing.md + 2, gap: 3 },
+  cardTitle: { fontFamily: fonts.display, fontSize: 24, letterSpacing: -0.6, color: colors.ivory },
+  tagline: { fontFamily: fonts.medium, fontSize: 14, color: colors.gold },
+  cardBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: 'rgba(247,244,238,0.75)' },
   radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 1.5,
-    borderColor: colors.borderStrong,
+    borderColor: 'rgba(247,244,238,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioOn: { borderColor: colors.gold },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.gold },
+  radioOn: { backgroundColor: colors.ivory, borderColor: colors.ivory },
   footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
 });
