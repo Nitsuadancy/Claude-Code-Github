@@ -130,6 +130,10 @@ create table public.orders (
   customer_id uuid not null references public.profiles (id),
   restaurant_id uuid not null references public.restaurants (id),
   status public.order_status not null default 'placed',
+  -- Copied when the order is placed, so both sides can always read them:
+  -- the kitchen can't read customer profiles, and kitchens can go offline.
+  customer_name text not null default '',
+  restaurant_name text not null default '',
   subtotal_cents integer not null check (subtotal_cents > 0),
   -- Manna's 5% movement fee, paid by the customer. There is no delivery fee:
   -- orders are picked up.
@@ -225,6 +229,17 @@ $$;
 
 -- Mirrors isOpenAt in src/lib/hours.ts: overnight hours (e.g. 20:00-02:00)
 -- belong to the day the shift started.
+-- First name and last initial, e.g. "Ada L." Mirrors publicName() in src/lib/reviews.ts.
+create function public.public_name(full_name text) returns text
+language sql immutable as $$
+  select case
+    when full_name is null or trim(full_name) = '' then 'A neighbor'
+    when position(' ' in trim(full_name)) = 0 then trim(full_name)
+    else split_part(trim(full_name), ' ', 1) || ' '
+      || upper(left(regexp_replace(trim(full_name), '^.*\s', ''), 1)) || '.'
+  end;
+$$;
+
 create function public.kitchen_open_at(r public.restaurants, ts timestamptz) returns boolean
 language plpgsql stable as $$
 declare
@@ -411,11 +426,12 @@ begin
   cook_day := (coalesce(p_scheduled_for, now()) at time zone r.timezone)::date;
 
   insert into public.orders (
-    customer_id, restaurant_id, subtotal_cents, movement_fee_cents,
+    customer_id, restaurant_id, customer_name, restaurant_name, subtotal_cents, movement_fee_cents,
     tip_cents, total_cents, customer_note, scheduled_for, estimated_ready_at
   ) values (
     -- Placeholder totals; the real ones are written once every line is priced.
-    auth.uid(), r.id, 1, 0, 0, 1,
+    auth.uid(), r.id, public.public_name((select name from public.profiles where id = auth.uid())), r.name,
+    1, 0, 0, 1,
     left(coalesce(p_customer_note, ''), 280), p_scheduled_for, ready_at
   ) returning id into new_id;
 
@@ -528,13 +544,8 @@ begin
   if p_stars not between 1 and 5 then
     raise exception 'Stars must be 1 to 5';
   end if;
-  select trim(name) into full_name from public.profiles where id = auth.uid();
-  -- First name and last initial only, matching publicName() in the app.
-  shown_name := case
-    when full_name is null or full_name = '' then 'A neighbor'
-    when position(' ' in full_name) = 0 then full_name
-    else split_part(full_name, ' ', 1) || ' ' || upper(left(regexp_replace(full_name, '^.*\s', ''), 1)) || '.'
-  end;
+  select name into full_name from public.profiles where id = auth.uid();
+  shown_name := public.public_name(full_name);
   insert into public.reviews (order_id, restaurant_id, customer_id, customer_name, stars, tags, text)
     values (o.id, o.restaurant_id, auth.uid(), shown_name, p_stars, coalesce(p_tags, '{}'), left(trim(coalesce(p_text, '')), 500))
     returning id into new_id;
@@ -564,6 +575,20 @@ begin
   end if;
   update public.restaurants set verified = true, status = 'live' where id = p_restaurant_id;
 end;
+$$;
+
+-- Each live kitchen's most ordered dish over the last 60 days, once it has
+-- been in at least 3 orders. The app shows these with a "Most ordered" label.
+create function public.popular_menu_items() returns table (restaurant_id uuid, menu_item_id uuid)
+language sql stable security definer set search_path = public as $$
+  select distinct on (o.restaurant_id) o.restaurant_id, ol.menu_item_id
+  from public.order_lines ol
+  join public.orders o on o.id = ol.order_id
+  join public.restaurants r on r.id = o.restaurant_id and r.status = 'live'
+  where o.status <> 'declined' and o.created_at > now() - interval '60 days'
+  group by o.restaurant_id, ol.menu_item_id
+  having count(distinct o.id) >= 3
+  order by o.restaurant_id, sum(ol.quantity) desc, ol.menu_item_id;
 $$;
 
 -- Admin: take down a review that breaks the rules, and take it out of the rating.
@@ -609,7 +634,7 @@ begin
         cover_paths = '{}', logo_path = null, in_person = '[]'::jsonb
     where owner_id = me;
   update public.reviews set customer_name = 'Former customer', text = '' where customer_id = me;
-  update public.orders set customer_note = '' where customer_id = me;
+  update public.orders set customer_note = '', customer_name = 'Former customer' where customer_id = me;
   update public.profiles
     set name = '', email = null, phone = null, neighborhood = '', dietary = '{}',
         avoid_allergens = '{}', deleted_at = now()
@@ -627,6 +652,7 @@ grant execute on function public.set_order_status(uuid, public.order_status) to 
 grant execute on function public.set_chef_note(uuid, text) to authenticated;
 grant execute on function public.add_review(uuid, integer, text[], text) to authenticated;
 grant execute on function public.approve_restaurant(uuid) to authenticated;
+grant execute on function public.popular_menu_items() to anon, authenticated;
 revoke all on function public.remove_review(uuid) from public;
 grant execute on function public.remove_review(uuid) to authenticated;
 revoke all on function public.delete_my_account() from public;

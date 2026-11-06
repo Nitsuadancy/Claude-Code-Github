@@ -1,0 +1,213 @@
+import { describe, expect, it } from '@jest/globals';
+
+import {
+  averageRating,
+  menuItemRow,
+  orderFromRow,
+  placeOrderArgs,
+  profileFromRow,
+  profileUpdate,
+  restaurantFromRow,
+  restaurantUpdate,
+  reviewFromRow,
+  toAppTime,
+} from '@/lib/db/mappers';
+import type { MenuItemRow, OrderWithChildren, ProfileRow, RestaurantRow } from '@/lib/db/rows';
+
+const url = (path: string) => `https://cdn.example/${path}`;
+
+const restaurantRow: RestaurantRow = {
+  id: 'r1',
+  owner_id: 'u1',
+  name: 'Susie’s Sweets',
+  chef_name: 'Mrs. Susie',
+  chef_bio: 'Forty years of bake sales.',
+  chef_photo_path: 'r1/chef.jpg',
+  cuisine: 'Bakery',
+  categories: ['bakery', 'meal-preppers'],
+  logo_path: null,
+  cover_paths: ['r1/a.jpg', 'r1/b.jpg'],
+  neighborhood: 'College Park',
+  city: 'Orlando',
+  zip: '32804',
+  timezone: 'America/New_York',
+  working_days: ['tuesday', 'saturday', 'funday'],
+  open_time: '09:00:00',
+  close_time: '17:30:00',
+  prep_minutes: 35,
+  verified: true,
+  founding: true,
+  in_person: [{ place: 'Lantern Coffee', when: 'Saturdays' }],
+  accepting_orders: true,
+  has_offer: false,
+  status: 'pending_review',
+  signature_item_id: 'm2',
+  rating_sum: 47,
+  rating_count: 10,
+  created_at: '2026-04-03T12:00:00Z',
+};
+
+const menuRow = (id: string, position: number, extra: Partial<MenuItemRow> = {}): MenuItemRow => ({
+  id,
+  restaurant_id: 'r1',
+  name: `Dish ${id}`,
+  description: '',
+  price_cents: 1200,
+  available: true,
+  photo_path: null,
+  dietary: ['vegetarian', 'keto'],
+  allergens: ['eggs', 'glitter'],
+  daily_limit: null,
+  section: null,
+  position,
+  created_at: '2026-04-03T12:00:00Z',
+  ...extra,
+});
+
+describe('database mappers', () => {
+  it('reads times and ratings the way the app stores them', () => {
+    expect(toAppTime('09:00:00')).toBe('09:00');
+    expect(toAppTime(null)).toBe('');
+    expect(averageRating(47, 10)).toBe(4.7);
+    expect(averageRating(0, 0)).toBe(0);
+  });
+
+  it('builds a kitchen from its rows and drops values the app does not know', () => {
+    const r = restaurantFromRow(restaurantRow, url, {
+      menu: [menuRow('m2', 1, { photo_path: 'r1/m2.jpg' }), menuRow('m1', 0)],
+      address: '5 Willow Way',
+      popularItemIds: new Set(['m1']),
+    });
+    expect(r).toMatchObject({
+      ownerId: 'u1',
+      chefPhotoUri: 'https://cdn.example/r1/chef.jpg',
+      coverUris: ['https://cdn.example/r1/a.jpg', 'https://cdn.example/r1/b.jpg'],
+      categories: ['bakery'],
+      workingDays: ['tuesday', 'saturday'],
+      openTime: '09:00',
+      closeTime: '17:30',
+      rating: 4.7,
+      ratingCount: 10,
+      areaCode: '32804',
+      address: '5 Willow Way',
+      signatureItemId: 'm2',
+      status: 'draft',
+    });
+    expect(r.logoUri).toBeUndefined();
+    expect(r.menu.map((m) => m.id)).toEqual(['m1', 'm2']);
+    expect(r.menu[0]).toMatchObject({ popular: true, dietary: ['vegetarian'], allergens: ['eggs'], section: '' });
+    expect(r.menu[1].popular).toBeUndefined();
+    expect(r.menu[1].photoUri).toBe('https://cdn.example/r1/m2.jpg');
+    expect(restaurantFromRow({ ...restaurantRow, status: 'live' }, url).status).toBe('live');
+  });
+
+  it('round-trips the fields a chef can edit, and never writes protected ones', () => {
+    const r = restaurantFromRow(restaurantRow, url);
+    const update = restaurantUpdate(r, { coverPaths: ['a', 'b', 'c', 'd'], logoPath: null, chefPhotoPath: 'r1/chef.jpg' });
+    expect(update).toMatchObject({ name: 'Susie’s Sweets', zip: '32804', open_time: '09:00', cover_paths: ['a', 'b', 'c'] });
+    for (const key of ['verified', 'founding', 'status', 'rating_sum', 'rating_count', 'owner_id']) {
+      expect(update).not.toHaveProperty(key);
+    }
+  });
+
+  it('saves a menu item with its position and an empty section as null', () => {
+    const item = restaurantFromRow(restaurantRow, url, { menu: [menuRow('m1', 0)] }).menu[0];
+    expect(menuItemRow({ ...item, name: '  Pie ' }, 'r1', 3, 'r1/pie.jpg')).toMatchObject({
+      restaurant_id: 'r1',
+      name: 'Pie',
+      position: 3,
+      section: null,
+      photo_path: 'r1/pie.jpg',
+    });
+  });
+
+  it('builds an order with its history in time order', () => {
+    const row: OrderWithChildren = {
+      id: 'o1',
+      customer_id: 'c1',
+      restaurant_id: 'r1',
+      status: 'accepted',
+      customer_name: 'Bea F.',
+      restaurant_name: 'Susie’s Sweets',
+      subtotal_cents: 3300,
+      movement_fee_cents: 165,
+      tip_cents: 300,
+      total_cents: 3765,
+      pickup_address: '5 Willow Way, Orlando',
+      customer_note: 'No nuts',
+      chef_note: '',
+      scheduled_for: null,
+      estimated_ready_at: '2026-11-07T16:00:00Z',
+      created_at: '2026-11-07T15:20:00Z',
+      order_lines: [{ order_id: 'o1', menu_item_id: 'm1', name: 'Pie', price_cents: 1650, quantity: 2 }],
+      order_status_events: [
+        { status: 'accepted', at: '2026-11-07T15:22:00Z' },
+        { status: 'placed', at: '2026-11-07T15:20:00Z' },
+      ],
+    };
+    const o = orderFromRow(row);
+    expect(o.statusHistory.map((h) => h.status)).toEqual(['placed', 'accepted']);
+    expect(o.lines).toEqual([{ itemId: 'm1', name: 'Pie', priceCents: 1650, quantity: 2 }]);
+    expect(o).toMatchObject({ customerName: 'Bea F.', restaurantName: 'Susie’s Sweets', movementFeeCents: 165, tipCents: 300 });
+    expect(orderFromRow({ ...row, order_status_events: [] }).statusHistory).toEqual([
+      { status: 'placed', at: '2026-11-07T15:20:00Z' },
+    ]);
+  });
+
+  it('sends only ids and quantities when placing an order', () => {
+    const args = placeOrderArgs({
+      restaurantId: 'r1',
+      lines: [{ itemId: 'm1', quantity: 2 }],
+      customerNote: '  Extra crispy  ',
+      scheduledFor: null,
+      tipCents: 200,
+    });
+    expect(args).toEqual({
+      p_restaurant_id: 'r1',
+      p_lines: [{ menu_item_id: 'm1', quantity: 2 }],
+      p_customer_note: 'Extra crispy',
+      p_scheduled_for: null,
+      p_tip_cents: 200,
+    });
+  });
+
+  it('maps profiles and reviews', () => {
+    const row: ProfileRow = {
+      id: 'u1',
+      name: 'Bea Foodie',
+      email: null,
+      phone: '+14075550100',
+      role: 'foodie',
+      neighborhood: 'College Park',
+      dietary: ['vegan'],
+      avoid_allergens: ['peanuts'],
+      is_admin: false,
+      deleted_at: null,
+      created_at: '2026-11-01T00:00:00Z',
+    };
+    expect(profileFromRow(row)).toEqual({
+      id: 'u1',
+      name: 'Bea Foodie',
+      email: '',
+      phone: '+14075550100',
+      role: 'foodie',
+      neighborhood: 'College Park',
+      dietary: ['vegan'],
+      avoidAllergens: ['peanuts'],
+    });
+    expect(profileUpdate({ email: '  ', avoidAllergens: [] })).toEqual({ email: null, avoid_allergens: [] });
+    expect(
+      reviewFromRow({
+        id: 'v1',
+        order_id: 'o1',
+        restaurant_id: 'r1',
+        customer_id: 'c1',
+        customer_name: 'Bea F.',
+        stars: 5,
+        tags: ['Tasted like home'],
+        text: 'Wonderful',
+        created_at: '2026-11-07T18:00:00Z',
+      }),
+    ).toMatchObject({ orderId: 'o1', customerName: 'Bea F.', stars: 5 });
+  });
+});

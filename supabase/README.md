@@ -42,6 +42,30 @@ connected to it yet. The app still stores everything on the device (see
 4. Put the project URL and the **anon** key in `.env` as `EXPO_PUBLIC_SUPABASE_URL` and
    `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Never put the service-role key in the app.
 
+## Connecting the app
+
+The groundwork is in place and does nothing until `.env` is filled in (copy `.env.example`):
+
+- `src/lib/supabase.ts` creates the client from the two settings, keeps the sign-in on the
+  device, and turns storage paths into photo URLs. Without the settings, `supabase` is `null`
+  and the app keeps working on the device as it does today.
+- `src/lib/db/rows.ts` describes each table's rows; `src/lib/db/mappers.ts` turns them into
+  the app's models and back, with tests in `src/__tests__/db-mappers.test.ts`. Orders are
+  placed through `place_order()` with only dish ids and quantities, so prices always come
+  from the server.
+
+Still to do when the project exists:
+
+1. **Sign-in:** phone codes with `supabase.auth.signInWithOtp({ phone })` and `verifyOtp`.
+2. **Data:** load kitchens, menus, orders and reviews through the mappers, and listen to
+   order changes with Realtime so both sides update live.
+3. **Photos:** upload to the `public-photos` bucket before saving a dish or kitchen.
+4. **Account deletion:** `delete_my_account()` clears the person's data, but removing the
+   sign-in itself (`auth.users`) needs the service-role key. Add a small Edge Function that
+   calls `delete_my_account()` as the user and then `auth.admin.deleteUser()`.
+5. **Payments:** charge with Stripe when the kitchen accepts; see docs/ROADMAP.md.
+6. **Most ordered:** call `popular_menu_items()` and pass the ids to `restaurantFromRow`.
+
 ## Test it locally
 
 The checks play a chef, two customers and a Manna admin. They exercise every rule above

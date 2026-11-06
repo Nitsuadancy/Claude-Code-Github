@@ -126,6 +126,21 @@ select public.set_order_status((select id from first_order), 'ready');
 select public.set_order_status((select id from first_order), 'completed');
 select pg_temp.check((select count(*) = 5 from public.order_status_events where order_id = (select id from first_order)), 'five events');
 select pg_temp.expect_error($$ select public.set_order_status((select id from first_order), 'declined') $$, 'can''t move');
+select pg_temp.check((select customer_name = 'Bea F.' and restaurant_name = 'Ada''s Kitchen'
+                      from public.orders where id = (select id from first_order)),
+  'kitchen sees the customer''s first name and initial');
+
+-- Most ordered dish -------------------------------------------------------------
+select pg_temp.act_as(null);
+select pg_temp.check((select count(*) = 0 from public.popular_menu_items()), 'no favorite after one order');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select public.place_order('10000000-0000-0000-0000-000000000001',
+  '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]');
+select public.place_order('10000000-0000-0000-0000-000000000001',
+  '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":2}]');
+select pg_temp.act_as(null);
+select pg_temp.check((select menu_item_id = '20000000-0000-0000-0000-000000000002' from public.popular_menu_items()),
+  'garlic knots are the most ordered after three orders');
 
 -- Grower waitlist: anyone can join, only admins can read ---------------------
 select pg_temp.act_as(null);
