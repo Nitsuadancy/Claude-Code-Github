@@ -1,3 +1,4 @@
+/* global __dirname */
 /**
  * Renders Manna's cook-recruitment flyer (print PDF + PNG) and an Instagram post.
  *
