@@ -18,7 +18,7 @@ const TAB_META: Record<string, { label: string; icon: IconName; activeIcon: Icon
 /** Height the bar occupies, so screens can pad their scroll content. */
 export const TAB_BAR_SPACE = 96;
 
-/** Edge-to-edge bar under a hairline; the current tab gets a short gold rule above it. */
+/** Edge-to-edge frosted bar under a hairline; the current tab is bright, the rest recede. */
 export function MannaTabBar({
   state,
   emitter,
@@ -55,12 +55,11 @@ export function MannaTabBar({
               accessibilityLabel={badge ? `${meta.label}, ${badge} items` : meta.label}
               onPress={onPress}
               style={styles.item}>
-              <View style={[styles.indicator, focused && { backgroundColor: colors.gold }]} />
               <View>
                 <Icon
                   name={focused ? meta.activeIcon : meta.icon}
                   size={22}
-                  color={focused ? colors.gold : colors.textMuted}
+                  color={focused ? colors.ivory : colors.textFaint}
                 />
                 {badge > 0 ? (
                   <View style={styles.badge}>
@@ -70,7 +69,7 @@ export function MannaTabBar({
               </View>
               <Text
                 maxFontSizeMultiplier={1.2}
-                style={[styles.label, { color: focused ? colors.ivory : colors.textMuted }]}>
+                style={[styles.label, { color: focused ? colors.ivory : colors.textFaint }]}>
                 {meta.label}
               </Text>
             </Pressable>
@@ -86,13 +85,12 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     overflow: 'hidden',
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(10,9,7,0.82)' : colors.bg,
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(11,11,11,0.72)' : 'rgba(11,11,11,0.96)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderStrong,
+    borderTopColor: colors.hairline,
   },
-  item: { flex: 1, alignItems: 'center', gap: 4, minHeight: 56 },
+  item: { flex: 1, alignItems: 'center', gap: 4, minHeight: 56, paddingTop: 10 },
   label: { fontFamily: fonts.medium, fontSize: 11 },
-  indicator: { width: 22, height: 2, marginBottom: 8, backgroundColor: 'transparent' },
   badge: {
     position: 'absolute',
     top: -4,

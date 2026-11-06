@@ -34,7 +34,8 @@ import type { MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
 import { photoSource } from '@/lib/photo';
 
-const HERO_HEIGHT = 320;
+/** The hero fills most of the first screen, so a kitchen opens on its food. */
+const HERO_HEIGHT = 520;
 
 export default function RestaurantDetail() {
   const { id, preview } = useLocalSearchParams<{ id: string; preview?: string }>();
@@ -120,7 +121,7 @@ export default function RestaurantDetail() {
             {restaurant.logoUri ? <Image source={photoSource(restaurant.logoUri)} style={styles.logo} /> : null}
             <View style={{ flex: 1, gap: 6 }}>
               <View style={styles.nameRow}>
-                <Heading size={34} style={{ flexShrink: 1 }}>
+                <Heading size={38} style={{ flexShrink: 1 }}>
                   {restaurant.name}
                 </Heading>
                 {restaurant.verified ? <VerifiedSeal size={18} /> : null}
@@ -160,9 +161,7 @@ export default function RestaurantDetail() {
           {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
 
           <View style={styles.menuHeader}>
-            <View style={styles.menuRule} />
-            <Text style={styles.menuTitle}>Menu</Text>
-            <View style={styles.menuRule} />
+            <Heading size={28}>Menu</Heading>
           </View>
           {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
           {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
@@ -181,22 +180,32 @@ export default function RestaurantDetail() {
                   accessibilityRole="button"
                   accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
                   onPress={() => setOpenItemId(item.id)}
-                  style={({ pressed }) => [{ gap: 4 }, pressed && { opacity: 0.7 }]}>
-                  {signature ? <Text style={styles.signatureLabel}>The chef’s signature</Text> : null}
-                  <View style={styles.nameLine}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.leader} numberOfLines={1} ellipsizeMode="clip" accessible={false}>
-                      {LEADER}
+                  style={({ pressed }) => [styles.itemText, pressed && { opacity: 0.7 }]}>
+                  {signature ? <Text style={styles.signatureLabel}>Chef’s signature</Text> : null}
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  {item.description ? (
+                    <Text style={styles.description} numberOfLines={2}>
+                      {item.description}
                     </Text>
-                    <Text style={styles.price}>{item.available ? menuPrice(item.priceCents) : 'Unavailable'}</Text>
+                  ) : null}
+                  <View style={styles.itemFoot}>
+                    <Text style={styles.price}>{item.available ? formatCents(item.priceCents) : 'Unavailable'}</Text>
+                    <DietaryIcons tags={item.dietary} />
                   </View>
-                  {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
+                  <StockNote remaining={item.available ? left : null} />
                   <DietNote item={item} profile={diet} />
                 </Pressable>
-                <View style={styles.itemFoot}>
-                  <DietaryIcons tags={item.dietary} />
-                  <StockNote remaining={item.available ? left : null} />
-                  <View style={{ flex: 1 }} />
+                <View style={styles.thumbWrap}>
+                  {item.photoUri ? (
+                    <Pressable
+                      accessibilityRole="imagebutton"
+                      accessibilityLabel={`Photo of ${item.name}. Show details`}
+                      onPress={() => setOpenItemId(item.id)}>
+                      <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
+                    </Pressable>
+                  ) : (
+                    <View style={styles.thumbEmpty} />
+                  )}
                   {canOrder && !soldOut ? (
                     q > 0 ? (
                       <View style={styles.stepper}>
@@ -208,7 +217,7 @@ export default function RestaurantDetail() {
                             dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 });
                           }}
                           hitSlop={10}>
-                          <Icon name="minus" size={15} color={colors.gold} />
+                          <Icon name="minus" size={15} color={colors.bg} />
                         </Pressable>
                         <Text style={styles.qty}>{q}</Text>
                         <Pressable
@@ -217,7 +226,7 @@ export default function RestaurantDetail() {
                           disabled={atLimit}
                           onPress={() => add(item)}
                           hitSlop={10}>
-                          <Icon name="plus" size={15} color={atLimit ? colors.textFaint : colors.gold} />
+                          <Icon name="plus" size={15} color={atLimit ? colors.textMuted : colors.bg} />
                         </Pressable>
                       </View>
                     ) : (
@@ -226,9 +235,8 @@ export default function RestaurantDetail() {
                         accessibilityLabel={`Add ${item.name} to cart`}
                         onPress={() => add(item)}
                         hitSlop={8}
-                        style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.6 }]}>
-                        <Icon name="plus" size={14} color={colors.gold} />
-                        <Text style={styles.addText}>Add</Text>
+                        style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]}>
+                        <Icon name="plus" size={18} color={colors.bg} />
                       </Pressable>
                     )
                   ) : null}
@@ -331,14 +339,6 @@ export default function RestaurantDetail() {
   );
 }
 
-/** Dot leaders between a dish and its price, as on a printed menu. Clipped to fit. */
-const LEADER = ' . '.repeat(60);
-
-/** Menu prices without the dollar sign: "28" or "15.99". */
-function menuPrice(cents: number): string {
-  return cents % 100 === 0 ? String(cents / 100) : (cents / 100).toFixed(2);
-}
-
 function Fact({ icon, label }: { icon: IconName; label: string }) {
   return (
     <View style={styles.fact}>
@@ -388,68 +388,74 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  body: { paddingHorizontal: spacing.lg, gap: spacing.md, marginTop: -spacing.xl },
+  body: { paddingHorizontal: spacing.lg, gap: spacing.md, marginTop: -150 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.md },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   logo: { width: 64, height: 64, borderRadius: radius.md, borderWidth: 1, borderColor: colors.hairline },
-  chef: { fontFamily: fonts.displayItalic, fontSize: 19, color: colors.gold },
+  chef: { fontFamily: fonts.medium, fontSize: 16, color: 'rgba(247,244,238,0.8)' },
   facts: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flexWrap: 'wrap', marginTop: spacing.xs },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
   days: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, marginTop: -spacing.sm },
   notice: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  noticeText: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 22, color: colors.text },
-  menuHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
-  menuRule: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.borderStrong },
-  menuTitle: { fontFamily: fonts.display, fontSize: 26, color: colors.ivory },
+  noticeText: { flex: 1, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.text },
+  menuHeader: { marginTop: spacing.lg },
   sectionTitle: {
-    fontFamily: fonts.displayItalic,
-    fontSize: 19,
-    color: colors.gold,
-    textAlign: 'center',
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.textMuted,
     marginTop: spacing.lg,
     marginBottom: spacing.xs,
   },
   reviews: { gap: spacing.md, marginTop: spacing.lg },
-  item: { gap: spacing.sm, paddingVertical: spacing.md },
-  signatureLabel: { fontFamily: fonts.displayItalic, fontSize: 15, color: colors.gold },
-  nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
-  itemName: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, flexShrink: 1 },
-  leader: { flex: 1, minWidth: 16, fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, overflow: 'hidden' },
-  price: { fontFamily: fonts.medium, fontSize: 16, color: colors.ivory },
-  description: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 22, color: colors.textMuted, paddingRight: spacing.xl },
-  itemFoot: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 32 },
-  addButton: {
+  item: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.sm,
+    gap: spacing.md,
+    paddingVertical: spacing.md + 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
-  addText: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold },
+  itemText: { flex: 1, gap: 5 },
+  signatureLabel: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
+  itemName: { fontFamily: fonts.display, fontSize: 17, letterSpacing: -0.3, color: colors.ivory },
+  description: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textMuted },
+  itemFoot: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: 2 },
+  price: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  thumbWrap: { width: 104, alignItems: 'center' },
+  thumb: { width: 104, height: 104, borderRadius: radius.md },
+  thumbEmpty: { width: 104, height: 52 },
+  addButton: {
+    position: 'absolute',
+    bottom: -8,
+    right: -4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.ivory,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   finePrint: {
-    fontFamily: fonts.displayItalic,
-    fontSize: 13,
-    lineHeight: 19,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 18,
     color: colors.textFaint,
     textAlign: 'center',
     marginTop: spacing.xl,
     paddingHorizontal: spacing.md,
   },
   stepper: {
+    position: 'absolute',
+    bottom: -8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.gold,
-    borderRadius: radius.sm,
+    backgroundColor: colors.ivory,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     minHeight: 34,
   },
-  qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory, minWidth: 12, textAlign: 'center' },
+  qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.bg, minWidth: 12, textAlign: 'center' },
   footer: {
     position: 'absolute',
     left: 0,

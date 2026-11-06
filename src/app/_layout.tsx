@@ -1,12 +1,7 @@
-import { DMMono_400Regular } from '@expo-google-fonts/dm-mono/400Regular';
-import { DMMono_500Medium } from '@expo-google-fonts/dm-mono/500Medium';
-import { Gloock_400Regular } from '@expo-google-fonts/gloock/400Regular';
-import { InstrumentSans_400Regular } from '@expo-google-fonts/instrument-sans/400Regular';
-import { InstrumentSans_500Medium } from '@expo-google-fonts/instrument-sans/500Medium';
-import { InstrumentSans_600SemiBold } from '@expo-google-fonts/instrument-sans/600SemiBold';
-import { InstrumentSans_700Bold } from '@expo-google-fonts/instrument-sans/700Bold';
-import { Newsreader_400Regular } from '@expo-google-fonts/newsreader/400Regular';
-import { Newsreader_400Regular_Italic } from '@expo-google-fonts/newsreader/400Regular_Italic';
+import { HankenGrotesk_400Regular } from '@expo-google-fonts/hanken-grotesk/400Regular';
+import { HankenGrotesk_500Medium } from '@expo-google-fonts/hanken-grotesk/500Medium';
+import { HankenGrotesk_600SemiBold } from '@expo-google-fonts/hanken-grotesk/600SemiBold';
+import { HankenGrotesk_700Bold } from '@expo-google-fonts/hanken-grotesk/700Bold';
 import { useFonts } from 'expo-font';
 import { DarkTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -36,15 +31,10 @@ const navTheme = {
 function AppStack() {
   const { state } = useStore();
   const [fontsLoaded, fontError] = useFonts({
-    Gloock_400Regular,
-    Newsreader_400Regular,
-    Newsreader_400Regular_Italic,
-    InstrumentSans_400Regular,
-    InstrumentSans_500Medium,
-    InstrumentSans_600SemiBold,
-    InstrumentSans_700Bold,
-    DMMono_400Regular,
-    DMMono_500Medium,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
   });
   const ready = state.hydrated && (fontsLoaded || !!fontError);
 

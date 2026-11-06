@@ -1,25 +1,23 @@
 # Design System
 
-Manna should feel like a fine-dining room: calm, dark and warm, with gold used
-sparingly. Everything comes from the logo, which has ivory serif lettering inside fine
-gold rays on black. The tokens live in `src/theme/index.ts`.
-
-The design borrows from the paper objects of a good restaurant rather than from
-delivery apps: the **front page** of a local paper (home), the **printed menu**
-(kitchen pages) and the **kitchen ticket** (cart and orders).
+Manna should feel like an experience, not another food app: immersive, sleek and
+quiet. Full-screen photography carries the color; the interface stays out of the way.
+The tokens live in `src/theme/index.ts`.
 
 ## Principles
 
-1. **Dark canvas, gold accents.** Backgrounds are warm near-black. Gold marks what
-   matters: chef bylines, active states and the one main action on each screen.
-2. **Serif for names, italic for voice, sans for information, mono for tickets.**
-3. **Rules, not boxes.** Sections are separated by hairline rules and space. Almost
-   nothing sits in a bordered card.
-4. **Near-square corners.** 2–6px, like paper. Pills only for avatars and counts.
-5. **One primary action per screen.** A flat gold rectangle with small capitals.
-   Secondary actions are outlined rectangles or underlined gold links.
-6. **No empty photos.** A kitchen without photos gets a serif monogram on black with
-   the logo's rays, so the feed still looks premium.
+1. **Open on the food.** Home starts with full-screen featured kitchens that drift
+   slowly and swipe like stories. A kitchen opens on a full-height photo with its
+   name across it.
+2. **One typeface.** Hanken Grotesk, set large and tight for headlines. The serif
+   lives only in the MANNA wordmark.
+3. **Quiet luxury colors.** Neutral black, warm white type, champagne gold only for
+   the brand and a few highlights (signature dish, ratings, active states).
+4. **One primary action per screen.** A warm-white pill with black text. Secondary
+   actions are outlined pills or gold text.
+5. **Smooth surfaces, few lines.** Generous corners (10–24px), soft grey surfaces
+   instead of borders, frosted bars over photography.
+6. **No empty photos.** A kitchen without photos gets a quiet monogram seal.
 
 ## Color
 
@@ -43,24 +41,23 @@ buttons, use `onGold` (`#140F06`) for text.
 
 | Role | Font | Example |
 |---|---|---|
-| Display | Gloock | Headlines, kitchen and dish names, totals |
-| Italic | Newsreader Italic | Chef bylines, dish descriptions, pull quotes, fine print |
-| Interface | Instrument Sans Regular / Medium / SemiBold | Facts, fields, buttons (small capitals, letter-spaced) |
-| Ticket | DM Mono | Order numbers, receipt amounts, dietary codes |
-| Label | Instrument Sans Medium 13px, muted, sentence case | Only where it carries information ("7 kitchens") |
-
-Menu prices drop the dollar sign ("28", "15.99") and sit at the end of a dot leader.
+| Headlines | Hanken Grotesk SemiBold, tight tracking | Hero kitchen names, screen titles |
+| Names | Hanken Grotesk SemiBold 17–20px | Kitchen and dish names |
+| Body | Hanken Grotesk Regular / Medium | Descriptions, facts, fields |
+| Buttons | Hanken Grotesk SemiBold 16px, sentence case | "Place order · $16.79" |
+| Wordmark | The MANNA logotype (image) | Masthead |
 
 ## Components (`src/components/ui.tsx`)
 
 - `Logo`, `Wordmark`, `Rays`: brand assets cut from the logo (`assets/images/logo.png`, `wordmark.png`, `rays.png`). `Rays` sits faintly behind hero areas.
 - `Heading`, `Eyebrow`, `Body`, `SectionHeader`: the type scale. A section is a serif title; a quiet label only when it carries information.
-- `GoldButton`: `primary` (flat gold), `outline` and `ghost` variants, all with small-capital labels.
+- `GoldButton`: `primary` (warm-white pill), `outline` and `ghost` variants.
+- `HeroCarousel` (`hero-carousel.tsx`): full-bleed featured kitchens with a slow drift; still when "reduce motion" is on.
 - `TextField`, `PickerField`: dark fields whose border turns gold on focus.
 - `Chip`, `Badge`, `Card`, `Divider`, `GoldRule`, `IconCircleButton`, `BackButton`.
 - `RestaurantCard` / `FeaturedCard` / `RestaurantCover` (`restaurant-card.tsx`): photo cards with a monogram fallback.
-- `MannaTabBar`: an edge-to-edge bar under a hairline; the current tab gets a short gold rule.
-- `Ticket` (`ticket.tsx`): the receipt in the cart and on order tracking, with a dashed outline, dot leaders and mono amounts.
+- `MannaTabBar`: an edge-to-edge frosted bar; the current tab is bright, the rest recede.
+- `Ticket` (`ticket.tsx`): the order summary in the cart and on order tracking.
 - `OptionSheet`, `CoachMarks`, `OrderCard` (with a gold progress bar), `FormScreen`.
 - `ChefCard`, `ChefAvatar`, `VerifiedSeal` (`chef.tsx`): the chef's story as an italic pull quote, signed with their portrait. The gold seal appears only on verified kitchens.
 - `DishSheet`, `DietaryIcons`, `StockNote` (`dish.tsx`): dish details, dietary icons and "Only 3 left today".
@@ -91,12 +88,10 @@ menu-style letter codes (V, VG, GF, DF, H), not pictograms.
 
 ## What keeps it from looking generated
 
-- **Photography leads.** Feed entries are photos with type beneath: name, italic byline, one line of facts. No badges on photos.
-- **The logo's rays are a brand moment, not wallpaper.** They appear on welcome, sign-in, the order celebration and error pages only.
-- **No decorative labels.** No letter-spaced gold capitals above headings, no icons in circles, no gradient buttons, no floating glass bars.
-- **Real typography.** Gloock's contrast gives headlines presence; Newsreader italic carries the chefs' voices; typographic quotation marks instead of icon quotes.
-- **Details from the subject.** Dot leaders and plain prices on menus, the cottage food statement as fine print, order numbers and mono amounts on tickets, a dateline on the front page.
-- **Restrained placeholders.** A kitchen without photos shows a quiet gold monogram seal.
+- **Photography leads, full-bleed.** No badges on photos; kitchens are introduced by their food.
+- **No luxury clichés.** No gold gradients or glows, no letter-spaced gold capitals, no ornate serifs in the interface, no icons in circles.
+- **Motion with purpose.** Slow drift on the hero, paging between kitchens, a celebration when an order is placed. Nothing bounces.
+- **Restraint.** Gold appears a few times per screen at most.
 
 ## Updating the logo
 

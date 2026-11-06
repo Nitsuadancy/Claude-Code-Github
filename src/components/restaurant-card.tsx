@@ -195,19 +195,12 @@ const styles = StyleSheet.create({
   seal: { borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   monogram: { fontFamily: fonts.display, color: colors.gold },
   info: { paddingTop: spacing.md - 2, gap: 3 },
-  name: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
+  name: { fontFamily: fonts.display, fontSize: 20, letterSpacing: -0.5, color: colors.ivory },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  byline: { fontFamily: fonts.displayItalic, fontSize: 16, color: colors.gold },
-  offer: {
-    marginLeft: 'auto',
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: colors.gold,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.goldDeep,
-  },
+  byline: { fontFamily: fonts.medium, fontSize: 14, color: colors.textMuted },
+  offer: { marginLeft: 'auto', fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
-  meta: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, flexShrink: 1 },
+  meta: { fontFamily: fonts.body, fontSize: 13, color: colors.textFaint, flexShrink: 1 },
   metaDot: { color: colors.textFaint, fontSize: 13 },
   noShrink: { flexShrink: 0 },
 });
@@ -277,7 +270,7 @@ export function CoverGallery({
 const galleryStyles = StyleSheet.create({
   dots: {
     position: 'absolute',
-    bottom: 56,
+    bottom: 172,
     left: 0,
     right: 0,
     flexDirection: 'row',

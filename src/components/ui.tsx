@@ -85,7 +85,7 @@ export function Heading({
       {...props}
       style={[
         styles.heading,
-        { fontSize: size, lineHeight: Math.round(size * 1.1), letterSpacing: size >= 26 ? -0.4 : 0 },
+        { fontSize: size, lineHeight: Math.round(size * 1.08), letterSpacing: -size * 0.028 },
         italic && { fontFamily: fonts.displayItalic },
         style,
       ]}
@@ -201,10 +201,10 @@ export function GoldButton({
   fullWidth?: boolean;
 }) {
   const primary = variant === 'primary';
-  const textColor = primary ? colors.onGold : variant === 'outline' ? colors.ivory : colors.gold;
+  const textColor = primary ? colors.bg : variant === 'outline' ? colors.ivory : colors.gold;
   const surface =
     variant === 'primary'
-      ? { backgroundColor: colors.gold }
+      ? { backgroundColor: colors.ivory }
       : variant === 'outline'
         ? { borderWidth: 1, borderColor: colors.borderStrong }
         : null;
@@ -412,12 +412,12 @@ export function Chip({
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
       style={[styles.chip, selected && styles.chipSelected]}>
-      <Text style={[styles.chipText, selected && { color: colors.ivory }]}>{label}</Text>
+      <Text style={[styles.chipText, selected && { color: colors.bg }]}>{label}</Text>
       {icon ? (
         <Icon
           name={icon}
           size={16}
-          color={selected ? colors.ivory : colors.textMuted}
+          color={selected ? colors.bg : colors.textMuted}
           style={{ marginLeft: 4 }}
         />
       ) : null}
@@ -468,13 +468,13 @@ export const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   button: {
-    minHeight: 52,
-    borderRadius: radius.sm,
+    minHeight: 54,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-  buttonText: { fontFamily: fonts.semibold, fontSize: 13, letterSpacing: 1.6, textTransform: 'uppercase' },
+  buttonText: { fontFamily: fonts.semibold, fontSize: 16, letterSpacing: -0.1 },
   circleButton: {
     backgroundColor: 'rgba(10, 9, 7, 0.62)',
     alignItems: 'center',
@@ -489,7 +489,7 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.gold,
   },
-  link: { fontFamily: fonts.medium, color: colors.gold, fontSize: 14, textDecorationLine: 'underline', textDecorationColor: colors.goldDeep },
+  link: { fontFamily: fonts.semibold, color: colors.gold, fontSize: 14 },
   label: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
   field: {
     minHeight: 54,
@@ -517,12 +517,13 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
     paddingVertical: 8,
+    backgroundColor: colors.surface,
   },
-  chipSelected: { borderColor: colors.ivory, backgroundColor: colors.surfaceRaised },
-  chipText: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 13 },
+  chipSelected: { borderColor: colors.ivory, backgroundColor: colors.ivory },
+  chipText: { fontFamily: fonts.medium, color: colors.text, fontSize: 13 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   badgeDot: { width: 6, height: 6, borderRadius: 3 },
   badgeOnPhoto: { backgroundColor: 'rgba(10, 9, 7, 0.7)', borderRadius: radius.sm, paddingVertical: 5, paddingHorizontal: 9 },

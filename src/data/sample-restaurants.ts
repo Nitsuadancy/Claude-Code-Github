@@ -280,7 +280,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_susies_sweets',
-    coverUris: ['demo:peach-cobbler', 'demo:pound-cake'],
+    coverUris: ['demo:pound-cake', 'demo:peach-cobbler'],
     name: 'Susie’s Sweets',
     chefName: 'Mrs. Susie',
     chefBio:

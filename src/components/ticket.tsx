@@ -9,10 +9,7 @@ export interface TicketLine {
   cents: number;
 }
 
-/**
- * A receipt in the style of a kitchen ticket: a dashed outline, dot leaders
- * and amounts in mono, with the total set large.
- */
+/** The order summary: items, charges and a large total, on a quiet card. */
 export function Ticket({
   heading,
   items = [],
@@ -57,9 +54,6 @@ function TicketRow({ label, cents, strong }: TicketLine & { strong?: boolean }) 
       <Text style={[styles.label, strong && { color: colors.text }]} numberOfLines={2}>
         {label}
       </Text>
-      <Text style={styles.leader} numberOfLines={1} ellipsizeMode="clip">
-        {' . '.repeat(40)}
-      </Text>
       <Text style={[styles.amount, strong && { color: colors.text }]}>{formatCents(cents)}</Text>
     </View>
   );
@@ -67,28 +61,24 @@ function TicketRow({ label, cents, strong }: TicketLine & { strong?: boolean }) 
 
 const styles = StyleSheet.create({
   ticket: {
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.borderStrong,
-    borderRadius: radius.sm,
-    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md + 2,
     gap: spacing.md,
   },
-  heading: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 0.4, color: colors.textMuted },
+  heading: { fontFamily: fonts.medium, fontSize: 13, color: colors.textFaint },
   block: { gap: 6 },
-  row: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.md },
   label: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted, flexShrink: 1 },
-  leader: { flex: 1, minWidth: 12, fontFamily: fonts.mono, fontSize: 11, color: colors.textFaint, overflow: 'hidden' },
-  amount: { fontFamily: fonts.mono, fontSize: 14, color: colors.textMuted },
+  amount: { fontFamily: fonts.medium, fontSize: 14, color: colors.textMuted, fontVariant: ['tabular-nums'] },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.borderStrong,
   },
-  totalLabel: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
-  totalValue: { fontFamily: fonts.monoMedium, fontSize: 18, color: colors.gold },
+  totalLabel: { fontFamily: fonts.display, fontSize: 20, letterSpacing: -0.4, color: colors.ivory },
+  totalValue: { fontFamily: fonts.display, fontSize: 20, letterSpacing: -0.4, color: colors.ivory, fontVariant: ['tabular-nums'] },
 });

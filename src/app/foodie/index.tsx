@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
@@ -16,7 +17,8 @@ import { CollectionCard } from '@/components/collection-card';
 import { DishResult, MiniKitchenCard, OrderAgainCard } from '@/components/home-rows';
 import { FadeIn } from '@/components/motion';
 import { OptionSheet } from '@/components/option-sheet';
-import { FeaturedCard, isOpenNow, RestaurantCard } from '@/components/restaurant-card';
+import { HeroCarousel } from '@/components/hero-carousel';
+import { isOpenNow, RestaurantCard } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import {
   Body,
@@ -89,6 +91,7 @@ export default function FoodieHome() {
   const { state, dispatch } = useStore();
   const restaurants = useAllRestaurants();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [filters, setFilters] = useState<BrowseFilters>(DEFAULT_FILTERS);
   const [sheet, setSheet] = useState<'sort' | 'cuisines' | 'neighborhood' | null>(null);
   const now = new Date();
@@ -99,7 +102,7 @@ export default function FoodieHome() {
     const list = browseRestaurants(restaurants, filters, new Date());
     return fitsDiet && hasDietProfile(diet) ? list.filter((r) => kitchenFits(r, diet)) : list;
   }, [restaurants, filters, fitsDiet, diet]);
-  const featured = useMemo(() => {
+  const heroKitchens = useMemo(() => {
     const ranked = browseRestaurants(restaurants, DEFAULT_FILTERS, new Date());
     const open = ranked.filter((r) => isOpenNow(r, new Date()));
     return (open.length >= 2 ? open : ranked).slice(0, 5);
@@ -169,33 +172,56 @@ export default function FoodieHome() {
     go();
   };
 
+  const masthead = (
+    <View style={[styles.topRow, { paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg }]}>
+      <Wordmark width={92} />
+      <View style={styles.row}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Neighborhood: ${neighborhood}, ${LAUNCH_CITY}. Change`}
+          onPress={() => setSheet('neighborhood')}
+          style={styles.place}>
+          <Text style={styles.placeText} numberOfLines={1}>
+            {neighborhood}
+          </Text>
+          <Icon name="chevron-down" size={14} color={colors.ivory} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={unseen ? `Activity, ${unseen} new` : 'Activity'}
+          hitSlop={10}
+          onPress={() => router.push('/activity')}
+          style={styles.bell}>
+          <Icon name="bell-outline" size={20} color={colors.ivory} />
+          {unseen > 0 ? <View style={styles.bellDot} /> : null}
+        </Pressable>
+      </View>
+    </View>
+  );
+
   const header = (
     <View style={{ gap: spacing.xl }}>
       <View style={{ gap: spacing.lg }}>
-        <View style={styles.topRow}>
-          <Wordmark width={96} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={unseen ? `Activity, ${unseen} new` : 'Activity'}
-            hitSlop={10}
-            onPress={() => router.push('/activity')}>
-            <Icon name="bell-outline" size={22} color={colors.text} />
-            {unseen > 0 ? <View style={styles.bellDot} /> : null}
-          </Pressable>
-        </View>
+        {heroKitchens.length ? (
+          <View style={{ marginHorizontal: -spacing.lg }}>
+            <HeroCarousel
+              restaurants={heroKitchens}
+              width={width}
+              height={Math.round(Math.min(width * 1.32, 620))}
+              label={(r) =>
+                isOpenNow(r, now) ? `Open now · ready in ~${r.prepMinutes} min` : `Opens ${formatTime(r.openTime)}`
+              }
+              onOpen={open}
+              overlay={masthead}
+            />
+          </View>
+        ) : (
+          <View style={{ marginHorizontal: -spacing.lg }}>{masthead}</View>
+        )}
 
-        <View style={{ gap: spacing.sm }}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Neighborhood: ${neighborhood}, ${LAUNCH_CITY}. Change`}
-            onPress={() => setSheet('neighborhood')}
-            style={styles.row}>
-            <Text style={styles.dateline} numberOfLines={1}>
-              {dateline(now)} · {neighborhood}, {LAUNCH_CITY}
-            </Text>
-            <Icon name="chevron-down" size={14} color={colors.textMuted} />
-          </Pressable>
-          <Heading size={34}>{headline(now, neighborhood)}</Heading>
+        <View style={{ gap: 6 }}>
+          <Heading size={30}>{headline(now, neighborhood)}</Heading>
+          <Text style={styles.dateline}>{dateline(now)}</Text>
         </View>
 
         <View style={styles.search}>
@@ -328,22 +354,6 @@ export default function FoodieHome() {
         </FadeIn>
       ) : null}
 
-      {!searching && featured.length ? (
-        <FadeIn delay={80} style={{ gap: spacing.md }}>
-          <SectionHeader title="Tonight’s table" />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={width * 0.68 + spacing.md}
-            decelerationRate="fast"
-            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-            style={{ marginHorizontal: -spacing.lg }}>
-            {featured.map((r) => (
-              <FeaturedCard key={r.id} restaurant={r} width={width * 0.68} onPress={() => open(r)} />
-            ))}
-          </ScrollView>
-        </FadeIn>
-      ) : null}
 
       {!searching ? (
         <FadeIn delay={100} style={{ gap: spacing.md }}>
@@ -424,7 +434,7 @@ export default function FoodieHome() {
   );
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <FlatList
         data={results}
         keyExtractor={(r) => r.id}
@@ -495,18 +505,38 @@ export default function FoodieHome() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingTop: spacing.md },
+  content: { padding: spacing.lg, paddingTop: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
-  bellDot: { position: 'absolute', top: -1, right: -1, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.gold },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.sm },
+  place: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(11,11,11,0.45)',
+    marginRight: spacing.sm,
+  },
+  placeText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ivory },
+  bell: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(11,11,11,0.45)',
+  },
+  bellDot: { position: 'absolute', top: 6, right: 7, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.gold },
   dateline: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted, flexShrink: 1 },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderStrong,
-    minHeight: 48,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    minHeight: 50,
   },
   searchInput: {
     flex: 1,

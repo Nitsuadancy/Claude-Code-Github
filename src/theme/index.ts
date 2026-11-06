@@ -1,35 +1,34 @@
 /**
  * Manna design tokens.
  *
- * Taken from the Manna logo: deep black, ivory serif lettering and fine
- * champagne-gold rays. The whole app uses one dark, luxurious palette; gold
- * is an accent (lines, highlights, primary actions), never a background wash.
+ * Quiet luxury: a deep neutral black, warm white type and champagne gold kept
+ * for the brand and a few highlights. Photography carries the color.
  */
 export const colors = {
   // Surfaces, darkest to lightest.
-  bg: '#0A0907',
-  surface: '#14120E',
-  surfaceRaised: '#1D1A15',
-  border: '#2E2A22',
-  borderStrong: '#4A4234',
-  hairline: 'rgba(205, 165, 88, 0.28)',
+  bg: '#0B0B0B',
+  surface: '#161616',
+  surfaceRaised: '#1F1F1E',
+  border: '#272726',
+  borderStrong: '#3B3A37',
+  hairline: 'rgba(255, 255, 255, 0.10)',
 
-  // Gold, from the logo's rays.
-  gold: '#CDA558',
-  goldBright: '#E6C77F',
-  goldDeep: '#9C7A35',
-  goldTint: 'rgba(205, 165, 88, 0.12)',
-  goldGlow: 'rgba(205, 165, 88, 0.45)',
-  onGold: '#140F06',
+  // Champagne gold, from the logo's rays.
+  gold: '#D4B26E',
+  goldBright: '#E8CD92',
+  goldDeep: '#A88A4E',
+  goldTint: 'rgba(212, 178, 110, 0.12)',
+  goldGlow: 'rgba(212, 178, 110, 0.4)',
+  onGold: '#141109',
 
-  // Text, from the logo's ivory lettering.
-  ivory: '#FFF5E0',
-  text: '#F2E9D8',
-  textMuted: '#A89E8C',
-  textFaint: '#6F675A',
+  // Type.
+  ivory: '#F7F4EE',
+  text: '#ECE9E3',
+  textMuted: '#9A968F',
+  textFaint: '#64625D',
 
-  success: '#8FC38D',
-  danger: '#E8826F',
+  success: '#7FC79A',
+  danger: '#F08A76',
   overlay: 'rgba(0, 0, 0, 0.72)',
   black: '#000000',
 } as const;
@@ -39,22 +38,19 @@ export const goldGradient = ['#EBD08E', '#CDA558', '#A8853D'] as const;
 
 export const fonts = {
   /**
-   * Gloock: a high-contrast display serif with the presence of a fine-dining
-   * menu. Titles, kitchen names and dish names. It has one weight.
+   * One typeface, Hanken Grotesk, set large and tight for headlines. The serif
+   * lives only in the MANNA wordmark.
    */
-  display: 'Gloock_400Regular',
-  displayBold: 'Gloock_400Regular',
-  /** Newsreader italic: chef bylines, dish descriptions, quotes. */
-  displayItalic: 'Newsreader_400Regular_Italic',
-  serif: 'Newsreader_400Regular',
-  /** Instrument Sans: the interface. */
-  body: 'InstrumentSans_400Regular',
-  medium: 'InstrumentSans_500Medium',
-  semibold: 'InstrumentSans_600SemiBold',
-  bold: 'InstrumentSans_700Bold',
-  /** DM Mono: order tickets, order numbers and pickup times, like a kitchen printer. */
-  mono: 'DMMono_400Regular',
-  monoMedium: 'DMMono_500Medium',
+  display: 'HankenGrotesk_600SemiBold',
+  displayBold: 'HankenGrotesk_700Bold',
+  displayItalic: 'HankenGrotesk_400Regular',
+  serif: 'HankenGrotesk_400Regular',
+  body: 'HankenGrotesk_400Regular',
+  medium: 'HankenGrotesk_500Medium',
+  semibold: 'HankenGrotesk_600SemiBold',
+  bold: 'HankenGrotesk_700Bold',
+  mono: 'HankenGrotesk_500Medium',
+  monoMedium: 'HankenGrotesk_600SemiBold',
 } as const;
 
 export const spacing = {
@@ -66,11 +62,11 @@ export const spacing = {
   xxl: 48,
 } as const;
 
-/** Near-square corners, like printed menus and tickets. Pills only for avatars. */
+/** Smooth, generous corners, like iOS. */
 export const radius = {
-  sm: 2,
-  md: 4,
-  lg: 6,
+  sm: 10,
+  md: 16,
+  lg: 24,
   pill: 999,
 } as const;
 

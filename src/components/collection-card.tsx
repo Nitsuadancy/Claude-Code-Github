@@ -1,7 +1,7 @@
 import { StyleSheet, Text } from 'react-native';
 
 import type { Collection } from '@/data/collections';
-import { colors, fonts, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 
 import { CraftIcon } from './craft-icon';
 import { PressableScale } from './motion';
@@ -36,13 +36,13 @@ export function CollectionCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: 196,
+    width: 200,
     gap: spacing.sm,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderStrong,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
   },
-  title: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory, marginTop: spacing.xs },
-  tagline: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 20, color: colors.textMuted },
+  title: { fontFamily: fonts.display, fontSize: 18, letterSpacing: -0.4, color: colors.ivory, marginTop: spacing.xs },
+  tagline: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textMuted },
   count: { fontFamily: fonts.medium, fontSize: 12, color: colors.gold },
 });
