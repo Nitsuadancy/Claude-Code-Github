@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChefCard, FoundingMark, VerifiedSeal } from '@/components/chef';
@@ -44,6 +44,7 @@ export default function RestaurantDetail() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [tab, setTab] = useState<'menu' | 'about' | 'reviews'>('menu');
   const [scrollY] = useState(() => new Animated.Value(0));
   const reviews = useReviews(id);
   const diet = useDietProfile();
@@ -164,126 +165,164 @@ export default function RestaurantDetail() {
             />
           ) : null}
 
-          {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
+          <View style={styles.tabs} accessibilityRole="tablist">
+            {(
+              [
+                ['menu', 'Menu'],
+                ['about', 'About'],
+                ['reviews', reviews.length ? `Reviews · ${reviews.length}` : 'Reviews'],
+              ] as const
+            ).map(([key, label]) => (
+              <Pressable
+                key={key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: tab === key }}
+                onPress={() => setTab(key)}
+                style={[styles.tab, tab === key && styles.tabOn]}>
+                <Text style={[styles.tabText, tab === key && styles.tabTextOn]}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
 
-          {restaurant.inPerson?.length ? (
-            <View style={styles.inPerson}>
-              <Heading size={22}>Find me in person</Heading>
-              {restaurant.inPerson.map((spot) => (
-                <View key={`${spot.place}-${spot.when}`} style={styles.spot}>
-                  <View style={styles.spotIcon}>
-                    <Icon name="map-marker-outline" size={18} color={colors.gold} />
-                  </View>
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={styles.spotPlace}>{spot.place}</Text>
-                    <Text style={styles.spotWhen}>{spot.when}</Text>
-                  </View>
+          {tab === 'menu' ? (
+            <View>
+              {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
+              {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
+                <View key={group.title ?? `group-${group.items[0].id}`}>
+                  {group.title ? <Text style={styles.sectionTitle}>{group.title}</Text> : null}
+                  {group.items.map((item) => {
+                    const q = qty(item.id);
+                    const left = remaining(item);
+                    const soldOut = !item.available || left === 0;
+                    const atLimit = left !== null && q >= left;
+                    const signature = item.id === restaurant.signatureItemId;
+                    return (
+                      <View key={item.id} style={[styles.item, soldOut && { opacity: 0.5 }]}>
+                        {/* Details and the add buttons are separate controls, not nested ones. */}
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
+                          onPress={() => setOpenItemId(item.id)}
+                          style={({ pressed }) => [styles.itemText, pressed && { opacity: 0.7 }]}>
+                          {signature || item.popular ? (
+                            <Text style={styles.signatureLabel}>
+                              {[signature && 'Chef’s signature', item.popular && 'Most ordered'].filter(Boolean).join(' · ')}
+                            </Text>
+                          ) : null}
+                          <Text style={styles.itemName}>{item.name}</Text>
+                          {item.description ? (
+                            <Text style={styles.description} numberOfLines={2}>
+                              {item.description}
+                            </Text>
+                          ) : null}
+                          <View style={styles.itemFoot}>
+                            <Text style={styles.price}>{item.available ? formatCents(item.priceCents) : 'Unavailable'}</Text>
+                            <DietaryIcons tags={item.dietary} />
+                          </View>
+                          <StockNote remaining={item.available ? left : null} />
+                          <DietNote item={item} profile={diet} />
+                        </Pressable>
+                        <View style={styles.thumbWrap}>
+                          {item.photoUri ? (
+                            <Pressable
+                              accessibilityRole="imagebutton"
+                              accessibilityLabel={`Photo of ${item.name}. Show details`}
+                              onPress={() => setOpenItemId(item.id)}>
+                              <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
+                            </Pressable>
+                          ) : (
+                            <View style={styles.thumbEmpty} />
+                          )}
+                          {canOrder && !soldOut ? (
+                            q > 0 ? (
+                              <View style={styles.stepper}>
+                                <Pressable
+                                  accessibilityRole="button"
+                                  accessibilityLabel={`Remove one ${item.name}`}
+                                  onPress={() => {
+                                    haptics.tap();
+                                    dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 });
+                                  }}
+                                  hitSlop={10}>
+                                  <Icon name="minus" size={15} color={colors.bg} />
+                                </Pressable>
+                                <Text style={styles.qty}>{q}</Text>
+                                <Pressable
+                                  accessibilityRole="button"
+                                  accessibilityLabel={`Add one ${item.name}`}
+                                  disabled={atLimit}
+                                  onPress={() => add(item)}
+                                  hitSlop={10}>
+                                  <Icon name="plus" size={15} color={atLimit ? colors.textMuted : colors.bg} />
+                                </Pressable>
+                              </View>
+                            ) : (
+                              <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Add ${item.name} to cart`}
+                                onPress={() => add(item)}
+                                hitSlop={8}
+                                style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]}>
+                                <Icon name="plus" size={18} color={colors.bg} />
+                              </Pressable>
+                            )
+                          ) : null}
+                        </View>
+                      </View>
+                    );
+                  })}
                 </View>
               ))}
             </View>
           ) : null}
 
-          <View style={styles.menuHeader}>
-            <Heading size={28}>Menu</Heading>
-          </View>
-          {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
-          {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
-            <View key={group.title ?? `group-${group.items[0].id}`}>
-              {group.title ? <Text style={styles.sectionTitle}>{group.title}</Text> : null}
-          {group.items.map((item) => {
-            const q = qty(item.id);
-            const left = remaining(item);
-            const soldOut = !item.available || left === 0;
-            const atLimit = left !== null && q >= left;
-            const signature = item.id === restaurant.signatureItemId;
-            return (
-              <View key={item.id} style={[styles.item, soldOut && { opacity: 0.5 }]}>
-                {/* Details and the add buttons are separate controls, not nested ones. */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.name}, ${formatCents(item.priceCents)}. Show details`}
-                  onPress={() => setOpenItemId(item.id)}
-                  style={({ pressed }) => [styles.itemText, pressed && { opacity: 0.7 }]}>
-                  {signature ? <Text style={styles.signatureLabel}>Chef’s signature</Text> : null}
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  {item.description ? (
-                    <Text style={styles.description} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  ) : null}
-                  <View style={styles.itemFoot}>
-                    <Text style={styles.price}>{item.available ? formatCents(item.priceCents) : 'Unavailable'}</Text>
-                    <DietaryIcons tags={item.dietary} />
-                  </View>
-                  <StockNote remaining={item.available ? left : null} />
-                  <DietNote item={item} profile={diet} />
-                </Pressable>
-                <View style={styles.thumbWrap}>
-                  {item.photoUri ? (
-                    <Pressable
-                      accessibilityRole="imagebutton"
-                      accessibilityLabel={`Photo of ${item.name}. Show details`}
-                      onPress={() => setOpenItemId(item.id)}>
-                      <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
-                    </Pressable>
-                  ) : (
-                    <View style={styles.thumbEmpty} />
-                  )}
-                  {canOrder && !soldOut ? (
-                    q > 0 ? (
-                      <View style={styles.stepper}>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Remove one ${item.name}`}
-                          onPress={() => {
-                            haptics.tap();
-                            dispatch({ type: 'setCartQuantity', itemId: item.id, quantity: q - 1 });
-                          }}
-                          hitSlop={10}>
-                          <Icon name="minus" size={15} color={colors.bg} />
-                        </Pressable>
-                        <Text style={styles.qty}>{q}</Text>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Add one ${item.name}`}
-                          disabled={atLimit}
-                          onPress={() => add(item)}
-                          hitSlop={10}>
-                          <Icon name="plus" size={15} color={atLimit ? colors.textMuted : colors.bg} />
-                        </Pressable>
-                      </View>
-                    ) : (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Add ${item.name} to cart`}
-                        onPress={() => add(item)}
-                        hitSlop={8}
-                        style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.7 }]}>
-                        <Icon name="plus" size={18} color={colors.bg} />
-                      </Pressable>
-                    )
-                  ) : null}
-                </View>
-              </View>
-            );
-          })}
-            </View>
-          ))}
+          {tab === 'about' ? (
+            <View style={{ gap: spacing.lg }}>
+              {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
 
-          {reviews.length ? (
-            <View style={styles.reviews}>
-              <Heading size={24}>What neighbors say</Heading>
-              <RatingSummary restaurant={restaurant} />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-                style={{ marginHorizontal: -spacing.lg }}>
-                {reviews.slice(0, 10).map((r) => (
-                  <ReviewCard key={r.id} review={r} now={now} />
-                ))}
-              </ScrollView>
+              {restaurant.inPerson?.length ? (
+                <View style={styles.inPerson}>
+                  <Heading size={22}>Find me in person</Heading>
+                  {restaurant.inPerson.map((spot) => (
+                    <View key={`${spot.place}-${spot.when}`} style={styles.spot}>
+                      <View style={styles.spotIcon}>
+                        <Icon name="map-marker-outline" size={18} color={colors.gold} />
+                      </View>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={styles.spotPlace}>{spot.place}</Text>
+                        <Text style={styles.spotWhen}>{spot.when}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              <View style={{ gap: 4 }}>
+                <Text style={styles.aboutLabel}>Hours</Text>
+                <Text style={styles.aboutText}>
+                  {days}, {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
+                </Text>
+              </View>
+              <View style={{ gap: 4 }}>
+                <Text style={styles.aboutLabel}>Pickup</Text>
+                <Text style={styles.aboutText}>
+                  {restaurant.neighborhood || restaurant.city}. The exact address is shared once your order is accepted.
+                </Text>
+              </View>
             </View>
+          ) : null}
+
+          {tab === 'reviews' ? (
+            reviews.length ? (
+              <View style={styles.reviews}>
+                <RatingSummary restaurant={restaurant} />
+                {reviews.slice(0, 20).map((r) => (
+                  <ReviewCard key={r.id} review={r} now={now} wide />
+                ))}
+              </View>
+            ) : (
+              <Body muted>No reviews yet. Reviews appear here after customers pick up their orders.</Body>
+            )
           ) : null}
           <Text style={styles.finePrint}>
             Made in a cottage food operation that is not subject to Florida’s food safety regulations. Tell{' '}
@@ -436,7 +475,19 @@ const styles = StyleSheet.create({
   spotPlace: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
   spotWhen: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   noticeText: { flex: 1, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.text },
-  menuHeader: { marginTop: spacing.lg },
+  tabs: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderStrong,
+  },
+  tab: { paddingVertical: spacing.sm + 2, borderBottomWidth: 2, borderBottomColor: 'transparent', marginBottom: -1 },
+  tabOn: { borderBottomColor: colors.ivory },
+  tabText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textMuted },
+  tabTextOn: { color: colors.ivory },
+  aboutLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textMuted },
+  aboutText: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.text },
   sectionTitle: {
     fontFamily: fonts.semibold,
     fontSize: 15,
@@ -444,7 +495,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.xs,
   },
-  reviews: { gap: spacing.md, marginTop: spacing.lg },
+  reviews: { gap: spacing.md },
   item: {
     flexDirection: 'row',
     gap: spacing.md,

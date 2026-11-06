@@ -68,6 +68,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'cp_biscotti',
+        popular: true,
         photoUri: 'demo:biscotti',
         section: 'Cookies',
         name: 'Almond Biscotti (12)',
@@ -126,6 +127,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'bm_jerk_rub',
+        popular: true,
         name: 'Jerk Seasoning Dry Rub',
         description: 'Scotch bonnet, pimento, thyme and scallion, dried and ground in small batches. 4 oz jar.',
         priceCents: 1200,
@@ -177,6 +179,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'jn_brownies',
+        popular: true,
         photoUri: 'demo:brownies',
         name: 'Fudge Brownies (4)',
         description: 'Dense, dark-chocolate brownies under a crunch of toasted hazelnuts.',
@@ -222,6 +225,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'gb_banana_bread',
+        popular: true,
         photoUri: 'demo:banana-bread',
         name: 'Vegan Banana Bread',
         description: 'Very ripe bananas, coconut sugar and a crackly top. One loaf, sliced.',
@@ -269,6 +273,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'sp_biscuits',
+        popular: true,
         photoUri: 'demo:biscuits',
         name: 'Buttermilk Biscuits (6)',
         description: 'Tall, flaky and golden, baked the morning of your pickup.',
@@ -323,6 +328,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'ss_pound_cake',
+        popular: true,
         photoUri: 'demo:pound-cake',
         name: 'Earl Grey Pound Cake',
         description: 'Buttery pound cake steeped with black tea and a little bergamot. One loaf.',
@@ -369,6 +375,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
       }),
       dish({
         id: 'ar_polvorones',
+        popular: true,
         name: 'Polvorones (12)',
         description: 'Crumbly pecan wedding cookies rolled in powdered sugar.',
         priceCents: 1100,

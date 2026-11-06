@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
   initials: { fontFamily: fonts.display, color: colors.gold },
   card: {
     gap: spacing.md,
-    paddingVertical: spacing.lg,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.borderStrong,
   },

@@ -41,9 +41,10 @@ export function RatingSummary({ restaurant }: { restaurant: Restaurant }) {
   );
 }
 
-export function ReviewCard({ review, now }: { review: Review; now: Date }) {
+/** A review. `wide` fills its column; otherwise it is sized for a horizontal row. */
+export function ReviewCard({ review, now, wide }: { review: Review; now: Date; wide?: boolean }) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, wide && styles.wide]}>
       <View style={styles.cardHeader}>
         <Stars value={review.stars} />
         <Text style={styles.when}>{relativeDay(review.createdAt, now)}</Text>
@@ -162,6 +163,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.sm,
   },
+  wide: { width: 'auto' },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   when: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint },
   text: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 23, color: colors.text },
