@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -131,7 +132,15 @@ export default function Login() {
                 ))}
               </View>
               <Body muted style={styles.legal}>
-                By continuing you agree to Manna’s Terms of Service and Privacy Policy.
+                By continuing you agree to Manna’s{' '}
+                <Text accessibilityRole="link" style={styles.legalLink} onPress={() => router.push('/legal/terms')}>
+                  Terms of Service
+                </Text>{' '}
+                and{' '}
+                <Text accessibilityRole="link" style={styles.legalLink} onPress={() => router.push('/legal/privacy')}>
+                  Privacy Policy
+                </Text>
+                .
               </Body>
             </>
           ) : (
@@ -171,6 +180,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  legalLink: { color: colors.text, textDecorationLine: 'underline' },
   hero: { paddingBottom: spacing.xl },
   brand: { alignItems: 'center', justifyContent: 'center', paddingTop: spacing.md },
   sheet: {

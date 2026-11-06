@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -112,15 +113,13 @@ export function AccountSettings({ showIdentity = true }: { showIdentity?: boolea
         <Row
           icon="file-document-outline"
           label="Terms of Service"
-          onPress={() => notify('Terms of Service', 'Our terms are being finalized with our attorneys before launch.')}
+          onPress={() => router.push('/legal/terms')}
         />
         <View style={styles.rowDivider} />
         <Row
           icon="shield-lock-outline"
           label="Privacy Policy"
-          onPress={() =>
-            notify('Privacy Policy', 'Right now your information stays on this device. A full privacy policy will be published before launch.')
-          }
+          onPress={() => router.push('/legal/privacy')}
         />
       </View>
 
