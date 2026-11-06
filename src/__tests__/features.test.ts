@@ -9,7 +9,10 @@ import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
 import { estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
+import { accentColor } from '@/data/accents';
+import { cleanInstagram, visibleUpdate } from '@/lib/kitchen-style';
 import { firstOrderSteps } from '@/lib/launch';
+import { moveItem } from '@/lib/menu';
 import { INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
 import { withReviews } from '@/lib/reviews';
 import type { Order, Restaurant } from '@/types';
@@ -311,5 +314,28 @@ describe('cancelling an order', () => {
     expect(s.orders[0].status).toBe('cancelled');
     expect(isActive('cancelled')).toBe(false);
     expect(isAddressShared('cancelled')).toBe(false);
+  });
+});
+
+describe('kitchen personalization', () => {
+  it('cleans Instagram handles and hides old updates', () => {
+    expect(cleanInstagram('@Susies.Sweets ')).toBe('susies.sweets');
+    expect(cleanInstagram('https://www.instagram.com/susies_sweets/?hl=en')).toBe('susies_sweets');
+    expect(cleanInstagram('not a handle!')).toBe('');
+    const now = new Date('2026-11-07T12:00:00Z');
+    expect(visibleUpdate({ text: 'Pie is back', postedAt: '2026-11-05T12:00:00Z' }, now)?.text).toBe('Pie is back');
+    expect(visibleUpdate({ text: 'Old news', postedAt: '2026-10-20T12:00:00Z' }, now)).toBeNull();
+    expect(visibleUpdate({ text: '  ', postedAt: '2026-11-06T12:00:00Z' }, now)).toBeNull();
+    expect(accentColor('sage')).toBe('#9DC59B');
+    expect(accentColor(undefined)).toBe('#D4B26E');
+  });
+});
+
+describe('reordering dishes', () => {
+  it('swaps neighbours and ignores moves off either end', () => {
+    expect(moveItem(['a', 'b', 'c'], 1, -1)).toEqual(['b', 'a', 'c']);
+    expect(moveItem(['a', 'b', 'c'], 1, 1)).toEqual(['a', 'c', 'b']);
+    expect(moveItem(['a', 'b', 'c'], 0, -1)).toEqual(['a', 'b', 'c']);
+    expect(moveItem(['a', 'b', 'c'], 2, 1)).toEqual(['a', 'b', 'c']);
   });
 });

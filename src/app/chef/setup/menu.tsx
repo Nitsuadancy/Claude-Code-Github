@@ -8,7 +8,8 @@ import { FormScreen } from '@/components/form-screen';
 import { Body, Chip, Eyebrow, FieldLabel, GoldButton, SectionTitle, TextField } from '@/components/ui';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { pickImages } from '@/lib/images';
-import { MENU_SECTIONS } from '@/lib/menu';
+import { MENU_SECTIONS, moveItem } from '@/lib/menu';
+import { photoSource } from '@/lib/photo';
 import { formatCents, parsePriceToCents } from '@/lib/money';
 import { isMenuComplete } from '@/lib/setup';
 import { digitsOnly, newId } from '@/lib/validation';
@@ -115,7 +116,7 @@ export default function MenuSetup() {
         }}
         style={styles.photo}>
         {photoUri ? (
-          <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <Image source={photoSource(photoUri)} style={StyleSheet.absoluteFill} contentFit="cover" />
         ) : (
           <View style={styles.photoEmpty}>
             <Icon name="camera-plus-outline" size={28} color={colors.gold} />
@@ -210,14 +211,39 @@ export default function MenuSetup() {
       <SectionTitle>Your menu ({draft.menu.length})</SectionTitle>
       {draft.menu.length > 1 ? (
         <Body muted style={styles.hint}>
-          Tap the star to choose your signature dish. It’s shown first on your page.
+          Tap the star to choose your signature dish; it’s shown first. Use the arrows to set the order
+          customers see the rest.
         </Body>
       ) : null}
       {draft.menu.length === 0 ? <Body muted>No dishes yet. Add your first one above.</Body> : null}
-      {draft.menu.map((item) => {
+      {draft.menu.map((item, i) => {
         const signature = item.id === draft.signatureItemId;
+        const first = i === 0;
+        const last = i === draft.menu.length - 1;
         return (
           <View key={item.id} style={[styles.item, signature && { borderColor: colors.hairline }]}>
+            {draft.menu.length > 1 ? (
+              <View style={styles.order}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move ${item.name} up`}
+                  accessibilityState={{ disabled: first }}
+                  disabled={first}
+                  hitSlop={6}
+                  onPress={() => setMenu(moveItem(draft.menu, i, -1))}>
+                  <Icon name="chevron-up" size={18} color={first ? colors.border : colors.textMuted} />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move ${item.name} down`}
+                  accessibilityState={{ disabled: last }}
+                  disabled={last}
+                  hitSlop={6}
+                  onPress={() => setMenu(moveItem(draft.menu, i, 1))}>
+                  <Icon name="chevron-down" size={18} color={last ? colors.border : colors.textMuted} />
+                </Pressable>
+              </View>
+            ) : null}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={signature ? `${item.name} is your signature dish` : `Make ${item.name} your signature dish`}
@@ -229,7 +255,7 @@ export default function MenuSetup() {
                 color={signature ? colors.gold : colors.textFaint}
               />
             </Pressable>
-            {item.photoUri ? <Image source={{ uri: item.photoUri }} style={styles.thumb} /> : null}
+            {item.photoUri ? <Image source={photoSource(item.photoUri)} style={styles.thumb} /> : null}
             <Pressable style={{ flex: 1, gap: 3 }} onPress={() => edit(item)} accessibilityLabel={`Edit ${item.name}`}>
               {signature ? <Eyebrow style={{ fontSize: 9 }}>Signature</Eyebrow> : null}
               <Text style={styles.itemName}>{item.name}</Text>
@@ -289,17 +315,18 @@ const styles = StyleSheet.create({
   formButtons: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
   cancel: { paddingHorizontal: spacing.md, minHeight: 44, justifyContent: 'center' },
   cancelText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textMuted },
+  order: { gap: 6, marginLeft: -4 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm + 4,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     padding: spacing.md,
     backgroundColor: colors.surface,
   },
-  thumb: { width: 52, height: 52, borderRadius: radius.sm },
+  thumb: { width: 44, height: 44, borderRadius: radius.sm },
   itemName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   itemPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },

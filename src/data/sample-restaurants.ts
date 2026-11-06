@@ -17,6 +17,11 @@ const EVERY_DAY: Weekday[] = [
   'sunday',
 ];
 
+/** Demo updates stay fresh: posted a day before the app opens. */
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 86_400_000).toISOString();
+}
+
 const base = {
   documents: [],
   status: 'live' as const,
@@ -33,6 +38,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_cafe_parmesan',
+    accent: 'terracotta',
+    tagline: 'Italian bakes from my nonna’s recipes',
     founding: true,
     inPerson: [{ place: 'Saturday pop-up at Lantern Coffee, College Park', when: 'Saturdays, 8 AM – noon' }],
     coverUris: ['demo:olive-oil-cake', 'demo:biscotti', 'demo:country-loaf'],
@@ -93,6 +100,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_blue_mountain',
+    accent: 'sage',
+    tagline: 'Jamaican sweets, the way Granny made them',
     founding: true,
     inPerson: [{ place: 'Table at the Pine Hills Sunday market', when: 'Sundays, 10 AM – 2 PM' }],
     coverUris: ['demo:gizzada'],
@@ -145,6 +154,9 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_jacksons_night_oven',
+    accent: 'lavender',
+    tagline: 'Warm cookies until 1 AM',
+    update: { text: 'Brown butter brownies are back this weekend. Only 12 trays.', postedAt: daysAgo(1) },
     founding: true,
     inPerson: [{ place: 'Late-night window at Mills 50 Night Bazaar', when: 'Fridays, 9 PM – midnight' }],
     coverUris: ['demo:cookies', 'demo:brownies'],
@@ -193,6 +205,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_green_bowl',
+    accent: 'sage',
+    tagline: 'Plant-based baking that doesn’t taste like it',
     founding: false,
     coverUris: ['demo:granola', 'demo:banana-bread'],
     name: 'The Green Pantry',
@@ -239,6 +253,9 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_sunrise_plates',
+    accent: 'champagne',
+    tagline: 'Breakfast bakes, ready by 7',
+    update: { text: 'Pumpkin cinnamon rolls every Saturday in November.', postedAt: daysAgo(1) },
     founding: true,
     inPerson: [{ place: 'Breakfast pop-up at Delaney Park Church', when: 'First Sunday of the month, 8–11 AM' }],
     coverUris: ['demo:cinnamon-rolls', 'demo:biscuits', 'demo:apricot-jam'],
@@ -294,6 +311,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_susies_sweets',
+    accent: 'berry',
+    tagline: 'Pound cakes and cobblers, the Macon way',
     founding: true,
     inPerson: [{ place: 'Bake table at Lantern Coffee, College Park', when: 'Saturdays, 8 AM – noon' }],
     coverUris: ['demo:pound-cake', 'demo:peach-cobbler'],
@@ -341,6 +360,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_abuela_rosa',
+    accent: 'terracotta',
+    tagline: 'Pan dulce from Rosa’s family table',
     founding: false,
     inPerson: [{ place: 'Panadería table at Colonialtown Market Hall', when: 'Sundays, 9 AM – 1 PM' }],
     coverUris: ['demo:conchas'],

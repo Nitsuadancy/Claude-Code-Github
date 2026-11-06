@@ -1,3 +1,5 @@
+import type { AccentId } from '@/data/accents';
+
 export type Role = 'foodie' | 'chef';
 
 export type Weekday =
@@ -71,6 +73,11 @@ export interface RestaurantDocument {
   uri: string;
 }
 
+export interface KitchenUpdate {
+  text: string;
+  postedAt: string;
+}
+
 export interface InPersonSpot {
   place: string;
   when: string;
@@ -95,6 +102,14 @@ export interface Restaurant {
   founding?: boolean;
   /** Where people can also find the cook in person, e.g. a market table or a coffee shop pop-up. */
   inPerson?: InPersonSpot[];
+  /** Kitchen page accent color, one of KITCHEN_ACCENTS. Manna's champagne when unset. */
+  accent?: AccentId;
+  /** One line under the kitchen's name, e.g. "Small-batch sourdough, baked Saturdays". */
+  tagline?: string;
+  /** A short note pinned to the top of the menu for a week, e.g. "Pumpkin bread is back". */
+  update?: KitchenUpdate;
+  /** Instagram username, without the @. */
+  instagram?: string;
   /** Typical minutes from order to ready. */
   prepMinutes: number;
   cuisine: string;

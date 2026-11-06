@@ -4,6 +4,7 @@ import type { ComponentRef, Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
+import { accentColor } from '@/data/accents';
 import { photoSource } from '@/lib/photo';
 import { colors, fonts } from '@/theme';
 import type { Restaurant } from '@/types';
@@ -33,6 +34,7 @@ export function StoryCard({
   const u = width / 270; // Designed at 270 px wide; everything scales from that.
   const signature = restaurant.menu.find((m) => m.id === restaurant.signatureItemId) ?? restaurant.menu[0];
   const photo = signature?.photoUri ?? restaurant.coverUris[0];
+  const accent = accentColor(restaurant.accent);
   return (
     <View ref={ref} collapsable={false} style={[styles.card, { width, height, borderRadius: 14 * u }]}>
       <View style={{ height: height * 0.66 }}>
@@ -52,7 +54,7 @@ export function StoryCard({
       </View>
 
       <View style={{ flex: 1, paddingHorizontal: 18 * u, marginTop: -54 * u, gap: 4 * u }}>
-        <Text style={[styles.kicker, { fontSize: 9.5 * u }]}>Now taking orders on Manna</Text>
+        <Text style={[styles.kicker, { fontSize: 9.5 * u, color: accent }]}>Now taking orders on Manna</Text>
         <Text style={[styles.name, { fontSize: 27 * u, lineHeight: 29 * u, letterSpacing: -0.8 * u }]} numberOfLines={2}>
           {restaurant.name}
         </Text>
@@ -60,6 +62,11 @@ export function StoryCard({
           {restaurant.chefName}
           {restaurant.neighborhood ? ` · ${restaurant.neighborhood}` : ''}
         </Text>
+        {restaurant.tagline ? (
+          <Text style={[styles.tagline, { fontSize: 11.5 * u, marginTop: 2 * u }]} numberOfLines={2}>
+            {restaurant.tagline}
+          </Text>
+        ) : null}
         <View style={[styles.bottom, { marginTop: 'auto', marginBottom: 18 * u, gap: 12 * u }]}>
           <View style={{ flex: 1, gap: 3 * u }}>
             {signature ? (
@@ -86,7 +93,8 @@ export function StoryCard({
 
 const styles = StyleSheet.create({
   card: { overflow: 'hidden', backgroundColor: colors.bg },
-  kicker: { fontFamily: fonts.semibold, color: colors.gold },
+  kicker: { fontFamily: fonts.semibold },
+  tagline: { fontFamily: fonts.medium, color: colors.text },
   name: { fontFamily: fonts.display, color: colors.ivory },
   byline: { fontFamily: fonts.medium, color: colors.textMuted },
   bottom: { flexDirection: 'row', alignItems: 'flex-end' },

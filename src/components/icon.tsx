@@ -48,6 +48,7 @@ import {
   Minus,
   Moon,
   Pencil,
+  Pin,
   Plus,
   Quote,
   ReceiptText,
@@ -82,7 +83,7 @@ import { colors } from '@/theme';
 /**
  * Manna's icon set: Lucide's thin-line icons at a 1.6 stroke, so every icon
  * shares one weight and corner style. Names are semantic (the keys below).
- * Only third-party brand marks (Google, Facebook, Apple) come from elsewhere.
+ * Only third-party brand marks (Google, Facebook, Apple, Instagram) come from elsewhere.
  */
 const LUCIDE = {
   'account': User,
@@ -134,6 +135,7 @@ const LUCIDE = {
   'format-quote-open': Quote,
   'heart': Heart,
   'heart-outline': Heart,
+  'pin-outline': Pin,
   'history': History,
   'home-heart': HouseHeart,
   'ice-cream': IceCreamCone,
@@ -178,7 +180,7 @@ const LUCIDE = {
   'weather-night': Moon,
 } satisfies Record<string, LucideIcon>;
 
-const BRANDS = ['google', 'facebook', 'apple'] as const;
+const BRANDS = ['google', 'facebook', 'apple', 'instagram'] as const;
 
 export type IconName = keyof typeof LUCIDE | (typeof BRANDS)[number];
 

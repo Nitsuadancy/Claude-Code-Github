@@ -20,6 +20,7 @@ import {
   BackButton,
   Body,
   Eyebrow,
+  FieldLabel,
   GoldButton,
   PickerField,
   Screen,
@@ -27,10 +28,12 @@ import {
   TextField,
   TextLink,
 } from '@/components/ui';
+import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
 import { CATEGORIES, CUISINES } from '@/data/categories';
 import { NEIGHBORHOODS } from '@/data/neighborhoods';
 import { capitalize, formatTime, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
 import { pickImages } from '@/lib/images';
+import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
 import { digitsOnly, isValidZip } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -45,7 +48,7 @@ const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
 }));
 
 const BIO_MAX = 280;
-type Errors = Partial<Record<'name' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
+type Errors = Partial<Record<'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
 
 const TIME_OPTIONS = TIME_SLOTS.map((t) => ({ value: t, label: formatTime(t) }));
 
@@ -63,9 +66,11 @@ export default function RestaurantInformation() {
       const e: Errors = {};
       if (!draft.name.trim()) e.name = 'Give your kitchen a name.';
       if (!draft.cuisine) e.cuisine = 'Choose a cuisine.';
+      const instagram = cleanInstagram(draft.instagram ?? '');
+      if (draft.instagram && !instagram) e.instagram = 'Use just your username, like @susiessweets.';
       setErrors(e);
       if (Object.keys(e).length) return;
-      save({ name: draft.name.trim() });
+      save({ name: draft.name.trim(), tagline: (draft.tagline ?? '').trim(), instagram });
       setStep(2);
       scroller.current?.scrollTo({ y: 0, animated: false });
       return;
@@ -238,6 +243,53 @@ export default function RestaurantInformation() {
                 icon="timer-sand"
                 value={`About ${draft.prepMinutes} minutes`}
                 onPress={() => setSheet('prep')}
+              />
+
+              <SectionTitle>Make it yours</SectionTitle>
+              <Body muted style={styles.hint}>
+                Your page keeps Manna’s layout, so customers always know where everything is. These are yours.
+              </Body>
+              <TextField
+                label={`Tagline (${(draft.tagline ?? '').length}/${TAGLINE_MAX})`}
+                placeholder="Small-batch sourdough, baked Saturdays"
+                maxLength={TAGLINE_MAX}
+                value={draft.tagline ?? ''}
+                onChangeText={(tagline) => update({ tagline })}
+              />
+              <View style={{ gap: spacing.sm }}>
+                <FieldLabel>Accent color</FieldLabel>
+                <View style={styles.swatches} accessibilityRole="radiogroup">
+                  {KITCHEN_ACCENTS.map((a) => {
+                    const on = (draft.accent ?? DEFAULT_ACCENT) === a.id;
+                    return (
+                      <Pressable
+                        key={a.id}
+                        accessibilityRole="radio"
+                        accessibilityLabel={a.label}
+                        accessibilityState={{ checked: on }}
+                        onPress={() => update({ accent: a.id })}
+                        style={[styles.swatch, on && { borderColor: a.color }]}>
+                        <View style={[styles.swatchFill, { backgroundColor: a.color }]}>
+                          {on ? <Icon name="check" size={16} color={colors.bg} /> : null}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Body muted style={{ fontSize: 13 }}>
+                  {KITCHEN_ACCENTS.find((a) => a.id === (draft.accent ?? DEFAULT_ACCENT))?.label}. Used on your
+                  kitchen page and your Instagram Story card.
+                </Body>
+              </View>
+              <TextField
+                label="Instagram (optional)"
+                placeholder="@yourkitchen"
+                icon="instagram"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={draft.instagram ? `@${draft.instagram}` : ''}
+                onChangeText={(text) => update({ instagram: text.replace(/^@/, '').replace(/\s/g, '').toLowerCase() })}
+                error={errors.instagram}
               />
             </>
           ) : (
@@ -464,6 +516,9 @@ function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm + 2 },
+  swatch: { padding: 3, borderRadius: 24, borderWidth: 2, borderColor: 'transparent' },
+  swatchFill: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   spotRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,4 +1,5 @@
 import type { PersistedState } from '@/state/reducer';
+import { isAccentId } from '@/data/accents';
 import { isCategoryId } from '@/data/categories';
 import type { MenuItem, Order, Restaurant, UserProfile } from '@/types';
 
@@ -34,6 +35,9 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     neighborhood: r.neighborhood ?? '',
     founding: r.founding ?? false,
     inPerson: r.inPerson ?? [],
+    accent: isAccentId(r.accent) ? r.accent : undefined,
+    tagline: r.tagline ?? '',
+    instagram: r.instagram ?? '',
     menu: (r.menu ?? []).map(normalizeMenuItem),
   };
 }

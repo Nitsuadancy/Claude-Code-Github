@@ -38,6 +38,11 @@ const restaurantRow: RestaurantRow = {
   verified: true,
   founding: true,
   in_person: [{ place: 'Lantern Coffee', when: 'Saturdays' }],
+  accent: 'berry',
+  tagline: 'Pound cakes, the Macon way',
+  update_text: 'Sweet potato pie is back',
+  update_posted_at: '2026-11-05T12:00:00Z',
+  instagram: 'susiessweets',
   accepting_orders: true,
   has_offer: false,
   status: 'pending_review',
@@ -92,6 +97,14 @@ describe('database mappers', () => {
       address: '5 Willow Way',
       signatureItemId: 'm2',
       status: 'draft',
+      accent: 'berry',
+      tagline: 'Pound cakes, the Macon way',
+      update: { text: 'Sweet potato pie is back', postedAt: '2026-11-05T12:00:00Z' },
+      instagram: 'susiessweets',
+    });
+    expect(restaurantFromRow({ ...restaurantRow, accent: 'neon', update_text: '' }, url)).toMatchObject({
+      accent: undefined,
+      update: undefined,
     });
     expect(r.logoUri).toBeUndefined();
     expect(r.menu.map((m) => m.id)).toEqual(['m1', 'm2']);
@@ -104,7 +117,20 @@ describe('database mappers', () => {
   it('round-trips the fields a chef can edit, and never writes protected ones', () => {
     const r = restaurantFromRow(restaurantRow, url);
     const update = restaurantUpdate(r, { coverPaths: ['a', 'b', 'c', 'd'], logoPath: null, chefPhotoPath: 'r1/chef.jpg' });
-    expect(update).toMatchObject({ name: 'Susie’s Sweets', zip: '32804', open_time: '09:00', cover_paths: ['a', 'b', 'c'] });
+    expect(update).toMatchObject({
+      name: 'Susie’s Sweets',
+      zip: '32804',
+      open_time: '09:00',
+      cover_paths: ['a', 'b', 'c'],
+      accent: 'berry',
+      update_text: 'Sweet potato pie is back',
+      instagram: 'susiessweets',
+    });
+    expect(restaurantUpdate({ ...r, accent: undefined, update: { text: ' ', postedAt: 'x' }, instagram: '@Bad Handle!' }, {
+      coverPaths: [],
+      logoPath: null,
+      chefPhotoPath: null,
+    })).toMatchObject({ accent: 'champagne', update_text: '', update_posted_at: null, instagram: '' });
     for (const key of ['verified', 'founding', 'status', 'rating_sum', 'rating_count', 'owner_id']) {
       expect(update).not.toHaveProperty(key);
     }

@@ -7,6 +7,7 @@ import { VerifiedSeal } from '@/components/chef';
 import { PrepList, WeeklyChart } from '@/components/chef-insights';
 import { OrderCard } from '@/components/order-card';
 import { FirstOrders } from '@/components/first-orders';
+import { PinnedUpdate } from '@/components/pinned-update';
 import { TodayMenu } from '@/components/today-menu';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
 import {
@@ -19,6 +20,7 @@ import {
   SectionHeader,
   TextField,
 } from '@/components/ui';
+import { accentColor } from '@/data/accents';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import { firstOrderSteps, type FirstOrderStep } from '@/lib/launch';
@@ -30,6 +32,7 @@ import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES, storedKitchen } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import type { Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
 
 export default function ChefDashboard() {
@@ -54,6 +57,10 @@ export default function ChefDashboard() {
   // Until the first order arrives, a checklist replaces the empty sales charts.
   const isNew = orders.length === 0;
   const steps = firstOrderSteps(restaurant, state.sharedSteps);
+  const saveKitchen = (changes: Partial<Restaurant>) => {
+    const stored = storedKitchen(state);
+    if (stored) dispatch({ type: 'saveRestaurant', restaurant: { ...stored, ...changes } });
+  };
   const onStep = (step: FirstOrderStep) => {
     if (step.id === 'photos') router.push('/chef/setup/menu');
     else if (step.id === 'bio') router.push('/chef/setup/information');
@@ -129,6 +136,13 @@ export default function ChefDashboard() {
             if (stored) dispatch({ type: 'saveRestaurant', restaurant: { ...stored, menu } });
           }}
           onEdit={() => router.push('/chef/setup/menu')}
+        />
+
+        <PinnedUpdate
+          update={restaurant.update}
+          accent={accentColor(restaurant.accent)}
+          onPost={(text) => saveKitchen({ update: { text, postedAt: new Date().toISOString() } })}
+          onRemove={() => saveKitchen({ update: undefined })}
         />
 
         {isNew ? null : (

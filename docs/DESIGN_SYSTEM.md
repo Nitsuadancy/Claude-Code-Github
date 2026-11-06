@@ -98,3 +98,18 @@ menu-style letter codes (V, VG, GF, DF, H), not pictograms.
 Replace `assets/images/icon.png` with the full logo on black (1024×1024). Then rebuild
 `logo.png`, `wordmark.png` and `rays.png` with transparent backgrounds. The splash
 screen and Android icons use these same files.
+
+## Kitchen personalization
+
+Every kitchen page uses the same layout, type, buttons, cart and checkout, so customers never
+relearn the app. Cooks make their page their own with a few controlled choices:
+
+- **Accent color**, one of six in `src/data/accents.ts` (Champagne, Terracotta, Sage, Berry,
+  Lavender, Sky). Each reads at better than 6.9:1 on the page background. It colors the tab
+  underline, the "Chef's signature" and "Most ordered" labels, the pinned update, the
+  in-person pins and the Instagram Story card's kicker. It never touches the feed, buttons,
+  prices or Manna's own badges (Founding stays champagne).
+- **Tagline**, up to 60 characters, under the kitchen's name.
+- **Pinned update**, up to 140 characters at the top of the menu, hidden after 7 days.
+- **Instagram** username, linked from the About tab.
+- **Dish order**, set with the arrows in the menu editor.

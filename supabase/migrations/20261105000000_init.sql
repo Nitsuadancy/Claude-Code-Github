@@ -64,6 +64,13 @@ create table public.restaurants (
   -- Where the cook also sells in person: [{"place": "...", "when": "..."}]
   in_person jsonb not null default '[]'::jsonb
     check (jsonb_typeof(in_person) = 'array' and jsonb_array_length(in_person) <= 5),
+  -- How the cook personalizes their page. The layout stays the same for everyone.
+  accent text not null default 'champagne'
+    check (accent in ('champagne', 'terracotta', 'sage', 'berry', 'lavender', 'sky')),
+  tagline text not null default '' check (char_length(tagline) <= 60),
+  update_text text not null default '' check (char_length(update_text) <= 140),
+  update_posted_at timestamptz,
+  instagram text not null default '' check (instagram = '' or instagram ~ '^[a-z0-9._]{1,30}$'),
   accepting_orders boolean not null default true,
   has_offer boolean not null default false,
   status public.restaurant_status not null default 'draft',

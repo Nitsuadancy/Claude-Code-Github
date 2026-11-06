@@ -3,9 +3,11 @@
  * models (camelCase, image URIs). Pure functions, so they're easy to test and
  * the screens never see database shapes.
  */
+import { DEFAULT_ACCENT, isAccentId } from '@/data/accents';
 import { isCategoryId } from '@/data/categories';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { WEEKDAYS } from '@/lib/hours';
+import { cleanInstagram, TAGLINE_MAX, UPDATE_MAX } from '@/lib/kitchen-style';
 import type {
   Allergen,
   DietaryTag,
@@ -143,6 +145,10 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     verified: row.verified,
     founding: row.founding,
     inPerson: row.in_person ?? [],
+    accent: isAccentId(row.accent) ? row.accent : undefined,
+    tagline: row.tagline,
+    update: row.update_text && row.update_posted_at ? { text: row.update_text, postedAt: row.update_posted_at } : undefined,
+    instagram: row.instagram,
     prepMinutes: row.prep_minutes,
     cuisine: row.cuisine,
     categories: row.categories.filter(isCategoryId),
@@ -192,6 +198,11 @@ export function restaurantUpdate(
     close_time: r.closeTime || null,
     prep_minutes: r.prepMinutes,
     in_person: (r.inPerson ?? []).slice(0, 5),
+    accent: r.accent ?? DEFAULT_ACCENT,
+    tagline: (r.tagline ?? '').trim().slice(0, TAGLINE_MAX),
+    update_text: (r.update?.text ?? '').trim().slice(0, UPDATE_MAX),
+    update_posted_at: r.update?.text.trim() ? r.update.postedAt : null,
+    instagram: cleanInstagram(r.instagram ?? ''),
     accepting_orders: r.acceptingOrders,
     signature_item_id: r.signatureItemId ?? null,
   };

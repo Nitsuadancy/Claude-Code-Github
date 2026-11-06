@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChefCard, FoundingMark, VerifiedSeal } from '@/components/chef';
@@ -19,13 +19,16 @@ import {
   type IconName,
   Screen,
 } from '@/components/ui';
+import { accentColor } from '@/data/accents';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import { formatDays, formatTime } from '@/lib/hours';
+import { instagramUrl, visibleUpdate } from '@/lib/kitchen-style';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
 import { groupMenu } from '@/lib/menu';
+import { relativeDay } from '@/lib/reviews';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { shareKitchen } from '@/lib/share';
 import { useDietProfile, useRestaurant, useReviews, useStore } from '@/state/store';
@@ -97,6 +100,10 @@ export default function RestaurantDetail() {
   };
 
   const days = formatDays(restaurant.workingDays);
+  // The cook's own touches: an accent color, a tagline, a pinned update and their Instagram.
+  const accent = accentColor(restaurant.accent);
+  const update = visibleUpdate(restaurant.update, now);
+  const chefFirst = restaurant.chefName.replace(/\.$/, '');
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -127,6 +134,7 @@ export default function RestaurantDetail() {
                 </Heading>
                 {restaurant.verified ? <VerifiedSeal size={18} /> : null}
               </View>
+              {restaurant.tagline ? <Text style={styles.tagline}>{restaurant.tagline}</Text> : null}
               <Text style={styles.chef}>
                 {restaurant.chefName}
                 {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
@@ -153,7 +161,7 @@ export default function RestaurantDetail() {
           </Text>
 
           {isPreview ? (
-            <Notice icon="eye-outline" text="This is how foodies will see your kitchen." />
+            <Notice icon="eye-outline" text="This is how customers will see your kitchen." />
           ) : !open ? (
             <Notice
               icon={slots.length ? 'calendar-clock' : 'moon-waning-crescent'}
@@ -178,7 +186,7 @@ export default function RestaurantDetail() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: tab === key }}
                 onPress={() => setTab(key)}
-                style={[styles.tab, tab === key && styles.tabOn]}>
+                style={[styles.tab, tab === key && [styles.tabOn, { borderBottomColor: accent }]]}>
                 <Text style={[styles.tabText, tab === key && styles.tabTextOn]}>{label}</Text>
               </Pressable>
             ))}
@@ -186,6 +194,14 @@ export default function RestaurantDetail() {
 
           {tab === 'menu' ? (
             <View>
+              {update ? (
+                <View style={[styles.update, { borderLeftColor: accent }]} accessibilityRole="summary">
+                  <Text style={[styles.updateFrom, { color: accent }]}>
+                    From {chefFirst} · {relativeDay(update.postedAt, now)}
+                  </Text>
+                  <Text style={styles.updateText}>{update.text}</Text>
+                </View>
+              ) : null}
               {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
               {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
                 <View key={group.title ?? `group-${group.items[0].id}`}>
@@ -205,7 +221,7 @@ export default function RestaurantDetail() {
                           onPress={() => setOpenItemId(item.id)}
                           style={({ pressed }) => [styles.itemText, pressed && { opacity: 0.7 }]}>
                           {signature || item.popular ? (
-                            <Text style={styles.signatureLabel}>
+                            <Text style={[styles.signatureLabel, { color: accent }]}>
                               {[signature && 'Chef’s signature', item.popular && 'Most ordered'].filter(Boolean).join(' · ')}
                             </Text>
                           ) : null}
@@ -286,7 +302,7 @@ export default function RestaurantDetail() {
                   {restaurant.inPerson.map((spot) => (
                     <View key={`${spot.place}-${spot.when}`} style={styles.spot}>
                       <View style={styles.spotIcon}>
-                        <Icon name="map-marker-outline" size={18} color={colors.gold} />
+                        <Icon name="map-marker-outline" size={18} color={accent} />
                       </View>
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={styles.spotPlace}>{spot.place}</Text>
@@ -294,6 +310,20 @@ export default function RestaurantDetail() {
                       </View>
                     </View>
                   ))}
+                </View>
+              ) : null}
+
+              {restaurant.instagram ? (
+                <View style={{ gap: 4 }}>
+                  <Text style={styles.aboutLabel}>Instagram</Text>
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`${restaurant.name} on Instagram, @${restaurant.instagram}`}
+                    onPress={() => void Linking.openURL(instagramUrl(restaurant.instagram ?? ''))}
+                    style={({ pressed }) => [styles.instagram, pressed && { opacity: 0.7 }]}>
+                    <Icon name="instagram" size={18} color={accent} />
+                    <Text style={[styles.aboutText, { color: accent }]}>@{restaurant.instagram}</Text>
+                  </Pressable>
                 </View>
               ) : null}
 
@@ -339,7 +369,7 @@ export default function RestaurantDetail() {
           ) : null}
           <Text style={styles.finePrint}>
             Made in a cottage food operation that is not subject to Florida’s food safety regulations. Tell{' '}
-            {restaurant.chefName.replace(/\.$/, '')} about allergies in your order note.
+            {chefFirst} about allergies in your order note.
           </Text>
         </View>
       </Animated.ScrollView>
@@ -499,6 +529,19 @@ const styles = StyleSheet.create({
   tabOn: { borderBottomColor: colors.ivory },
   tabText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textMuted },
   tabTextOn: { color: colors.ivory },
+  tagline: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 23, color: colors.ivory, opacity: 0.92 },
+  update: {
+    borderLeftWidth: 3,
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    gap: 4,
+    marginBottom: spacing.md,
+  },
+  updateFrom: { fontFamily: fonts.semibold, fontSize: 12 },
+  updateText: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 21, color: colors.ivory },
+  instagram: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start' },
   aboutLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textMuted },
   aboutText: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.text },
   sectionTitle: {

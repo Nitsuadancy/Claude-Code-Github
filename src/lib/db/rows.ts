@@ -44,6 +44,11 @@ export interface RestaurantRow {
   verified: boolean;
   founding: boolean;
   in_person: { place: string; when: string }[];
+  accent: string;
+  tagline: string;
+  update_text: string;
+  update_posted_at: string | null;
+  instagram: string;
   accepting_orders: boolean;
   has_offer: boolean;
   status: DbRestaurantStatus;
