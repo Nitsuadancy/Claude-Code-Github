@@ -6,6 +6,7 @@ import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
 import { PrepList, WeeklyChart } from '@/components/chef-insights';
 import { OrderCard } from '@/components/order-card';
+import { BakeDayCard } from '@/components/bake-day-card';
 import { FirstOrders } from '@/components/first-orders';
 import { PinnedUpdate } from '@/components/pinned-update';
 import { TodayMenu } from '@/components/today-menu';
@@ -21,13 +22,15 @@ import {
   TextField,
 } from '@/components/ui';
 import { accentColor } from '@/data/accents';
-import { confirmAction } from '@/lib/alert';
+import { confirmAction, notify } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
+import { bakeDayDate, nextBakeDayStatus, upcomingBakeDays } from '@/lib/bake-days';
 import { firstOrderSteps, type FirstOrderStep } from '@/lib/launch';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
+import { isBakeDayKitchen } from '@/lib/ordering';
 import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES, storedKitchen } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
@@ -54,6 +57,13 @@ export default function ChefDashboard() {
   const prep = prepList(state.orders, restaurant.id);
   const week = weeklyEarnings(state.orders, restaurant.id, new Date());
   const live = restaurant.acceptingOrders && inHours;
+  const now = new Date();
+  const bakeDayKitchen = isBakeDayKitchen(restaurant);
+  const bakeStatus = bakeDayKitchen ? nextBakeDayStatus(restaurant, state.orders, now) : null;
+  const skippedSet = new Set(restaurant.skippedBakeDays ?? []);
+  const skippedDays = bakeDayKitchen
+    ? upcomingBakeDays(restaurant, now, { includeSkipped: true }).filter((d) => skippedSet.has(d.date))
+    : [];
   // Until the first order arrives, a checklist replaces the empty sales charts.
   const isNew = orders.length === 0;
   const steps = firstOrderSteps(restaurant, state.sharedSteps);
@@ -94,29 +104,58 @@ export default function ChefDashboard() {
           </View>
         </View>
 
-        <View style={[styles.statusCard, live && { borderColor: colors.success }]}>
-          <View style={[styles.statusDot, { backgroundColor: live ? colors.success : colors.textFaint }]} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.statusTitle}>
-              {!restaurant.acceptingOrders ? 'Paused' : inHours ? 'Open for orders' : 'Closed for now'}
-            </Text>
-            <Body muted style={{ fontSize: 13 }}>
-              {inHours
-                ? `Your hours: ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`
-                : `Opens at ${formatTime(restaurant.openTime)}`}
-            </Body>
-          </View>
-          <Switch
-            accessibilityLabel="Accepting orders"
-            value={restaurant.acceptingOrders}
-            trackColor={{ true: colors.gold, false: colors.borderStrong }}
-            thumbColor={colors.ivory}
-            {...webSwitchThumb}
-            onValueChange={(accepting) =>
-              dispatch({ type: 'setAcceptingOrders', restaurantId: restaurant.id, accepting })
+        {bakeDayKitchen ? (
+          <BakeDayCard
+            status={bakeStatus}
+            skipped={skippedDays}
+            accepting={restaurant.acceptingOrders}
+            now={now}
+            onToggleAccepting={(accepting) => dispatch({ type: 'setAcceptingOrders', restaurantId: restaurant.id, accepting })}
+            onSkip={(day, count) => {
+              if (count > 0) {
+                notify(
+                  'You have orders for that day',
+                  `${count} ${count === 1 ? 'customer has' : 'customers have'} already ordered for ${bakeDayDate(day, now)}. Bake for them, or decline their orders below before skipping.`,
+                );
+                return;
+              }
+              confirmAction(
+                `Skip ${bakeDayDate(day, now)}?`,
+                'Customers won’t be able to order for that day. Your other bake days stay open.',
+                'Skip it',
+                () => saveKitchen({ skippedBakeDays: [...(restaurant.skippedBakeDays ?? []), day.date] }),
+                'Keep it',
+              );
+            }}
+            onUnskip={(day) =>
+              saveKitchen({ skippedBakeDays: (restaurant.skippedBakeDays ?? []).filter((d) => d !== day.date) })
             }
           />
-        </View>
+        ) : (
+          <View style={[styles.statusCard, live && { borderColor: colors.success }]}>
+            <View style={[styles.statusDot, { backgroundColor: live ? colors.success : colors.textFaint }]} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.statusTitle}>
+                {!restaurant.acceptingOrders ? 'Paused' : inHours ? 'Open for orders' : 'Closed for now'}
+              </Text>
+              <Body muted style={{ fontSize: 13 }}>
+                {inHours
+                  ? `Your hours: ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`
+                  : `Opens at ${formatTime(restaurant.openTime)}`}
+              </Body>
+            </View>
+            <Switch
+              accessibilityLabel="Accepting orders"
+              value={restaurant.acceptingOrders}
+              trackColor={{ true: colors.gold, false: colors.borderStrong }}
+              thumbColor={colors.ivory}
+              {...webSwitchThumb}
+              onValueChange={(accepting) =>
+                dispatch({ type: 'setAcceptingOrders', restaurantId: restaurant.id, accepting })
+              }
+            />
+          </View>
+        )}
 
         {isNew ? (
           <FirstOrders steps={steps} onStep={onStep} />
@@ -136,6 +175,11 @@ export default function ChefDashboard() {
             if (stored) dispatch({ type: 'saveRestaurant', restaurant: { ...stored, menu } });
           }}
           onEdit={() => router.push('/chef/setup/menu')}
+          day={
+            bakeStatus
+              ? { date: new Date(bakeStatus.day.pickupStart), label: bakeDayDate(bakeStatus.day, now) }
+              : undefined
+          }
         />
 
         <PinnedUpdate

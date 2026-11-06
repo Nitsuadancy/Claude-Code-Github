@@ -1,4 +1,4 @@
-import type { BakeDaySchedule, Restaurant, Weekday } from '@/types';
+import type { BakeDaySchedule, Order, Restaurant, Weekday } from '@/types';
 
 import { capitalize, formatTime, isValidTime, toMinutes, WEEKDAYS } from './hours';
 import { dayLabel } from './schedule';
@@ -144,4 +144,31 @@ export function describeBakeDaysLong(schedule: BakeDaySchedule[] | undefined): s
 export function describeCutoff(closeDaysBefore: number): string {
   const time = shortTime(CUTOFF_TIME);
   return closeDaysBefore === 1 ? `${time} the day before` : `${time}, ${closeDaysBefore} days before`;
+}
+
+export interface BakeDayStatus {
+  day: BakeDay;
+  /** Orders for this bake day that haven't been declined or cancelled. */
+  orderCount: number;
+  /** "open": taking orders. "baking": orders closed, before pickup. "pickup": the window is on. */
+  phase: 'open' | 'baking' | 'pickup';
+}
+
+/** Where the kitchen's next bake day stands, for the cook's dashboard. */
+export function nextBakeDayStatus(
+  kitchen: BakeKitchen & Pick<Restaurant, 'id'>,
+  orders: Pick<Order, 'restaurantId' | 'scheduledFor' | 'status'>[],
+  now: Date,
+): BakeDayStatus | null {
+  const day = upcomingBakeDays(kitchen, now)[0];
+  if (!day) return null;
+  const orderCount = orders.filter(
+    (o) =>
+      o.restaurantId === kitchen.id &&
+      o.scheduledFor === day.pickupStart &&
+      o.status !== 'declined' &&
+      o.status !== 'cancelled',
+  ).length;
+  const phase = now < new Date(day.closesAt) ? 'open' : now < new Date(day.pickupStart) ? 'baking' : 'pickup';
+  return { day, orderCount, phase };
 }

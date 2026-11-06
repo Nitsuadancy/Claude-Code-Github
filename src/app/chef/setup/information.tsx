@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { BakeDaysEditor } from '@/components/bake-days-editor';
 import { ChefAvatar } from '@/components/chef';
 import { OptionSheet } from '@/components/option-sheet';
 import { RestaurantCard } from '@/components/restaurant-card';
@@ -80,9 +81,13 @@ export default function RestaurantInformation() {
     if (!draft.address.trim()) e.address = 'Enter the pickup address.';
     if (!draft.city.trim()) e.city = 'Enter a city.';
     if (!isValidZip(draft.areaCode)) e.areaCode = 'Enter a 5-digit ZIP code.';
-    if (draft.workingDays.length === 0) e.days = 'Pick at least one day.';
-    if (!draft.openTime || !draft.closeTime) e.hours = 'Set your opening and closing times.';
-    else if (draft.openTime === draft.closeTime) e.hours = 'Opening and closing times can’t match.';
+    if (bakeDayMode) {
+      if (!(draft.bakeDays ?? []).length) e.days = 'Add at least one bake day.';
+    } else {
+      if (draft.workingDays.length === 0) e.days = 'Pick at least one day.';
+      if (!draft.openTime || !draft.closeTime) e.hours = 'Set your opening and closing times.';
+      else if (draft.openTime === draft.closeTime) e.hours = 'Opening and closing times can’t match.';
+    }
     setErrors(e);
     if (Object.keys(e).length) return;
     save();
@@ -97,6 +102,7 @@ export default function RestaurantInformation() {
     });
 
   const allSelected = draft.workingDays.length === WEEKDAYS.length;
+  const bakeDayMode = draft.orderMode === 'bake-days';
 
   return (
     <Screen>
@@ -337,64 +343,118 @@ export default function RestaurantInformation() {
               <Body muted style={{ fontSize: 13 }}>
                 Customers see only your neighborhood. Your address is shared with a customer once you accept their order.
               </Body>
-
-              <View style={styles.sectionHeader}>
-                <SectionTitle>Working days</SectionTitle>
-                <TextLink
-                  title={allSelected ? 'Clear All' : 'Select All'}
-                  onPress={() => update({ workingDays: allSelected ? [] : [...WEEKDAYS] })}
-                  style={{ marginTop: spacing.md }}
-                />
-              </View>
-              <View style={styles.days}>
-                {[WEEKDAYS.slice(0, 4), WEEKDAYS.slice(4)].map((column) => (
-                  <View key={column[0]} style={styles.dayColumn}>
-                    {column.map((day) => {
-                      const on = draft.workingDays.includes(day);
-                      return (
-                        <Pressable
-                          key={day}
-                          accessibilityRole="checkbox"
-                          accessibilityState={{ checked: on }}
-                          onPress={() => toggleDay(day)}
-                          style={styles.day}>
-                          <Icon
-                            name={on ? 'check-circle' : 'checkbox-blank-circle-outline'}
-                            size={26}
-                            color={on ? colors.gold : colors.border}
-                          />
-                          <Text style={styles.dayText}>{capitalize(day)}</Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                ))}
-              </View>
-              {errors.days ? <Text style={styles.error}>{errors.days}</Text> : null}
-
-              <SectionTitle>Hours</SectionTitle>
-              <View style={styles.pair}>
-                <PickerField
-                  containerStyle={{ flex: 1 }}
-                  label="Opens"
-                  placeholder="Opening time"
-                  icon="clock-outline"
-                  value={draft.openTime ? formatTime(draft.openTime) : null}
-                  onPress={() => setSheet('open')}
-                />
-                <PickerField
-                  containerStyle={{ flex: 1 }}
-                  label="Closes"
-                  placeholder="Closing time"
-                  icon="clock-outline"
-                  value={draft.closeTime ? formatTime(draft.closeTime) : null}
-                  onPress={() => setSheet('close')}
-                />
-              </View>
-              {errors.hours ? <Text style={styles.error}>{errors.hours}</Text> : null}
-              <Body muted style={styles.hint}>
-                Closing after midnight? Pick an earlier close time, like 6:00 PM to 2:00 AM.
+              <TextField
+                label="Pickup instructions (optional)"
+                placeholder="Cooler on the porch, ring once."
+                icon="home-heart"
+                maxLength={140}
+                value={draft.pickupInstructions ?? ''}
+                onChangeText={(pickupInstructions) => update({ pickupInstructions })}
+              />
+              <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
+                Shared with the address once you accept an order.
               </Body>
+
+              <SectionTitle>How you take orders</SectionTitle>
+              <View style={{ gap: spacing.sm }}>
+                {(
+                  [
+                    ['bake-days', 'Bake days', 'Recommended. Customers order ahead, you bake in one batch, and they pick up in a window.'],
+                    ['hours', 'Set hours', 'Customers order while you’re open and pick up when it’s ready.'],
+                  ] as const
+                ).map(([mode, title, body]) => {
+                  const on = (draft.orderMode ?? 'hours') === mode;
+                  return (
+                    <Pressable
+                      key={mode}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: on }}
+                      onPress={() => update({ orderMode: mode })}
+                      style={[styles.mode, on && styles.modeOn]}>
+                      <Icon
+                        name={on ? 'check-circle' : 'checkbox-blank-circle-outline'}
+                        size={22}
+                        color={on ? colors.gold : colors.border}
+                      />
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={styles.modeTitle}>{title}</Text>
+                        <Text style={styles.modeBody}>{body}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {bakeDayMode ? (
+                <>
+                  <SectionTitle>Your bake days</SectionTitle>
+                  <BakeDaysEditor
+                    value={draft.bakeDays ?? []}
+                    onChange={(bakeDays) => update({ bakeDays })}
+                    error={errors.days}
+                  />
+                </>
+              ) : (
+                <>
+                  <View style={styles.sectionHeader}>
+                    <SectionTitle>Working days</SectionTitle>
+                    <TextLink
+                      title={allSelected ? 'Clear All' : 'Select All'}
+                      onPress={() => update({ workingDays: allSelected ? [] : [...WEEKDAYS] })}
+                      style={{ marginTop: spacing.md }}
+                    />
+                  </View>
+                  <View style={styles.days}>
+                    {[WEEKDAYS.slice(0, 4), WEEKDAYS.slice(4)].map((column) => (
+                      <View key={column[0]} style={styles.dayColumn}>
+                        {column.map((day) => {
+                          const on = draft.workingDays.includes(day);
+                          return (
+                            <Pressable
+                              key={day}
+                              accessibilityRole="checkbox"
+                              accessibilityState={{ checked: on }}
+                              onPress={() => toggleDay(day)}
+                              style={styles.day}>
+                              <Icon
+                                name={on ? 'check-circle' : 'checkbox-blank-circle-outline'}
+                                size={26}
+                                color={on ? colors.gold : colors.border}
+                              />
+                              <Text style={styles.dayText}>{capitalize(day)}</Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ))}
+                  </View>
+                  {errors.days ? <Text style={styles.error}>{errors.days}</Text> : null}
+
+                  <SectionTitle>Hours</SectionTitle>
+                  <View style={styles.pair}>
+                    <PickerField
+                      containerStyle={{ flex: 1 }}
+                      label="Opens"
+                      placeholder="Opening time"
+                      icon="clock-outline"
+                      value={draft.openTime ? formatTime(draft.openTime) : null}
+                      onPress={() => setSheet('open')}
+                    />
+                    <PickerField
+                      containerStyle={{ flex: 1 }}
+                      label="Closes"
+                      placeholder="Closing time"
+                      icon="clock-outline"
+                      value={draft.closeTime ? formatTime(draft.closeTime) : null}
+                      onPress={() => setSheet('close')}
+                    />
+                  </View>
+                  {errors.hours ? <Text style={styles.error}>{errors.hours}</Text> : null}
+                  <Body muted style={styles.hint}>
+                    Closing after midnight? Pick an earlier close time, like 6:00 PM to 2:00 AM.
+                  </Body>
+                </>
+              )}
 
               <SectionTitle>Find me in person (optional)</SectionTitle>
               <Body muted style={styles.hint}>
@@ -603,6 +663,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pair: { flexDirection: 'row', gap: spacing.md },
+  mode: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  modeOn: { borderColor: colors.gold, backgroundColor: colors.surface },
+  modeTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
+  modeBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   days: { flexDirection: 'row' },
   dayColumn: { flex: 1, gap: spacing.md },

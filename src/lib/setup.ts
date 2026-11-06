@@ -1,5 +1,6 @@
 import type { DocumentKind, Restaurant, UserProfile } from '@/types';
 
+import { isValidBakeDay } from './bake-days';
 import { isValidZip } from './validation';
 
 export type SetupStep = 'information' | 'documents' | 'menu' | 'preview';
@@ -38,6 +39,12 @@ export const DOCUMENT_TYPES: {
   },
 ];
 
+/** Bake-day kitchens need at least one bake day; the rest need days and hours. */
+export function hasOrderingSchedule(r: Restaurant): boolean {
+  if (r.orderMode === 'bake-days') return (r.bakeDays ?? []).some(isValidBakeDay);
+  return r.workingDays.length > 0 && !!r.openTime && !!r.closeTime && r.openTime !== r.closeTime;
+}
+
 export function isInformationComplete(r: Restaurant | undefined): boolean {
   return (
     !!r &&
@@ -47,10 +54,7 @@ export function isInformationComplete(r: Restaurant | undefined): boolean {
     r.address.trim().length > 0 &&
     r.city.trim().length > 0 &&
     isValidZip(r.areaCode) &&
-    r.workingDays.length > 0 &&
-    !!r.openTime &&
-    !!r.closeTime &&
-    r.openTime !== r.closeTime
+    hasOrderingSchedule(r)
   );
 }
 
@@ -107,5 +111,10 @@ export function blankRestaurant(user: UserProfile, id: string): Restaurant {
     menu: [],
     documents: [],
     status: 'draft',
+    // New kitchens start with bake days, which is how most home bakers already sell.
+    orderMode: 'bake-days',
+    bakeDays: [],
+    skippedBakeDays: [],
+    pickupInstructions: '',
   };
 }

@@ -15,14 +15,18 @@ export function TodayMenu({
   orders,
   onMenuChange,
   onEdit,
+  day,
 }: {
   restaurant: Restaurant;
   orders: Order[];
+  /** The day limits count toward, e.g. the next bake day. Today when unset. */
+  day?: { date: Date; label: string };
   /** Receives the whole menu with one dish switched on or off. */
   onMenuChange: (menu: Restaurant['menu']) => void;
   onEdit: () => void;
 }) {
-  const now = new Date();
+  const cookDay = day?.date ?? new Date();
+  const when = day?.label ?? 'today';
   const setAvailable = (id: string, available: boolean) => {
     haptics.tap();
     onMenuChange(restaurant.menu.map((m) => (m.id === id ? { ...m, available } : m)));
@@ -30,20 +34,20 @@ export function TodayMenu({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>Today’s menu</Text>
+        <Text style={styles.title}>{day ? `Menu for ${day.label}` : 'Today’s menu'}</Text>
         <Pressable accessibilityRole="button" onPress={onEdit} hitSlop={10}>
           <Text style={styles.edit}>Edit menu</Text>
         </Pressable>
       </View>
       {restaurant.menu.map((item, i) => {
-        const left = remainingToday(item, orders, restaurant.id, now);
+        const left = remainingToday(item, orders, restaurant.id, cookDay);
         const status = !item.available
-          ? 'Off today'
+          ? `Off for ${when}`
           : left === null
             ? 'No daily limit'
             : left === 0
-              ? 'Sold out today'
-              : `${left} left today`;
+              ? `Sold out for ${when}`
+              : `${left} left for ${when}`;
         return (
           <View key={item.id} style={[styles.row, i > 0 && styles.rowRule]}>
             <View style={{ flex: 1, gap: 2 }}>

@@ -179,12 +179,16 @@ describe('chef setup', () => {
       address: '1 Main',
       city: 'Orlando',
       areaCode: '32804',
-      workingDays: ['monday'],
-      openTime: '09:00',
-      closeTime: '17:00',
+      bakeDays: [{ day: 'saturday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
     };
+    expect(r.orderMode).toBe('bake-days');
     expect(isInformationComplete(withInfo)).toBe(true);
     expect(isInformationComplete({ ...withInfo, neighborhood: '' })).toBe(false);
+    expect(isInformationComplete({ ...withInfo, bakeDays: [] })).toBe(false);
+    // Kitchens on set hours need days and hours instead.
+    const hours: Restaurant = { ...withInfo, orderMode: 'hours', bakeDays: [] };
+    expect(isInformationComplete(hours)).toBe(false);
+    expect(isInformationComplete({ ...hours, workingDays: ['monday'], openTime: '09:00', closeTime: '17:00' })).toBe(true);
     expect(currentStep(withInfo)).toBe('documents');
 
     const withDocs: Restaurant = {

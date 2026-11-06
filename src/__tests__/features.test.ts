@@ -11,7 +11,15 @@ import { estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/o
 import { isValidContact } from '@/lib/validation';
 import { accentColor } from '@/data/accents';
 import { cleanInstagram, visibleUpdate } from '@/lib/kitchen-style';
-import { describeBakeDays, describeBakeDaysLong, describeCutoff, isValidBakeDay, openBakeDays, upcomingBakeDays } from '@/lib/bake-days';
+import {
+  describeBakeDays,
+  describeBakeDaysLong,
+  describeCutoff,
+  isValidBakeDay,
+  nextBakeDayStatus,
+  openBakeDays,
+  upcomingBakeDays,
+} from '@/lib/bake-days';
 import { firstOrderSteps } from '@/lib/launch';
 import { moveItem } from '@/lib/menu';
 import { orderingLine, takingOrders } from '@/lib/ordering';
@@ -385,5 +393,25 @@ describe('bake days', () => {
     expect(describeCutoff(2)).toBe('8 PM, 2 days before');
     expect(isValidBakeDay({ day: 'monday', pickupStart: '12:00', pickupEnd: '09:00', closeDaysBefore: 1 })).toBe(false);
     expect(isValidBakeDay({ day: 'monday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 5 })).toBe(false);
+  });
+});
+
+describe('next bake day on the dashboard', () => {
+  it('counts the orders for it and knows whether it is open, baking or in pickup', () => {
+    const kitchen = {
+      id: 'k1',
+      bakeDays: [{ day: 'saturday' as const, pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
+      skippedBakeDays: [],
+    };
+    const sat = new Date(2026, 10, 7, 9, 0).toISOString();
+    const orders = [
+      { restaurantId: 'k1', scheduledFor: sat, status: 'placed' as const },
+      { restaurantId: 'k1', scheduledFor: sat, status: 'cancelled' as const },
+      { restaurantId: 'k1', scheduledFor: null, status: 'placed' as const },
+    ];
+    expect(nextBakeDayStatus(kitchen, orders, new Date(2026, 10, 5, 12))).toMatchObject({ orderCount: 1, phase: 'open' });
+    expect(nextBakeDayStatus(kitchen, orders, new Date(2026, 10, 6, 21))?.phase).toBe('baking');
+    expect(nextBakeDayStatus(kitchen, orders, new Date(2026, 10, 7, 10))?.phase).toBe('pickup');
+    expect(nextBakeDayStatus({ ...kitchen, bakeDays: [] }, orders, new Date(2026, 10, 5))).toBeNull();
   });
 });
