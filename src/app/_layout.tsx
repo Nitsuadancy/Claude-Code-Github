@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { DialogHost } from '@/components/dialog-host';
 import { FallbackScreen } from '@/components/fallback';
 import { StoreProvider, useStore } from '@/state/store';
 import { colors } from '@/theme';
@@ -66,6 +67,7 @@ function AppStack() {
         <Stack.Screen name="foodie" options={{ animation: 'fade' }} />
         <Stack.Screen name="chef" options={{ animation: 'fade' }} />
       </Stack>
+      <DialogHost />
     </ThemeProvider>
   );
 }
