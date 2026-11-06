@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  addressRow,
   averageRating,
   menuItemRow,
   orderFromRow,
@@ -43,6 +44,12 @@ const restaurantRow: RestaurantRow = {
   update_text: 'Sweet potato pie is back',
   update_posted_at: '2026-11-05T12:00:00Z',
   instagram: 'susiessweets',
+  order_mode: 'bake-days',
+  bake_days: [
+    { day: 'saturday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 },
+    { day: 'someday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 },
+  ],
+  skipped_bake_days: ['2026-11-28'],
   accepting_orders: true,
   has_offer: false,
   status: 'pending_review',
@@ -80,7 +87,7 @@ describe('database mappers', () => {
   it('builds a kitchen from its rows and drops values the app does not know', () => {
     const r = restaurantFromRow(restaurantRow, url, {
       menu: [menuRow('m2', 1, { photo_path: 'r1/m2.jpg' }), menuRow('m1', 0)],
-      address: '5 Willow Way',
+      address: { restaurant_id: 'r1', address: '5 Willow Way', instructions: 'Cooler on the porch' },
       popularItemIds: new Set(['m1']),
     });
     expect(r).toMatchObject({
@@ -95,6 +102,10 @@ describe('database mappers', () => {
       ratingCount: 10,
       areaCode: '32804',
       address: '5 Willow Way',
+      pickupInstructions: 'Cooler on the porch',
+      orderMode: 'bake-days',
+      bakeDays: [{ day: 'saturday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
+      skippedBakeDays: ['2026-11-28'],
       signatureItemId: 'm2',
       status: 'draft',
       accent: 'berry',
@@ -125,6 +136,13 @@ describe('database mappers', () => {
       accent: 'berry',
       update_text: 'Sweet potato pie is back',
       instagram: 'susiessweets',
+      order_mode: 'bake-days',
+      bake_days: [{ day: 'saturday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
+    });
+    expect(addressRow({ ...r, address: ' 5 Willow Way ', pickupInstructions: ' Ring once ' })).toEqual({
+      restaurant_id: 'r1',
+      address: '5 Willow Way',
+      instructions: 'Ring once',
     });
     expect(restaurantUpdate({ ...r, accent: undefined, update: { text: ' ', postedAt: 'x' }, instagram: '@Bad Handle!' }, {
       coverPaths: [],
@@ -160,6 +178,9 @@ describe('database mappers', () => {
       tip_cents: 300,
       total_cents: 3765,
       pickup_address: '5 Willow Way, Orlando',
+      pickup_instructions: 'Cooler on the porch',
+      pickup_by: '2026-11-07T19:00:00Z',
+      arrived_at: null,
       customer_note: 'No nuts',
       chef_note: '',
       scheduled_for: null,
@@ -174,7 +195,15 @@ describe('database mappers', () => {
     const o = orderFromRow(row);
     expect(o.statusHistory.map((h) => h.status)).toEqual(['placed', 'accepted']);
     expect(o.lines).toEqual([{ itemId: 'm1', name: 'Pie', priceCents: 1650, quantity: 2 }]);
-    expect(o).toMatchObject({ customerName: 'Bea F.', restaurantName: 'Susie’s Sweets', movementFeeCents: 165, tipCents: 300 });
+    expect(o).toMatchObject({
+      customerName: 'Bea F.',
+      restaurantName: 'Susie’s Sweets',
+      movementFeeCents: 165,
+      tipCents: 300,
+      pickupInstructions: 'Cooler on the porch',
+      pickupBy: '2026-11-07T19:00:00Z',
+    });
+    expect(o.arrivedAt).toBeUndefined();
     expect(orderFromRow({ ...row, order_status_events: [] }).statusHistory).toEqual([
       { status: 'placed', at: '2026-11-07T15:20:00Z' },
     ]);

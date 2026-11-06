@@ -7,6 +7,7 @@ import { DEFAULT_ACCENT, isAccentId } from '@/data/accents';
 import { isCategoryId } from '@/data/categories';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { WEEKDAYS } from '@/lib/hours';
+import { isValidBakeDay } from '@/lib/bake-days';
 import { cleanInstagram, TAGLINE_MAX, UPDATE_MAX } from '@/lib/kitchen-style';
 import type {
   Allergen,
@@ -25,6 +26,7 @@ import type {
   MenuItemRow,
   OrderWithChildren,
   ProfileRow,
+  RestaurantAddressRow,
   RestaurantDocumentRow,
   RestaurantRow,
   ReviewRow,
@@ -123,8 +125,8 @@ function documentFromRow(row: RestaurantDocumentRow): RestaurantDocument {
 
 export interface RestaurantExtras {
   menu?: MenuItemRow[];
-  /** Only the owner (and admins) can read the street address. */
-  address?: string;
+  /** Only the owner (and admins) can read the street address and pickup instructions. */
+  address?: RestaurantAddressRow;
   documents?: RestaurantDocumentRow[];
   /** Dish ids from popular_menu_items(). */
   popularItemIds?: ReadonlySet<string>;
@@ -149,12 +151,18 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     tagline: row.tagline,
     update: row.update_text && row.update_posted_at ? { text: row.update_text, postedAt: row.update_posted_at } : undefined,
     instagram: row.instagram,
+    orderMode: row.order_mode,
+    bakeDays: row.bake_days
+      .map((b) => ({ ...b, day: b.day as Weekday }))
+      .filter((b) => WEEKDAY_SET.has(b.day) && isValidBakeDay(b)),
+    skippedBakeDays: row.skipped_bake_days,
     prepMinutes: row.prep_minutes,
     cuisine: row.cuisine,
     categories: row.categories.filter(isCategoryId),
     logoUri: row.logo_path ? photoUrl(row.logo_path) : undefined,
     coverUris: row.cover_paths.map(photoUrl),
-    address: extras.address ?? '',
+    address: extras.address?.address ?? '',
+    pickupInstructions: extras.address?.instructions ?? '',
     city: row.city,
     areaCode: row.zip,
     neighborhood: row.neighborhood,
@@ -203,6 +211,9 @@ export function restaurantUpdate(
     update_text: (r.update?.text ?? '').trim().slice(0, UPDATE_MAX),
     update_posted_at: r.update?.text.trim() ? r.update.postedAt : null,
     instagram: cleanInstagram(r.instagram ?? ''),
+    order_mode: r.orderMode ?? 'hours',
+    bake_days: (r.bakeDays ?? []).filter(isValidBakeDay).slice(0, 3),
+    skipped_bake_days: r.skippedBakeDays ?? [],
     accepting_orders: r.acceptingOrders,
     signature_item_id: r.signatureItemId ?? null,
   };
@@ -229,6 +240,9 @@ export function orderFromRow(row: OrderWithChildren): Order {
     tipCents: row.tip_cents,
     totalCents: row.total_cents,
     pickupAddress: row.pickup_address,
+    ...(row.pickup_instructions ? { pickupInstructions: row.pickup_instructions } : {}),
+    ...(row.pickup_by ? { pickupBy: row.pickup_by } : {}),
+    ...(row.arrived_at ? { arrivedAt: row.arrived_at } : {}),
     status: row.status,
     statusHistory: history.length ? history : [{ status: 'placed', at: row.created_at }],
     chefNote: row.chef_note,
@@ -236,6 +250,15 @@ export function orderFromRow(row: OrderWithChildren): Order {
     createdAt: row.created_at,
     estimatedReadyAt: row.estimated_ready_at,
     scheduledFor: row.scheduled_for,
+  };
+}
+
+/** The kitchen's private row: street address and pickup instructions. */
+export function addressRow(r: Restaurant): RestaurantAddressRow {
+  return {
+    restaurant_id: r.id,
+    address: r.address.trim().slice(0, 200),
+    instructions: (r.pickupInstructions ?? '').trim().slice(0, 140),
   };
 }
 

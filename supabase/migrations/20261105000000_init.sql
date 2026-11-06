@@ -71,6 +71,14 @@ create table public.restaurants (
   update_text text not null default '' check (char_length(update_text) <= 140),
   update_posted_at timestamptz,
   instagram text not null default '' check (instagram = '' or instagram ~ '^[a-z0-9._]{1,30}$'),
+  -- 'bake-days': customers order ahead for weekly bake days and pick up in a window.
+  -- 'hours': customers order while the kitchen is open.
+  order_mode text not null default 'hours' check (order_mode in ('bake-days', 'hours')),
+  -- [{"day": "saturday", "pickupStart": "09:00", "pickupEnd": "12:00", "closeDaysBefore": 1}]
+  -- Orders close at 8 PM, closeDaysBefore days before the bake day.
+  bake_days jsonb not null default '[]'::jsonb
+    check (jsonb_typeof(bake_days) = 'array' and jsonb_array_length(bake_days) <= 3),
+  skipped_bake_days date[] not null default '{}',
   accepting_orders boolean not null default true,
   has_offer boolean not null default false,
   status public.restaurant_status not null default 'draft',
@@ -84,7 +92,9 @@ create table public.restaurants (
 -- order once the chef accepts (see set_order_status).
 create table public.restaurant_addresses (
   restaurant_id uuid primary key references public.restaurants (id) on delete cascade,
-  address text not null default '' check (char_length(address) <= 200)
+  address text not null default '' check (char_length(address) <= 200),
+  -- e.g. "Cooler on the porch, ring once". Shared with the address on accept.
+  instructions text not null default '' check (char_length(instructions) <= 140)
 );
 
 -- Farmers and artisans waiting for Manna Mart. Anyone may sign up; only the
@@ -149,6 +159,11 @@ create table public.orders (
   total_cents integer not null,
   -- Filled in when the chef accepts; empty until then.
   pickup_address text not null default '',
+  pickup_instructions text not null default '',
+  -- End of the pickup window for bake-day orders.
+  pickup_by timestamptz,
+  -- When the customer said "I'm here".
+  arrived_at timestamptz,
   customer_note text not null default '' check (char_length(customer_note) <= 280),
   chef_note text not null default '' check (char_length(chef_note) <= 280),
   scheduled_for timestamptz,
@@ -268,6 +283,30 @@ begin
     return yesterday = any (r.working_days);
   end if;
   return false;
+end;
+$$;
+
+-- The pickup window and order cutoff for a bake-day pickup starting at
+-- p_start, or nulls when the kitchen doesn't bake then (or skipped that day).
+create function public.bake_day_window(
+  r public.restaurants, p_start timestamptz, out pickup_end timestamptz, out closes_at timestamptz
+)
+language plpgsql stable as $$
+declare
+  local_start timestamp := p_start at time zone r.timezone;
+  day_name text := lower(trim(to_char(local_start, 'Day')));
+  b jsonb;
+begin
+  if local_start::date = any (r.skipped_bake_days) then
+    return;
+  end if;
+  for b in select * from jsonb_array_elements(r.bake_days) loop
+    if b ->> 'day' = day_name and local_start::time = (b ->> 'pickupStart')::time then
+      pickup_end := (local_start::date + (b ->> 'pickupEnd')::time) at time zone r.timezone;
+      closes_at := ((local_start::date - (b ->> 'closeDaysBefore')::int) + time '20:00') at time zone r.timezone;
+      return;
+    end if;
+  end loop;
 end;
 $$;
 
@@ -406,6 +445,8 @@ declare
   movement_fee integer;
   new_id uuid;
   ready_at timestamptz;
+  bake record;
+  window_end timestamptz;
 begin
   if auth.uid() is null then
     raise exception 'Sign in to order' using errcode = '42501';
@@ -417,7 +458,17 @@ begin
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
     raise exception 'Your cart is empty';
   end if;
-  if p_scheduled_for is null then
+  if r.order_mode = 'bake-days' then
+    if p_scheduled_for is null then
+      raise exception 'Pick a bake day';
+    end if;
+    select * into bake from public.bake_day_window(r, p_scheduled_for);
+    if bake.pickup_end is null or now() >= bake.closes_at or p_scheduled_for > now() + interval '15 days' then
+      raise exception 'Orders for that bake day are closed';
+    end if;
+    ready_at := p_scheduled_for;
+    window_end := bake.pickup_end;
+  elsif p_scheduled_for is null then
     if not public.kitchen_open_at(r, now()) then
       raise exception 'This kitchen is closed right now';
     end if;
@@ -434,12 +485,12 @@ begin
 
   insert into public.orders (
     customer_id, restaurant_id, customer_name, restaurant_name, subtotal_cents, movement_fee_cents,
-    tip_cents, total_cents, customer_note, scheduled_for, estimated_ready_at
+    tip_cents, total_cents, customer_note, scheduled_for, estimated_ready_at, pickup_by
   ) values (
     -- Placeholder totals; the real ones are written once every line is priced.
     auth.uid(), r.id, public.public_name((select name from public.profiles where id = auth.uid())), r.name,
     1, 0, 0, 1,
-    left(coalesce(p_customer_note, ''), 280), p_scheduled_for, ready_at
+    left(coalesce(p_customer_note, ''), 280), p_scheduled_for, ready_at, window_end
   ) returning id into new_id;
 
   for line in select * from jsonb_array_elements(p_lines) loop
@@ -513,8 +564,11 @@ begin
   end if;
   update public.orders set status = p_status where id = o.id;
   if p_status = 'accepted' then
-    update public.orders set pickup_address = coalesce(
-      (select a.address from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), '')
+    update public.orders set
+      pickup_address = coalesce(
+        (select a.address from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), ''),
+      pickup_instructions = coalesce(
+        (select a.instructions from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), '')
     where id = o.id;
   end if;
   insert into public.order_status_events (order_id, status) values (o.id, p_status);
@@ -537,6 +591,23 @@ begin
   end if;
   update public.orders set status = 'cancelled' where id = o.id;
   insert into public.order_status_events (order_id, status) values (o.id, 'cancelled');
+end;
+$$;
+
+-- The customer says "I'm here" at pickup, so the kitchen can bring the order out.
+create function public.mark_arrived(p_order_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  o public.orders;
+begin
+  select * into o from public.orders where id = p_order_id for update;
+  if not found or o.customer_id is distinct from auth.uid() then
+    raise exception 'Order not found' using errcode = '42501';
+  end if;
+  if o.status not in ('accepted', 'preparing', 'ready') then
+    raise exception 'This order isn''t ready for pickup';
+  end if;
+  update public.orders set arrived_at = coalesce(arrived_at, now()) where id = o.id;
 end;
 $$;
 
@@ -672,6 +743,8 @@ revoke all on function public.place_order(uuid, jsonb, text, timestamptz, intege
 revoke all on function public.set_order_status(uuid, public.order_status) from public;
 revoke all on function public.set_chef_note(uuid, text) from public;
 revoke all on function public.cancel_order(uuid) from public;
+revoke all on function public.mark_arrived(uuid) from public;
+grant execute on function public.mark_arrived(uuid) to authenticated;
 grant execute on function public.cancel_order(uuid) to authenticated;
 revoke all on function public.add_review(uuid, integer, text[], text) from public;
 revoke all on function public.approve_restaurant(uuid) from public;

@@ -51,6 +51,8 @@ then expand. Each phase ends with something real people can use.
 - [x] Chef's "Today's menu": turn dishes on and off and see what's left today
 - [x] Kitchen personalization inside one shared layout: accent color (six curated), tagline, a pinned weekly update, Instagram link and dish order
 - [x] "Get your first order" checklist for new kitchens; customers can cancel before the kitchen accepts
+- [x] Bake days: weekly pickup windows with an 8 PM order cutoff, chosen at checkout; cooks skip a week from the dashboard. The default for new kitchens
+- [x] Pickup handoff: private pickup instructions, "I'm here", and a written no-show rule (paid to the cook after a 30-minute grace period)
 
 ## Phase 1: Real accounts and shared data
 

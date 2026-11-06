@@ -189,6 +189,56 @@ select pg_temp.expect_error($$ insert into public.review_reports (review_id) val
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check((select count(*) = 1 from public.review_reports), 'admins see reports');
 
+-- Bake days ---------------------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+update public.restaurant_addresses set instructions = 'Cooler on the porch, ring once.';
+create temp table bake_dates as select (now() at time zone 'UTC')::date + 3 as open_day, (now() at time zone 'UTC')::date + 2 as closed_day;
+update public.restaurants set order_mode = 'bake-days', bake_days = jsonb_build_array(
+  jsonb_build_object('day', lower(trim(to_char((select open_day from bake_dates), 'Day'))),
+    'pickupStart', '10:00', 'pickupEnd', '13:00', 'closeDaysBefore', 1),
+  -- Closes three days ahead, so it's already shut for this one.
+  jsonb_build_object('day', lower(trim(to_char((select closed_day from bake_dates), 'Day'))),
+    'pickupStart', '10:00', 'pickupEnd', '13:00', 'closeDaysBefore', 3));
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001',
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]') $$, 'pick a bake day');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001',
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]', '', ((select open_day from bake_dates) + time '11:00') at time zone 'UTC') $$,
+  'closed');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001',
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]', '', ((select closed_day from bake_dates) + time '10:00') at time zone 'UTC') $$,
+  'closed');
+create temp table bake_order as
+  select public.place_order('10000000-0000-0000-0000-000000000001',
+    '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]', '',
+    ((select open_day from bake_dates) + time '10:00') at time zone 'UTC') as id;
+select pg_temp.check((select pickup_by = ((select open_day from bake_dates) + time '13:00') at time zone 'UTC'
+                      and pickup_instructions = '' from public.orders where id = (select id from bake_order)),
+  'bake-day order gets its pickup window, and no instructions before accept');
+select pg_temp.expect_error($$ select public.mark_arrived((select id from bake_order)) $$, 'isn''t ready');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select public.set_order_status((select id from bake_order), 'accepted');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select pickup_instructions = 'Cooler on the porch, ring once.' from public.orders
+                      where id = (select id from bake_order)), 'instructions shared on accept');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_error($$ select public.mark_arrived((select id from bake_order)) $$, 'order not found');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select public.mark_arrived((select id from bake_order));
+select pg_temp.check((select arrived_at is not null from public.orders where id = (select id from bake_order)), 'arrived');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+update public.restaurants set skipped_bake_days = array[(select open_day from bake_dates)];
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001',
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]', '', ((select open_day from bake_dates) + time '10:00') at time zone 'UTC') $$,
+  'closed');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+update public.restaurants set order_mode = 'hours', skipped_bake_days = '{}';
+
 -- Opening hours, including overnight shifts ----------------------------------
 reset role;
 update public.restaurants set working_days = array['thursday'], open_time = '20:00', close_time = '02:00';

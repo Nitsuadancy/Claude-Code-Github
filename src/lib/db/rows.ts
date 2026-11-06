@@ -49,6 +49,10 @@ export interface RestaurantRow {
   update_text: string;
   update_posted_at: string | null;
   instagram: string;
+  order_mode: 'bake-days' | 'hours';
+  bake_days: { day: string; pickupStart: string; pickupEnd: string; closeDaysBefore: number }[];
+  /** "YYYY-MM-DD" */
+  skipped_bake_days: string[];
   accepting_orders: boolean;
   has_offer: boolean;
   status: DbRestaurantStatus;
@@ -56,6 +60,13 @@ export interface RestaurantRow {
   rating_sum: number;
   rating_count: number;
   created_at: string;
+}
+
+/** The private part of a kitchen: only its owner and admins can read it. */
+export interface RestaurantAddressRow {
+  restaurant_id: string;
+  address: string;
+  instructions: string;
 }
 
 export interface MenuItemRow {
@@ -98,6 +109,9 @@ export interface OrderRow {
   tip_cents: number;
   total_cents: number;
   pickup_address: string;
+  pickup_instructions: string;
+  pickup_by: string | null;
+  arrived_at: string | null;
   customer_note: string;
   chef_note: string;
   scheduled_for: string | null;
