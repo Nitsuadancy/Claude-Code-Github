@@ -4,13 +4,14 @@ import { AccountSettings } from '@/components/account-settings';
 import { DietPreferences } from '@/components/diet';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Heading, Screen } from '@/components/ui';
+import { endedWithoutSale } from '@/lib/orders';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 export default function Profile() {
   const { state } = useStore();
   const userId = state.user?.id;
-  const orders = state.orders.filter((o) => o.customerId === userId && o.status !== 'declined').length;
+  const orders = state.orders.filter((o) => o.customerId === userId && !endedWithoutSale(o.status)).length;
   const kitchens = new Set(state.orders.filter((o) => o.customerId === userId).map((o) => o.restaurantId)).size;
   const reviews = state.reviews.filter((r) => r.customerId === userId).length;
   const initials = (state.user?.name ?? '')

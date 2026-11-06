@@ -1,6 +1,7 @@
 import type { CartLine, MenuItem, Order, Restaurant } from '@/types';
 
 import { remainingToday } from './limits';
+import { endedWithoutSale } from './orders';
 
 /* ---------- Order again ---------- */
 
@@ -9,7 +10,7 @@ export function recentKitchenOrders(orders: Order[], customerId: string, limit =
   const seen = new Set<string>();
   const result: Order[] = [];
   const mine = orders
-    .filter((o) => o.customerId === customerId && o.status !== 'declined')
+    .filter((o) => o.customerId === customerId && !endedWithoutSale(o.status))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   for (const o of mine) {
     if (seen.has(o.restaurantId)) continue;

@@ -16,7 +16,7 @@ create extension if not exists pgcrypto;
 
 create type public.user_role as enum ('foodie', 'chef');
 create type public.restaurant_status as enum ('draft', 'pending_review', 'live', 'suspended');
-create type public.order_status as enum ('placed', 'accepted', 'preparing', 'ready', 'completed', 'declined');
+create type public.order_status as enum ('placed', 'accepted', 'preparing', 'ready', 'completed', 'declined', 'cancelled');
 create type public.document_kind as enum ('food-handler', 'home-kitchen-permit', 'government-id');
 
 -- ---------------------------------------------------------------------------
@@ -452,7 +452,7 @@ begin
         from public.order_lines ol
         join public.orders o on o.id = ol.order_id
         where ol.menu_item_id = item.id
-          and o.status <> 'declined'
+          and o.status not in ('declined', 'cancelled')
           and o.id <> new_id
           and (coalesce(o.scheduled_for, o.created_at) at time zone r.timezone)::date = cook_day;
       if committed + qty > item.daily_limit then
@@ -511,6 +511,25 @@ begin
     where id = o.id;
   end if;
   insert into public.order_status_events (order_id, status) values (o.id, p_status);
+end;
+$$;
+
+-- A customer calls off their order before the kitchen accepts it. Nothing
+-- has been charged yet, because payment is taken when the kitchen accepts.
+create function public.cancel_order(p_order_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  o public.orders;
+begin
+  select * into o from public.orders where id = p_order_id for update;
+  if not found or o.customer_id is distinct from auth.uid() then
+    raise exception 'Order not found' using errcode = '42501';
+  end if;
+  if o.status <> 'placed' then
+    raise exception 'The kitchen already accepted this order. Contact them to change it.';
+  end if;
+  update public.orders set status = 'cancelled' where id = o.id;
+  insert into public.order_status_events (order_id, status) values (o.id, 'cancelled');
 end;
 $$;
 
@@ -585,7 +604,7 @@ language sql stable security definer set search_path = public as $$
   from public.order_lines ol
   join public.orders o on o.id = ol.order_id
   join public.restaurants r on r.id = o.restaurant_id and r.status = 'live'
-  where o.status <> 'declined' and o.created_at > now() - interval '60 days'
+  where o.status not in ('declined', 'cancelled') and o.created_at > now() - interval '60 days'
   group by o.restaurant_id, ol.menu_item_id
   having count(distinct o.id) >= 3
   order by o.restaurant_id, sum(ol.quantity) desc, ol.menu_item_id;
@@ -645,6 +664,8 @@ $$;
 revoke all on function public.place_order(uuid, jsonb, text, timestamptz, integer) from public;
 revoke all on function public.set_order_status(uuid, public.order_status) from public;
 revoke all on function public.set_chef_note(uuid, text) from public;
+revoke all on function public.cancel_order(uuid) from public;
+grant execute on function public.cancel_order(uuid) to authenticated;
 revoke all on function public.add_review(uuid, integer, text[], text) from public;
 revoke all on function public.approve_restaurant(uuid) from public;
 grant execute on function public.place_order(uuid, jsonb, text, timestamptz, integer) to authenticated;

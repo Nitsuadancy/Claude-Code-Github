@@ -7,6 +7,7 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   ready: 'Ready for pickup',
   completed: 'Picked up',
   declined: 'Declined by kitchen',
+  cancelled: 'Cancelled',
 };
 
 /** Button text a kitchen sees for moving an order to `status`. */
@@ -17,14 +18,25 @@ export const KITCHEN_ACTION_LABEL: Record<OrderStatus, string> = {
   ready: 'Mark ready',
   completed: 'Mark picked up',
   declined: 'Decline',
+  cancelled: 'Cancel',
 };
 
 /** The happy path, in order, for progress bars. */
 export const ORDER_PROGRESS: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
 
+/** The order ended without a sale: the kitchen declined it or the customer cancelled. */
+export function endedWithoutSale(status: OrderStatus): boolean {
+  return status === 'declined' || status === 'cancelled';
+}
+
+/** Customers can cancel only while the kitchen hasn't said yes yet. */
+export function canCustomerCancel(status: OrderStatus): boolean {
+  return status === 'placed';
+}
+
 /** Home kitchens share their exact address only once they've said yes to an order. */
 export function isAddressShared(status: OrderStatus): boolean {
-  return status !== 'placed' && status !== 'declined';
+  return status !== 'placed' && !endedWithoutSale(status);
 }
 
 /** A short number to say at pickup, e.g. "0472". Stable for an order. */
@@ -38,7 +50,7 @@ export function orderNumber(id: string): string {
 }
 
 export function isActive(status: OrderStatus): boolean {
-  return status !== 'completed' && status !== 'declined';
+  return status !== 'completed' && !endedWithoutSale(status);
 }
 
 export function formatOrderTime(iso: string): string {
@@ -69,6 +81,7 @@ export const ORDER_HEADLINE: Record<OrderStatus, string> = {
   ready: 'Ready for pickup',
   completed: 'Picked up. Enjoy!',
   declined: 'The kitchen couldn’t take this order',
+  cancelled: 'You cancelled this order',
 };
 
 /** "Nov 5" in the device's locale. */

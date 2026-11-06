@@ -7,7 +7,7 @@ import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/m
 import { formatDays } from '@/lib/hours';
 import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
-import { estimateReadyAt, isAddressShared, orderNumber } from '@/lib/orders';
+import { estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
 import { firstOrderSteps } from '@/lib/launch';
 import { INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
@@ -292,5 +292,24 @@ describe('first-order checklist', () => {
     let s = reducer(INITIAL_STATE, { type: 'markShared', step: 'story' });
     s = reducer(s, { type: 'markShared', step: 'story' });
     expect(s.sharedSteps).toEqual(['story']);
+  });
+});
+
+describe('cancelling an order', () => {
+  it('lets the customer cancel only before the kitchen accepts', () => {
+    const placed = order({ id: 'p', customerId: 'c1', restaurantId: 'sample_blue_mountain' });
+    const accepted = { ...order({ id: 'a', customerId: 'c1', restaurantId: 'sample_blue_mountain' }), status: 'accepted' as const };
+    let s = { ...INITIAL_STATE, orders: [placed, accepted] };
+    s = reducer(s, { type: 'cancelOrder', orderId: 'p', customerId: 'someone-else' });
+    expect(s.orders[0].status).toBe('placed');
+    s = reducer(s, { type: 'cancelOrder', orderId: 'p', customerId: 'c1', at: '2026-11-07T15:00:00Z' });
+    s = reducer(s, { type: 'cancelOrder', orderId: 'a', customerId: 'c1' });
+    expect(s.orders.map((o) => o.status)).toEqual(['cancelled', 'accepted']);
+    expect(s.orders[0].statusHistory.at(-1)).toEqual({ status: 'cancelled', at: '2026-11-07T15:00:00Z' });
+    // A kitchen can't move a cancelled order.
+    s = reducer(s, { type: 'setOrderStatus', orderId: 'p', status: 'accepted' });
+    expect(s.orders[0].status).toBe('cancelled');
+    expect(isActive('cancelled')).toBe(false);
+    expect(isAddressShared('cancelled')).toBe(false);
   });
 });

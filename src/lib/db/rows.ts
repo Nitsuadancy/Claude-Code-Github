@@ -4,7 +4,7 @@
  */
 
 export type DbRestaurantStatus = 'draft' | 'pending_review' | 'live' | 'suspended';
-export type DbOrderStatus = 'placed' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'declined';
+export type DbOrderStatus = 'placed' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'declined' | 'cancelled';
 export type DbDocumentKind = 'food-handler' | 'home-kitchen-permit' | 'government-id';
 
 export interface ProfileRow {

@@ -2,6 +2,7 @@ import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 
 import { MannaTabBar } from '@/components/tab-bar';
+import { isActive } from '@/lib/orders';
 import { useStore } from '@/state/store';
 import { colors } from '@/theme';
 
@@ -11,7 +12,7 @@ export default function FoodieTabs() {
 
   const cartCount = state.cart.lines.reduce((n, l) => n + l.quantity, 0);
   const activeOrders = state.orders.filter(
-    (o) => o.customerId === state.user?.id && !['completed', 'declined'].includes(o.status),
+    (o) => o.customerId === state.user?.id && isActive(o.status),
   ).length;
 
   return (

@@ -1,5 +1,7 @@
 import type { MenuItem, Order } from '@/types';
 
+import { endedWithoutSale } from './orders';
+
 function sameLocalDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -18,7 +20,7 @@ export function fulfilmentDate(order: Order): Date {
 export function soldToday(orders: Order[], restaurantId: string, itemId: string, now: Date): number {
   let sold = 0;
   for (const order of orders) {
-    if (order.restaurantId !== restaurantId || order.status === 'declined') continue;
+    if (order.restaurantId !== restaurantId || endedWithoutSale(order.status)) continue;
     if (!sameLocalDay(fulfilmentDate(order), now)) continue;
     for (const line of order.lines) if (line.itemId === itemId) sold += line.quantity;
   }

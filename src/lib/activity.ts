@@ -12,10 +12,11 @@ export interface ActivityItem {
 const TITLES: Record<OrderStatus, (kitchen: string) => string> = {
   placed: (k) => `Order sent to ${k}`,
   accepted: (k) => `${k} accepted your order`,
-  preparing: (k) => `${k} is cooking`,
+  preparing: (k) => `${k} is baking your order`,
   ready: (k) => `Your order is ready at ${k}`,
   completed: () => 'Picked up. Enjoy!',
   declined: (k) => `${k} couldn’t take your order`,
+  cancelled: (k) => `You cancelled your order from ${k}`,
 };
 
 /** A customer's order updates and chef notes, newest first. */

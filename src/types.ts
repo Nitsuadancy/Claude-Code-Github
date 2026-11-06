@@ -138,7 +138,9 @@ export type OrderStatus =
   | 'preparing'
   | 'ready'
   | 'completed'
-  | 'declined';
+  | 'declined'
+  /** The customer called it off before the kitchen accepted. */
+  | 'cancelled';
 
 export interface OrderLine {
   itemId: string;

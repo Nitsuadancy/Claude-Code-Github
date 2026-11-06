@@ -3,6 +3,7 @@ import type { Order, Restaurant } from '@/types';
 import { isNew } from './browse';
 import { type DietProfile, hasDietProfile, kitchenFits } from './diet';
 import { isOpenAt } from './hours';
+import { endedWithoutSale } from './orders';
 
 export interface ForYouPick {
   restaurant: Restaurant;
@@ -28,7 +29,7 @@ export function pickForYou(
 ): ForYouPick[] {
   const ordered = new Set(
     context.orders
-      .filter((o) => o.customerId === context.customerId && o.status !== 'declined')
+      .filter((o) => o.customerId === context.customerId && !endedWithoutSale(o.status))
       .map((o) => o.restaurantId),
   );
   const ranked = restaurants

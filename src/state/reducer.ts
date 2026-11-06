@@ -1,4 +1,5 @@
 import type { SharedStep } from '@/lib/launch';
+import { canCustomerCancel } from '@/lib/orders';
 import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
@@ -89,6 +90,7 @@ export type Action =
   | { type: 'placeOrder'; order: Order }
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
   | { type: 'setOrderNote'; orderId: string; note: string }
+  | { type: 'cancelOrder'; orderId: string; customerId: string; at?: string }
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
   | { type: 'reportReview'; reviewId: string }
@@ -106,6 +108,7 @@ export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   ready: ['completed'],
   completed: [],
   declined: [],
+  cancelled: [],
 };
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -254,6 +257,20 @@ export function reducer(state: AppState, action: Action): AppState {
                   ...o.statusHistory,
                   { status: action.status, at: action.at ?? new Date().toISOString() },
                 ],
+              }
+            : o,
+        ),
+      };
+
+    case 'cancelOrder':
+      return {
+        ...state,
+        orders: state.orders.map((o) =>
+          o.id === action.orderId && o.customerId === action.customerId && canCustomerCancel(o.status)
+            ? {
+                ...o,
+                status: 'cancelled',
+                statusHistory: [...o.statusHistory, { status: 'cancelled', at: action.at ?? new Date().toISOString() }],
               }
             : o,
         ),

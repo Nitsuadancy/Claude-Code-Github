@@ -15,9 +15,10 @@ const ICONS: Record<ActivityItem['kind'], IconName> = {
   placed: 'receipt-text-outline',
   accepted: 'check-circle-outline',
   preparing: 'pot-steam-outline',
-  ready: 'bike-fast',
+  ready: 'shopping-outline',
   completed: 'star-outline',
   declined: 'close-circle-outline',
+  cancelled: 'close-circle-outline',
   note: 'message-text-outline',
 };
 
@@ -59,7 +60,7 @@ export default function Activity() {
                   <Icon
                     name={ICONS[item.kind]}
                     size={20}
-                    color={item.kind === 'declined' ? colors.danger : colors.gold}
+                    color={item.kind === 'declined' || item.kind === 'cancelled' ? colors.danger : colors.gold}
                   />
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>

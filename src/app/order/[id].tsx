@@ -16,8 +16,20 @@ import {
   Heading,
   Screen,
 } from '@/components/ui';
+import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
-import { formatClock, formatOrderTime, isActive, isAddressShared, orderNumber, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import {
+  canCustomerCancel,
+  endedWithoutSale,
+  formatClock,
+  formatOrderTime,
+  isActive,
+  isAddressShared,
+  orderNumber,
+  ORDER_HEADLINE,
+  ORDER_PROGRESS,
+  ORDER_STATUS_LABEL,
+} from '@/lib/orders';
 import { publicName } from '@/lib/reviews';
 import { formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
@@ -50,7 +62,7 @@ export default function OrderTracking() {
   }
 
   const chefName = restaurant?.chefName ?? order.restaurantName;
-  const declined = order.status === 'declined';
+  const declined = endedWithoutSale(order.status);
   const current = ORDER_PROGRESS.indexOf(order.status);
   const timeFor = (status: string) => order.statusHistory.find((h) => h.status === status)?.at;
 
@@ -112,8 +124,9 @@ export default function OrderTracking() {
         ) : (
           <Card>
             <Body>
-              The kitchen couldn’t take this order, so you won’t be charged. Try another dish or
-              another kitchen.
+              {order.status === 'cancelled'
+                ? 'You cancelled before the kitchen started, so you won’t be charged.'
+                : 'The kitchen couldn’t take this order, so you won’t be charged. Try another dish or another kitchen.'}
             </Body>
           </Card>
         )}
@@ -163,13 +176,29 @@ export default function OrderTracking() {
               <Body muted style={{ flex: 1, fontSize: 13 }}>
                 {isAddressShared(order.status) && order.pickupAddress
                   ? `Pick up at ${order.pickupAddress}`
-                  : order.status === 'declined'
+                  : declined
                     ? 'No pickup needed.'
                     : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
               </Body>
             </View>
           }
         />
+
+        {canCustomerCancel(order.status) && order.customerId === state.user?.id ? (
+          <GoldButton
+            title="Cancel order"
+            variant="ghost"
+            onPress={() =>
+              confirmAction(
+                'Cancel this order?',
+                `${chefName} hasn’t started on it yet, so you won’t be charged.`,
+                'Cancel order',
+                () => dispatch({ type: 'cancelOrder', orderId: order.id, customerId: order.customerId }),
+                'Keep it',
+              )
+            }
+          />
+        ) : null}
 
         {restaurant ? (
           <GoldButton

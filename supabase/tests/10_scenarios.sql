@@ -130,6 +130,20 @@ select pg_temp.check((select customer_name = 'Bea F.' and restaurant_name = 'Ada
                       from public.orders where id = (select id from first_order)),
   'kitchen sees the customer''s first name and initial');
 
+-- Customers cancel before the kitchen accepts ---------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+create temp table oops as
+  select public.place_order('10000000-0000-0000-0000-000000000001',
+    '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":1}]') as id;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_error($$ select public.cancel_order((select id from oops)) $$, 'order not found');
+select pg_temp.expect_error($$ select public.cancel_order((select id from first_order)) $$, 'already accepted');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select public.cancel_order((select id from oops));
+select pg_temp.check((select status = 'cancelled' from public.orders where id = (select id from oops)), 'customer cancelled');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect_error($$ select public.set_order_status((select id from oops), 'accepted') $$, 'can''t move');
+
 -- Most ordered dish -------------------------------------------------------------
 select pg_temp.act_as(null);
 select pg_temp.check((select count(*) = 0 from public.popular_menu_items()), 'no favorite after one order');

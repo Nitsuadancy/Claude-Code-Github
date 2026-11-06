@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { formatCents } from '@/lib/money';
-import { formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL, orderNumber } from '@/lib/orders';
+import { endedWithoutSale, formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL, orderNumber } from '@/lib/orders';
 import { formatSlot } from '@/lib/schedule';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order } from '@/types';
@@ -10,7 +10,7 @@ import { Icon } from './icon';
 
 /** Gold progress bar across placed → accepted → preparing → ready → picked up. */
 export function OrderProgress({ order }: { order: Order }) {
-  if (order.status === 'declined') return null;
+  if (endedWithoutSale(order.status)) return null;
   const step = ORDER_PROGRESS.indexOf(order.status);
   return (
     <View
@@ -34,7 +34,7 @@ export function OrderCard({
 }) {
   const active = isActive(order.status);
   const statusColor =
-    order.status === 'declined' ? colors.danger : active ? colors.gold : colors.success;
+    endedWithoutSale(order.status) ? colors.danger : active ? colors.gold : colors.success;
   return (
     <View style={[styles.card, active && { borderColor: colors.hairline }]}>
       <View style={styles.header}>
