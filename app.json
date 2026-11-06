@@ -12,6 +12,9 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Manna uses your photos so you can add your restaurant logo and food pictures."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {

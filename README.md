@@ -53,6 +53,10 @@ Then do one of these:
 2. Open **Dashboard → Account → Switch to Foodie** and order from your new kitchen.
 3. Go to **Profile → Become a Culinary Entrepreneur**. The order is waiting on your dashboard.
 
+## Run it on an iPhone
+
+See [docs/IPHONE.md](docs/IPHONE.md): build in the cloud with Expo and install through TestFlight. No Mac needed.
+
 ## Share a demo link
 
 The fastest way to send people a link they can open on any phone or computer:
