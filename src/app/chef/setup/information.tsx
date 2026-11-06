@@ -149,7 +149,7 @@ export default function RestaurantInformation() {
 
               <SectionTitle>Logo</SectionTitle>
               <Body muted style={styles.hint}>
-                Square image works best. Max size 2 MB.
+                Square image works best. Large photos are resized for you.
               </Body>
               {draft.logoUri ? (
                 <View style={styles.logoWrap}>
@@ -176,7 +176,7 @@ export default function RestaurantInformation() {
 
               <SectionTitle>Cover photos</SectionTitle>
               <Body muted style={styles.hint}>
-                Up to 3 pictures of your food. Max size 2 MB each.
+                Up to 3 pictures of your food, straight from your camera roll.
               </Body>
               {draft.coverUris.length < 3 ? (
                 <UploadBox

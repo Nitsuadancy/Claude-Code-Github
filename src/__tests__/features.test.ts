@@ -5,6 +5,7 @@ import { allergenSentence } from '@/lib/dietary';
 import { remainingToday, soldToday, stockLabel } from '@/lib/limits';
 import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/migrate';
 import { formatDays } from '@/lib/hours';
+import { fitWithin } from '@/lib/images';
 import { estimateReadyAt, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
 import { INITIAL_STATE, reducer } from '@/state/reducer';
@@ -189,5 +190,14 @@ describe('order numbers', () => {
     expect(orderNumber('order_abc123')).toMatch(/^\d{4}$/);
     expect(orderNumber('order_abc123')).toBe(orderNumber('order_abc123'));
     expect(orderNumber('order_abc123')).not.toBe(orderNumber('order_abc124'));
+  });
+});
+
+describe('photo uploads', () => {
+  it('shrinks big phone photos to 1600 px on the long side and leaves small ones alone', () => {
+    expect(fitWithin(4032, 3024)).toEqual({ width: 1600 });
+    expect(fitWithin(3024, 4032)).toEqual({ height: 1600 });
+    expect(fitWithin(1200, 900)).toBeNull();
+    expect(fitWithin(undefined, undefined)).toBeNull();
   });
 });

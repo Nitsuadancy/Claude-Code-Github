@@ -6,14 +6,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FormScreen } from '@/components/form-screen';
 import { Body, GoldButton, SectionTitle } from '@/components/ui';
 import { notify } from '@/lib/alert';
-import { MAX_IMAGE_BYTES } from '@/lib/images';
 import { DOCUMENT_TYPES, isDocumentsComplete } from '@/lib/setup';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { DocumentKind } from '@/types';
 import { Icon } from '@/components/icon';
 
-const MAX_DOC_BYTES = 5 * MAX_IMAGE_BYTES;
+/** PDFs and phone photos of certificates both fit comfortably. */
+const MAX_DOC_BYTES = 10 * 1024 * 1024;
 
 export default function RestaurantDocuments() {
   const { draft, update, save } = useRestaurantDraft();
