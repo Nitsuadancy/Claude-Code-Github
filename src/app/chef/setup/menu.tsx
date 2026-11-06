@@ -125,7 +125,7 @@ export default function MenuSetup() {
         )}
       </Pressable>
 
-      <TextField label="Dish name" placeholder="Grandma’s Lasagna" value={name} onChangeText={setName} error={errors.name} />
+      <TextField label="Dish name" placeholder="Grandma’s Peach Cobbler" value={name} onChangeText={setName} error={errors.name} />
       <TextField
         label="Description"
         placeholder="What makes it special?"

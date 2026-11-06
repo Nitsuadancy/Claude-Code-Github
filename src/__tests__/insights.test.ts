@@ -50,7 +50,7 @@ describe('order again', () => {
       restaurantId: kitchen.id,
       lines: [
         { itemId: 'ss_peach_cobbler', name: 'Peach Cobbler', priceCents: 1599, quantity: 4 },
-        { itemId: 'ss_cookies', name: 'Cookies', priceCents: 899, quantity: 2 },
+        { itemId: 'ss_pound_cake', name: 'Earl Grey Pound Cake', priceCents: 1800, quantity: 2 },
         { itemId: 'gone', name: 'Old special', priceCents: 500, quantity: 1 },
       ],
       createdAt: at(1),
@@ -65,7 +65,7 @@ describe('order again', () => {
     const result = buildReorder(past, kitchen, [past, soldToday], new Date(2026, 10, 5, 15));
     expect(result.lines).toEqual([
       { itemId: 'ss_peach_cobbler', quantity: 3 },
-      { itemId: 'ss_cookies', quantity: 2 },
+      { itemId: 'ss_pound_cake', quantity: 2 },
     ]);
     expect(result.missing).toEqual(['Peach Cobbler', 'Old special']);
   });
@@ -73,15 +73,16 @@ describe('order again', () => {
 
 describe('dish search', () => {
   it('finds dishes by name before description', () => {
-    const results = searchDishes(SAMPLE_RESTAURANTS, 'cheese');
-    expect(results[0].item.name).toBe('Four-Cheese Deep Dish');
+    const results = searchDishes(SAMPLE_RESTAURANTS, 'coconut');
+    expect(results[0].item.name).toBe('Coconut Drops (8)');
+    expect(results.some((r) => r.item.name === 'Gizzada (6)')).toBe(true);
     expect(results.some((r) => r.item.name === 'Peach Cobbler')).toBe(false);
   });
 
   it('ignores one-letter queries and draft kitchens', () => {
     expect(searchDishes(SAMPLE_RESTAURANTS, 'a')).toEqual([]);
     const draft: Restaurant = { ...SAMPLE_RESTAURANTS[0], id: 'd', status: 'draft' };
-    expect(searchDishes([draft], 'lasagna')).toEqual([]);
+    expect(searchDishes([draft], 'biscotti')).toEqual([]);
   });
 });
 

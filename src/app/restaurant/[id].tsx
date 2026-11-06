@@ -143,6 +143,7 @@ export default function RestaurantDetail() {
             <Badge label={open ? 'Open now' : 'Closed'} tone={open ? 'success' : 'muted'} />
           </View>
           <Text style={styles.days}>
+            {restaurant.neighborhood ? `Pickup in ${restaurant.neighborhood} · ` : ''}
             {days} · {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
           </Text>
 

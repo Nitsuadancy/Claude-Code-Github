@@ -3,6 +3,18 @@
 The goal is to launch in **one city** with a small group of hand-picked chefs, learn,
 then expand. Each phase ends with something real people can use.
 
+## Launch decisions (November 2026)
+
+| Question | Decision | Why |
+|---|---|---|
+| Where | Orlando, starting with College Park and nearby neighborhoods | Density beats reach: 20 cooks in one area make a better first week than 60 spread out |
+| What can be sold | Florida cottage foods only: breads, pastries, cookies, cakes, candy, granola, jams and dry spice blends | Hot meals need a licensed kitchen. Licensed kitchens can join later as a second kitchen type |
+| How food changes hands | Pickup only, at a time the customer picks. The street address is shared once the chef accepts | No courier costs, and home cooks keep their address private |
+| Fee | One 5% movement fee paid by the customer. Card processing comes out of it, and kitchens keep 100% of their prices | One honest number, far below delivery apps |
+| Manna Fest | Postponed. Recruit the first cooks at existing markets (Lake Eola, Winter Park, Audubon Park), on Instagram and through churches | Same people the Fest would reach, without the cost and risk of running an event |
+| Farmers and artisans | Waitlist in the app now; Manna Mart after the food side works | Growers need buyers first |
+| Rewards | Badges, placement and early access first. Physical gifts only once the fee covers them, or a sponsor pays | Early gift tiers cost more than the orders bring in |
+
 ## Phase 0: Prototype ✅
 
 - [x] All mockup screens built as a working app (iOS, Android, web)
@@ -19,13 +31,17 @@ then expand. Each phase ends with something real people can use.
 - [x] Chef dashboard: today's prep list and a 7-day earnings chart
 - [x] Ratings and reviews after delivery (stars, quick compliments, note); "What neighbors say" on restaurant pages
 - [x] Schedule for later, including pre-orders from kitchens that are closed right now
-- [x] Editorial collections (Sunday Supper, Plant-Powered, Sweet Endings…), animated logo, reviews on the chef dashboard, text-size caps for accessibility
+- [x] Editorial collections (Grandma’s Recipes, Plant-Powered, Sweet Endings…), animated logo, reviews on the chef dashboard, text-size caps for accessibility
 - [x] Activity feed behind the bell (order updates, chef notes, unseen dot), profile stats, help and legal links, styled not-found and crash screens
 - [x] Swipeable cover photo gallery, customer notes to the chef (allergies, requests), live card preview while chefs set up
 - [x] Menu sections (Specials, Mains, Sides, Desserts, Drinks), share a kitchen, live pulse on the current tracking step
 - [x] Personal diet & allergy profile: "Fits your diet" tags, allergen warnings on dishes and in the cart, "Fits my diet" filter
 - [x] Accessibility audit (no nested or unlabeled buttons), search suggestions with recent and popular searches, soft fade between tabs
 - [x] Tips for chefs at checkout (100% to the chef, counted in their earnings), full receipt on tracking, "Personalize your feed" nudge
+- [x] Custom drawn icons for the seven crafts (Vegan, Cottage, Global, Bakery, Breakfast, Late Night, Sweet)
+- [x] Pickup-only ordering with a single 5% movement fee, neighborhood-only kitchen locations and a private pickup address
+- [x] Orlando demo kitchens with cottage-legal menus and real photography
+- [x] Farmer & Artisan waitlist for Manna Mart
 
 ## Phase 1: Real accounts and shared data
 

@@ -46,11 +46,29 @@ county**:
 - Selling **perishable meals** (lasagna, deep-dish pizza) from a home kitchen without
   one of these permits is illegal in many places.
 
+**Florida (the launch market).** Manna launches in Orlando under Florida's cottage food
+law (section 500.80, Florida Statutes). As we understand it, and to be confirmed with
+FDACS or a food attorney before launch:
+
+- Cottage food operators don't need a state permit or inspection, but may sell only
+  foods that don't need refrigeration: breads, cakes and pies without cream fillings,
+  cookies, candy, granola, jams and jellies, dried herbs and spice blends.
+- Sales go directly to the customer: in person, by pickup or by delivery. Wholesale to
+  stores or restaurants isn't allowed.
+- There's a yearly gross sales cap per operator.
+- Every product needs a label with the operator's name and address, the ingredients and
+  allergens, and the statement that it was made in a cottage food operation not subject
+  to Florida's food safety regulations.
+- Cities, counties and HOAs may add their own rules (business tax receipts, zoning).
+
 To do before launch:
 
-- [ ] Pick the launch city and find out exactly what home cooks may sell there, and under which permit.
-- [ ] Decide which categories Manna allows in that market. Bakery and sweets are often easiest to start with.
-- [ ] Require each chef's permit and food handler card in the app. The **Restaurant Documents** step already asks for them.
+- [x] Pick the launch city: Orlando, starting with College Park.
+- [x] Limit categories to cottage foods. The demo kitchens follow this.
+- [x] Require a food handler certificate and ID in the app; a local permit is optional.
+- [ ] Confirm the rules above, the current sales cap and the exact label wording with FDACS or an attorney.
+- [ ] Add the cottage food label statement to dish pages and printed order labels.
+- [ ] Decide how licensed kitchens (hot meals) join later.
 - [ ] Have someone review documents before a kitchen goes live (Roadmap Phase 3).
 - [ ] Ask an attorney whether Manna is a "marketplace" or a "seller" under local law. The answer changes your liability and tax duties.
 

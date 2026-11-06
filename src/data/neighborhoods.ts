@@ -17,6 +17,7 @@ export const NEIGHBORHOODS = [
   'Lake Nona',
   'Mills 50',
   'Parramore',
+  'Pine Hills',
   'Thornton Park',
   'Winter Park',
 ];

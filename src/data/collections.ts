@@ -16,16 +16,16 @@ export interface Collection {
 
 export const COLLECTIONS: Collection[] = [
   {
-    id: 'sunday-supper',
-    title: 'Sunday Supper',
-    tagline: 'Slow-cooked comfort, made to share at the table.',
+    id: 'grandmas-recipes',
+    title: 'Grandma’s Recipes',
+    tagline: 'Family recipes, baked the way they always were.',
     icon: 'cottage',
     categories: ['cottage-kitchen'],
   },
   {
     id: 'plant-powered',
     title: 'Plant-Powered',
-    tagline: 'Vegan and vegetarian cooking that tastes like a treat.',
+    tagline: 'Vegan and vegetarian baking that tastes like a treat.',
     icon: 'vegan',
     categories: ['vegan'],
     dietary: ['vegan', 'vegetarian'],
@@ -40,7 +40,7 @@ export const COLLECTIONS: Collection[] = [
   {
     id: 'around-the-world',
     title: 'Around the World',
-    tagline: 'Family recipes carried here from far away.',
+    tagline: 'Recipes carried here from Jamaica, Mexico and Italy.',
     icon: 'global',
     categories: ['global-flavors'],
   },

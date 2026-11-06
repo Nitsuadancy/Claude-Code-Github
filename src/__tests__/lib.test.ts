@@ -117,15 +117,15 @@ describe('browse', () => {
   it('searches names, chefs and dishes', () => {
     const search = (query: string) =>
       browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, query }, now).map((r) => r.name);
-    expect(search('lasagna')).toEqual(['Cafe Parmesan']);
+    expect(search('polenta')).toEqual(['Cafe Parmesan']);
     expect(search('mrs. susie')).toEqual(['Susie’s Sweets']);
-    expect(search('MOMO')).toEqual(['Momo Mania']);
+    expect(search('GIZZADA')).toEqual(['Blue Mountain Bakehouse']);
     expect(search('no such food')).toEqual([]);
   });
 
   it('filters by category, cuisine, rating and offers', () => {
     const vegan = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, category: 'vegan' }, now);
-    expect(vegan.map((r) => r.name)).toEqual(['The Green Bowl']);
+    expect(vegan.map((r) => r.name)).toEqual(['The Green Pantry']);
 
     const italian = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, cuisines: ['Italian'] }, now);
     expect(italian.every((r) => cuisineTags(r).includes('Italian'))).toBe(true);
@@ -138,9 +138,9 @@ describe('browse', () => {
   });
 
   it('shows only kitchens open right now', () => {
-    const thursdayMorning = new Date(2026, 10, 5, 8, 0);
-    const open = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, openNow: true }, thursdayMorning);
-    expect(open.map((r) => r.name)).toEqual(['Sunrise Plates']);
+    const thursdayDawn = new Date(2026, 10, 5, 6, 45);
+    const open = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, openNow: true }, thursdayDawn);
+    expect(open.map((r) => r.name)).toEqual(['Sunrise Bakehouse']);
   });
 
   it('sorts by rating and flags new kitchens', () => {
@@ -148,8 +148,8 @@ describe('browse', () => {
     for (let i = 1; i < byRating.length; i++) {
       expect(byRating[i - 1].rating).toBeGreaterThanOrEqual(byRating[i].rating);
     }
-    const momo = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_momo_mania')!;
-    expect(isNew(momo, now)).toBe(true);
+    const blueMountain = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_blue_mountain')!;
+    expect(isNew(blueMountain, now)).toBe(true);
     const susie = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_susies_sweets')!;
     expect(isNew(susie, now)).toBe(false);
   });

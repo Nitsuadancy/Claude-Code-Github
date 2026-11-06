@@ -126,11 +126,13 @@ describe('collections', () => {
   it('match kitchens by category or by dish', () => {
     const byId = (id: string) => COLLECTIONS.find((c) => c.id === id)!;
     const names = (id: string) => collectionKitchens(byId(id), SAMPLE_RESTAURANTS).map((r) => r.name).sort();
-    expect(names('sweet-endings')).toEqual(['Susie’s Sweets']);
-    // The Green Bowl by category; Cafe Parmesan, Momo Mania, Jackson's and Susie's by vegetarian dishes.
-    expect(names('plant-powered')).toContain('The Green Bowl');
-    expect(names('plant-powered')).toContain('Momo Mania');
-    expect(names('plant-powered')).not.toContain('Sunrise Plates');
+    expect(names('sweet-endings')).toContain('Susie’s Sweets');
+    expect(names('sweet-endings')).toContain('Jackson’s Night Oven');
+    expect(names('sweet-endings')).not.toContain('Sunrise Bakehouse');
+    // The Green Pantry by category; the others by their vegan or vegetarian dishes.
+    expect(names('plant-powered')).toContain('The Green Pantry');
+    expect(names('plant-powered')).toContain('Blue Mountain Bakehouse');
+    expect(names('after-dark')).toEqual(['Jackson’s Night Oven']);
     for (const c of COLLECTIONS) expect(collectionKitchens(c, SAMPLE_RESTAURANTS).length).toBeGreaterThan(0);
   });
 });
@@ -190,21 +192,21 @@ describe('menu sections', () => {
 describe('diet and allergy preferences', () => {
   const cobbler = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_susies_sweets')!;
   const green = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_green_bowl')!;
-  const falafel = green.menu.find((m) => m.id === 'gb_falafel')!; // vegan, dairy-free, contains sesame
+  const granola = green.menu.find((m) => m.id === 'gb_granola')!; // vegan, dairy-free, contains tree nuts
 
   it('flags allergens the customer avoids', () => {
-    expect(allergenConflicts(falafel, ['sesame', 'peanuts'])).toEqual(['sesame']);
-    expect(conflictSentence(['sesame'])).toBe('Contains sesame, which you avoid');
+    expect(allergenConflicts(granola, ['tree-nuts', 'peanuts'])).toEqual(['tree-nuts']);
+    expect(conflictSentence(['tree-nuts'])).toBe('Contains tree nuts, which you avoid');
     expect(conflictSentence([])).toBeNull();
   });
 
   it('matches dishes against every diet and allergy', () => {
-    expect(dishFits(falafel, { dietary: ['vegan'], avoid: [] })).toBe(true);
-    expect(dishFits(falafel, { dietary: ['vegan', 'halal'], avoid: [] })).toBe(false);
-    expect(dishFits(falafel, { dietary: ['vegan'], avoid: ['sesame'] })).toBe(false);
-    expect(dishFits(falafel, { dietary: [], avoid: [] })).toBe(false);
+    expect(dishFits(granola, { dietary: ['vegan'], avoid: [] })).toBe(true);
+    expect(dishFits(granola, { dietary: ['vegan', 'halal'], avoid: [] })).toBe(false);
+    expect(dishFits(granola, { dietary: ['vegan'], avoid: ['tree-nuts'] })).toBe(false);
+    expect(dishFits(granola, { dietary: [], avoid: [] })).toBe(false);
     // Vegan dishes also count as vegetarian and dairy-free.
-    expect(dishFits(falafel, { dietary: ['vegetarian', 'dairy-free'], avoid: [] })).toBe(true);
+    expect(dishFits(granola, { dietary: ['vegetarian', 'dairy-free'], avoid: [] })).toBe(true);
   });
 
   it('finds kitchens with at least one dish that fits', () => {
