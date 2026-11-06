@@ -46,6 +46,9 @@ then expand. Each phase ends with something real people can use.
 - [x] Growth kit for chefs: an Instagram Story image with a QR code to their kitchen
 - [x] Founding Creators badge and home row; "Find me in person" spots; "For you" picks with reasons
 - [x] Phone photos of any size are resized automatically on upload
+- [x] Delete account, in-app privacy policy and terms (drafts), report a review
+- [x] Kitchen page tabs (Menu, About, Reviews), "Most ordered" labels, swipe to remove in the cart
+- [x] Chef's "Today's menu": turn dishes on and off and see what's left today
 
 ## Phase 1: Real accounts and shared data
 
@@ -56,49 +59,73 @@ Without this, a chef and a customer on different phones can't see each other.
 - [ ] Google and Apple sign-in. Apple's App Store rules require Apple sign-in if Google sign-in is offered.
 - [x] Database tables for profiles, restaurants, menu items, documents and orders, with row-level security (`supabase/`, tested in CI)
 - [x] Server functions: pricing, daily limits, opening hours, order status, reviews, kitchen approval
+- [x] App-side groundwork: Supabase client (off until configured) and tested row ↔ model mappers
 - [ ] Photo and document uploads to private storage
 - [ ] Live order updates, so the chef's dashboard updates the moment an order is placed
+- [ ] Edge Function that removes the sign-in when someone deletes their account
 
 ## Phase 2: Getting paid
 
 - [ ] Stripe Connect (Express accounts): chefs onboard to get paid, and Stripe handles identity checks and 1099-K tax forms
 - [ ] Card, Apple Pay and Google Pay checkout
-- [ ] Decide the fee model. The prototype uses a placeholder 10% customer service fee plus a $2.99 delivery fee. A commission on the chef's side is also common.
+- [x] Fee model: one 5% movement fee paid by the customer; kitchens keep 100% of their prices
 - [ ] Refunds and order cancellation rules
 
 ## Phase 3: Trust and safety (required before public launch)
 
-- [ ] Admin review queue: approve chefs only after checking their permit and food handler card
-- [ ] Allergen fields on menu items, shown clearly to customers
+- [ ] Admin review queue: approve chefs only after checking their food handler card and ID
+- [x] Allergen fields on menu items, shown clearly to customers
+- [x] Report a review (App Store guideline 1.2), with `remove_review()` for the team
 - [ ] Report a problem with an order
-- [ ] Terms of Service, Privacy Policy and chef agreement (see [COMPANY_SETUP.md](COMPANY_SETUP.md))
+- [ ] Attorney review of the Terms of Service and Privacy Policy (drafts in the app), plus a chef agreement (see [COMPANY_SETUP.md](COMPANY_SETUP.md))
 
-## Phase 4: Getting food to people
+## Phase 4: Notifications
 
-**Open decision:** who carries the food?
+Pickup only for launch (see Launch decisions). Delivery can come back as an option once there's demand.
 
-1. **Pickup only.** This is the simplest and cheapest option, and it fits most cottage food laws.
-2. **Chef delivers.** The chef sets a radius and a fee.
-3. **Delivery partner.** For example, DoorDash Drive or Uber Direct send a courier on request. The customer pays per trip.
-
-The recommendation is to launch with 1 and 2, then add 3 once order volume justifies it.
-
-- [ ] Pickup vs. delivery choice at checkout
-- [ ] Address search and distance limits (Google Places or Mapbox)
 - [ ] Push notifications for new orders (chef) and status changes (customer)
+- [ ] Text-message fallback for chefs who turn push off
 
 ## Phase 5: Launch
 
 - [ ] Apple Developer and Google Play accounts in the company's name
-- [ ] App icons, screenshots and store listings
+- [x] Store listing and screenshots ([APP_STORE.md](APP_STORE.md), `store/screenshots/`)
+- [ ] Retake the checkout screenshot once payments are live
 - [ ] Beta with 10–20 chefs and friends and family through TestFlight and Play internal testing
 - [ ] App Store and Google Play submission (`eas build` + `eas submit`)
 - [ ] Crash reporting and analytics (Sentry plus a privacy-friendly analytics tool)
 
+## Phase 6: Paid plans and promotion for cooks
+
+Start once cooks are making money on Manna, roughly 30–50 active kitchens with most getting repeat
+orders. Selling and getting paid stay free forever: storefront, orders, payouts, reviews and the
+Instagram Story card. Paid features help cooks sell more or save time.
+
+**Manna Pro** (about $15–25 a month; free for a year for founding kitchens)
+
+- [ ] Drops and pre-order windows ("Thanksgiving pies, orders close Tuesday")
+- [ ] Followers: customers follow a kitchen and get a notification when it posts a drop
+- [ ] Discount codes and gift cards
+- [ ] Deeper insights: repeat customers, best sellers by day, busiest pickup times
+- [ ] Custom storefront link (`manna.app/susies`), flyer and branded label templates. A basic
+  Florida-compliant product label stays free.
+
+**Promoted spots**
+
+- [ ] Weekly sponsored slots in a neighborhood: the home carousel, or the top of a craft such as Bakery
+  (about $10–25 a week to start, not pay-per-click)
+- [ ] At most one or two per screen, always labeled "Sponsored", and only for verified kitchens with
+  good ratings, so the feed stays curated
+
+**How cooks pay**
+
+- [ ] Stripe Billing on the web. Digital subscriptions bought inside the iPhone app normally go
+  through Apple's in-app purchase at 15–30%; check Apple's current rules on linking to web checkout
+  before building
+- [ ] Database: a plan and renewal date on each kitchen, and a table of sponsored slots with dates
+
 ## Later ideas
 
 - Weekly subscriptions from a favorite chef
-- Chef storefront links to share on social media
-- Promotions and "Offers" managed by chefs
 - Catering and large orders
 - Web dashboard for chefs
