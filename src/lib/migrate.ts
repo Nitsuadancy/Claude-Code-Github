@@ -63,12 +63,13 @@ export function normalizeUser(saved: UserProfile): UserProfile {
 
 export function normalizePersisted(saved: Partial<PersistedState> | null): Partial<PersistedState> | null {
   if (!saved) return saved;
-  return {
-    ...saved,
-    user: saved.user ? normalizeUser(saved.user) : saved.user,
-    restaurants: saved.restaurants?.map(normalizeRestaurant),
-    orders: saved.orders?.map(normalizeOrder),
-    reviews: saved.reviews ?? [],
-    recentSearches: saved.recentSearches ?? [],
-  };
+  const out: Partial<PersistedState> = { ...saved, reviews: saved.reviews ?? [], recentSearches: saved.recentSearches ?? [] };
+  // Only touch sections that were saved, so a missing one keeps the app's default instead of becoming undefined.
+  if (saved.user) out.user = normalizeUser(saved.user);
+  if (saved.restaurants) out.restaurants = saved.restaurants.map(normalizeRestaurant);
+  if (saved.orders) out.orders = saved.orders.map(normalizeOrder);
+  for (const key of Object.keys(out) as (keyof PersistedState)[]) {
+    if (out[key] === undefined) delete out[key];
+  }
+  return out;
 }

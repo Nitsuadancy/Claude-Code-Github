@@ -231,3 +231,26 @@ describe('for you', () => {
     expect(pickForYou(SAMPLE_RESTAURANTS, base, 3)).toHaveLength(3);
   });
 });
+
+describe('deleting an account', () => {
+  it('removes the person, their kitchen and everything tied to them, and keeps everyone else', () => {
+    let s = reducer(INITIAL_STATE, { type: 'hydrate', state: {} });
+    s = reducer(s, { type: 'signIn', userId: 'u1', phone: '+14075550100' });
+    s = reducer(s, { type: 'saveRestaurant', restaurant: { ...SAMPLE_RESTAURANTS[0], id: 'mine', ownerId: 'u1' } });
+    s = {
+      ...s,
+      favoriteRestaurantIds: ['sample_blue_mountain'],
+      orders: [
+        order({ id: 'a', customerId: 'u1', restaurantId: 'sample_blue_mountain' }),
+        order({ id: 'b', customerId: 'other', restaurantId: 'mine' }),
+        order({ id: 'c', customerId: 'other', restaurantId: 'sample_blue_mountain' }),
+      ],
+    };
+    const after = reducer(s, { type: 'deleteAccount' });
+    expect(after.user).toBeNull();
+    expect(after.restaurants.map((r) => r.id)).toEqual([]);
+    expect(after.orders.map((o) => o.id)).toEqual(['c']);
+    expect(after.favoriteRestaurantIds).toEqual([]);
+    expect(after.hasSeenWelcome).toBe(true);
+  });
+});

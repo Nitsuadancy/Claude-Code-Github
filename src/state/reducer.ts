@@ -65,6 +65,7 @@ export type Action =
   | { type: 'signIn'; userId: string; phone: string }
   | { type: 'updateProfile'; changes: Partial<Omit<UserProfile, 'id'>> }
   | { type: 'signOut' }
+  | { type: 'deleteAccount' }
   | { type: 'saveRestaurant'; restaurant: Restaurant }
   | { type: 'publishRestaurant'; restaurantId: string }
   | { type: 'setAcceptingOrders'; restaurantId: string; accepting: boolean }
@@ -139,6 +140,23 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'updateProfile':
       if (!state.user) return state;
       return { ...state, user: { ...state.user, ...action.changes } };
+
+    case 'deleteAccount': {
+      // Removes everything this person created on the device: profile, their
+      // kitchen, orders they placed or received, reviews, favorites and searches.
+      const userId = state.user?.id;
+      if (!userId) return state;
+      const mine = new Set(state.restaurants.filter((r) => r.ownerId === userId).map((r) => r.id));
+      return {
+        ...INITIAL_STATE,
+        hydrated: true,
+        hasSeenWelcome: true,
+        hasSeenCoachMarks: state.hasSeenCoachMarks,
+        restaurants: state.restaurants.filter((r) => !mine.has(r.id)),
+        orders: state.orders.filter((o) => o.customerId !== userId && !mine.has(o.restaurantId)),
+        reviews: state.reviews.filter((r) => r.customerId !== userId && !mine.has(r.restaurantId)),
+      };
+    }
 
     case 'signOut':
       return { ...state, user: null, pendingRole: null, cart: EMPTY_CART };

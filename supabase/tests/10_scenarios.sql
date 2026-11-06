@@ -155,4 +155,19 @@ select pg_temp.check((select public.kitchen_open_at(r, '2026-11-06 01:00+00') fr
 select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-05 01:00+00') from public.restaurants r), 'Thu 1am belongs to Wednesday');
 select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-06 03:00+00') from public.restaurants r), 'Fri 3am closed');
 
+-- Deleting an account --------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+insert into public.favorites (customer_id, restaurant_id) values (auth.uid(), '10000000-0000-0000-0000-000000000001');
+select public.delete_my_account();
+select pg_temp.check((select name = '' and phone is null and deleted_at is not null from public.profiles where id = auth.uid()),
+  'deleted account details cleared');
+select pg_temp.check((select count(*) = 0 from public.favorites), 'favorites removed');
+select pg_temp.check((select customer_name = 'Former customer' from public.reviews), 'review kept without the name');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select public.delete_my_account();
+select pg_temp.check((select status = 'draft' and not accepting_orders from public.restaurants), 'kitchen taken down');
+select pg_temp.check((select count(*) = 0 from public.restaurant_addresses), 'address removed');
+select pg_temp.act_as(null);
+select pg_temp.expect_error($$ select public.delete_my_account() $$, 'permission denied');
+
 select 'All Manna database checks passed' as result;

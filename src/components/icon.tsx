@@ -143,6 +143,7 @@ const LUCIDE = {
   'lightning-bolt-outline': Zap,
   'lock-outline': Lock,
   'logout': LogOut,
+  'delete-outline': Trash2,
   'magnify': Search,
   'map-marker': MapPin,
   'map-marker-outline': MapPin,

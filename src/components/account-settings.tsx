@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { notify } from '@/lib/alert';
+import { confirmAction, notify } from '@/lib/alert';
 import { resetTo } from '@/lib/navigation';
 import { formatE164UsPhone, isValidEmail } from '@/lib/validation';
 import { useStore } from '@/state/store';
@@ -42,6 +42,19 @@ export function AccountSettings({ showIdentity = true }: { showIdentity?: boolea
     dispatch({ type: 'chooseRole', role: user.role === 'chef' ? 'foodie' : 'chef' });
     resetTo('/');
   };
+
+  const deleteAccount = () =>
+    confirmAction(
+      'Delete your account?',
+      user.role === 'chef'
+        ? 'This removes your profile, your kitchen and its menu, your orders and your reviews from Manna. It can’t be undone.'
+        : 'This removes your profile, your orders, your reviews and your favorites from Manna. It can’t be undone.',
+      'Delete account',
+      () => {
+        dispatch({ type: 'deleteAccount' });
+        resetTo('/');
+      },
+    );
 
   const signOut = () => {
     dispatch({ type: 'signOut' });
@@ -85,6 +98,8 @@ export function AccountSettings({ showIdentity = true }: { showIdentity?: boolea
         />
         <View style={styles.rowDivider} />
         <Row icon="logout" label="Sign out" onPress={signOut} danger />
+        <View style={styles.rowDivider} />
+        <Row icon="delete-outline" label="Delete account" onPress={deleteAccount} danger />
       </View>
 
       <View style={styles.list}>

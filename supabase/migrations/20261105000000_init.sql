@@ -33,6 +33,8 @@ create table public.profiles (
   dietary text[] not null default '{}',
   avoid_allergens text[] not null default '{}',
   is_admin boolean not null default false,
+  -- Set when the person deletes their account; their details are cleared.
+  deleted_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -545,6 +547,37 @@ begin
 end;
 $$;
 
+-- Deletes a person's account from inside the app (Apple requires this).
+-- Their details, favorites, kitchen listing, address and documents are
+-- removed; order and review records stay for the kitchens' bookkeeping,
+-- without the person's details. Removing the sign-in itself (auth.users)
+-- needs the service role, so an Edge Function calls this and then deletes it.
+create function public.delete_my_account() returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+begin
+  if me is null then
+    raise exception 'Sign in first' using errcode = '42501';
+  end if;
+  delete from public.favorites where customer_id = me;
+  delete from public.restaurant_addresses a using public.restaurants r
+    where a.restaurant_id = r.id and r.owner_id = me;
+  delete from public.restaurant_documents d using public.restaurants r
+    where d.restaurant_id = r.id and r.owner_id = me;
+  update public.restaurants
+    set status = 'draft', accepting_orders = false, chef_bio = '', chef_photo_path = null,
+        cover_paths = '{}', logo_path = null, in_person = '[]'::jsonb
+    where owner_id = me;
+  update public.reviews set customer_name = 'Former customer', text = '' where customer_id = me;
+  update public.orders set customer_note = '' where customer_id = me;
+  update public.profiles
+    set name = '', email = null, phone = null, neighborhood = '', dietary = '{}',
+        avoid_allergens = '{}', deleted_at = now()
+    where id = me;
+end;
+$$;
+
 revoke all on function public.place_order(uuid, jsonb, text, timestamptz, integer) from public;
 revoke all on function public.set_order_status(uuid, public.order_status) from public;
 revoke all on function public.set_chef_note(uuid, text) from public;
@@ -555,6 +588,8 @@ grant execute on function public.set_order_status(uuid, public.order_status) to 
 grant execute on function public.set_chef_note(uuid, text) to authenticated;
 grant execute on function public.add_review(uuid, integer, text[], text) to authenticated;
 grant execute on function public.approve_restaurant(uuid) to authenticated;
+revoke all on function public.delete_my_account() from public;
+grant execute on function public.delete_my_account() to authenticated;
 
 grant usage on schema public to anon, authenticated;
 grant select on all tables in schema public to anon, authenticated;
