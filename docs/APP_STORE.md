@@ -36,13 +36,16 @@ FOR FOOD LOVERS
 • Discover home kitchens near you, starting in College Park, Orlando
 • Meet the cook behind every dish and read their story
 • See ingredients and allergens before you order, and filter by diet
-• Order ahead, choose a pickup time, and follow your order from oven to pickup
+• Order ahead for a cook's bake day, or pick up as soon as it's ready
+• Follow your order from oven to pickup, then tap "I'm here" when you arrive
 • Pay upfront in the app. No DMs, no Venmo requests, no guessing
 • One 5% fee at checkout. Cooks keep every dollar of their prices, and every tip
 
 FOR HOME COOKS
 • Turn your kitchen into a storefront in minutes
-• Get paid upfront, and set your own hours, prices and daily limits so you never oversell
+• Bake days: take orders all week, bake in one batch, hand off in one pickup window
+• Get paid upfront, and set your own prices and daily limits so you never oversell
+• Make your page yours: accent color, tagline, a pinned update and your Instagram
 • Today's menu: turn dishes on and off as you sell out
 • A prep list that tells you what to bake today
 • A ready-to-post Instagram Story with your QR code, so your followers can order in one tap

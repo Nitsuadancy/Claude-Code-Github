@@ -56,7 +56,7 @@ const NOW = new Date('2026-11-07T10:40:00-05:00'); // A Saturday morning, when m
   await page.mouse.move(215, 600);
   await page.mouse.wheel(0, 900);
   await shot('07-cart-total', 900);
-  await visible(page.getByRole('button', { name: /^(Place order|Schedule pickup)/ })).click();
+  await visible(page.getByRole('button', { name: /^(Place order|Schedule pickup|Order for)/ })).click();
   await page.waitForTimeout(1500);
   // Move the order along so tracking shows progress.
   const url = page.url();
@@ -69,6 +69,11 @@ const NOW = new Date('2026-11-07T10:40:00-05:00'); // A Saturday morning, when m
     o.statusHistory = [{ status: 'placed', at: t(26) }, { status: 'accepted', at: t(24) }, { status: 'preparing', at: t(18) }];
     o.chefNote = 'Rolls are proofing now. Frosting goes on warm!';
     o.estimatedReadyAt = new Date(now + 12 * 60000).toISOString();
+    // Show this morning's bake-day window rather than next week's.
+    if (o.pickupBy) {
+      o.scheduledFor = new Date(now - 160 * 60000).toISOString();
+      o.pickupBy = new Date(now + 20 * 60000).toISOString();
+    }
     localStorage.setItem('manna/state/v1', JSON.stringify(st));
   }, NOW.getTime());
   await page.goto(url.replace(/[?&]celebrate=1/, ''));
