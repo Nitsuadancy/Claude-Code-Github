@@ -46,7 +46,7 @@ import {
   type SortOption,
 } from '@/lib/browse';
 import * as haptics from '@/lib/haptics';
-import { formatTime } from '@/lib/hours';
+import { orderingLine } from '@/lib/ordering';
 import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
 import { useAllRestaurants, useDietProfile, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -168,7 +168,7 @@ export default function FoodieHome() {
     const kitchen = byId(order.restaurantId);
     if (!kitchen) return;
     if (!isOpenNow(kitchen, new Date())) {
-      notify('Kitchen closed', `${kitchen.name} isn’t taking orders right now. Opens at ${formatTime(kitchen.openTime)}.`);
+      notify('Not taking orders', `${kitchen.name} isn’t taking orders right now. ${orderingLine(kitchen, new Date(), { long: true })}.`);
       return;
     }
     const { lines, missing } = buildReorder(order, kitchen, state.orders, new Date());
@@ -225,9 +225,7 @@ export default function FoodieHome() {
               restaurants={heroKitchens}
               width={width}
               height={Math.round(Math.min(width * 1.32, 620))}
-              label={(r) =>
-                isOpenNow(r, now) ? `Open now · ready in ~${r.prepMinutes} min` : `Opens ${formatTime(r.openTime)}`
-              }
+              label={(r) => orderingLine(r, now, { long: true })}
               onOpen={open}
               overlay={masthead}
             />

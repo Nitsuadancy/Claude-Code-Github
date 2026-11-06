@@ -41,3 +41,10 @@ export function formatSlot(iso: string, now: Date): string {
   const time = new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
   return `${dayLabel(iso, now)}, ${time}`;
 }
+
+/** "Pickup Sat, 9:00 AM – 12:00 PM" for a window, or "Pickup Today, 6:30 PM" for a set time. */
+export function formatPickup(scheduledFor: string, pickupBy: string | undefined, now: Date): string {
+  if (!pickupBy) return `Pickup ${formatSlot(scheduledFor, now)}`;
+  const end = new Date(pickupBy).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return `Pickup ${formatSlot(scheduledFor, now)} – ${end}`;
+}

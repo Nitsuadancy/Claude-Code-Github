@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { formatCents } from '@/lib/money';
 import { endedWithoutSale, formatOrderTime, isActive, ORDER_PROGRESS, ORDER_STATUS_LABEL, orderNumber } from '@/lib/orders';
-import { formatSlot } from '@/lib/schedule';
+import { formatPickup } from '@/lib/schedule';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order } from '@/types';
 import { Icon } from './icon';
@@ -51,7 +51,7 @@ export function OrderCard({
       {order.scheduledFor && active ? (
         <View style={styles.scheduled}>
           <Icon name="calendar-clock" size={14} color={colors.gold} />
-          <Text style={styles.scheduledText}>Pickup {formatSlot(order.scheduledFor, new Date())}</Text>
+          <Text style={styles.scheduledText}>{formatPickup(order.scheduledFor, order.pickupBy, new Date())}</Text>
         </View>
       ) : null}
       {order.customerNote ? (

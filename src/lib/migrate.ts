@@ -38,6 +38,10 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     accent: isAccentId(r.accent) ? r.accent : undefined,
     tagline: r.tagline ?? '',
     instagram: r.instagram ?? '',
+    orderMode: r.orderMode ?? 'hours',
+    bakeDays: r.bakeDays ?? [],
+    skippedBakeDays: r.skippedBakeDays ?? [],
+    pickupInstructions: r.pickupInstructions ?? '',
     menu: (r.menu ?? []).map(normalizeMenuItem),
   };
 }

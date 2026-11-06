@@ -22,12 +22,22 @@ import {
 import { accentColor } from '@/data/accents';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
+import {
+  describeBakeDays,
+  describeBakeDaysLong,
+  describeCutoff,
+  formatBakeDay,
+  formatCutoff,
+  openBakeDays,
+  upcomingBakeDays,
+} from '@/lib/bake-days';
 import { formatDays, formatTime } from '@/lib/hours';
 import { instagramUrl, visibleUpdate } from '@/lib/kitchen-style';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
 import { groupMenu } from '@/lib/menu';
+import { isBakeDayKitchen } from '@/lib/ordering';
 import { relativeDay } from '@/lib/reviews';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { shareKitchen } from '@/lib/share';
@@ -64,7 +74,9 @@ export default function RestaurantDetail() {
 
   const now = new Date();
   const open = isOpenNow(restaurant, now);
-  const slots = open ? [] : availableSlots(restaurant, now);
+  const bakeDayKitchen = isBakeDayKitchen(restaurant);
+  const bakeDays = bakeDayKitchen && restaurant.acceptingOrders ? openBakeDays(restaurant, now) : [];
+  const slots = open || bakeDayKitchen ? [] : availableSlots(restaurant, now);
   // Closed kitchens still take pre-orders for their next opening.
   const canOrder = (open || slots.length > 0) && !isPreview && state.user?.role === 'foodie';
   const inThisCart = state.cart.restaurantId === restaurant.id;
@@ -151,17 +163,41 @@ export default function RestaurantDetail() {
           <View style={styles.facts}>
             <Text style={styles.factText}>{restaurant.cuisine.replace(/\s*•\s*/g, ' · ')}</Text>
             <Fact icon="star" label={formatRating(restaurant)} />
-            <Text style={[styles.factText, { color: open ? colors.success : colors.textMuted }]}>
-              {open ? `Open · ready in ~${restaurant.prepMinutes} min` : 'Closed now'}
-            </Text>
+            {bakeDayKitchen ? null : (
+              <Text style={[styles.factText, { color: open ? colors.success : colors.textMuted }]}>
+                {open ? `Open · ready in ~${restaurant.prepMinutes} min` : 'Closed now'}
+              </Text>
+            )}
           </View>
           <Text style={styles.days}>
-            {days}, {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
+            {bakeDayKitchen
+              ? `Bake days ${describeBakeDays(restaurant.bakeDays)}`
+              : `${days}, ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`}
             {restaurant.neighborhood ? ` · Pickup in ${restaurant.neighborhood}` : ''}
           </Text>
 
           {isPreview ? (
             <Notice icon="eye-outline" text="This is how customers will see your kitchen." />
+          ) : bakeDayKitchen ? (
+            bakeDays.length ? (
+              <View style={[styles.bakeDay, { borderColor: accent }]}>
+                <Text style={[styles.bakeDayLabel, { color: accent }]}>Next bake day</Text>
+                <Text style={styles.bakeDayWhen}>{formatBakeDay(bakeDays[0], now)}</Text>
+                <Text style={styles.bakeDayCutoff}>
+                  {formatCutoff(bakeDays[0], now)}. {chefFirst} bakes everything fresh for that day.
+                </Text>
+              </View>
+            ) : (
+              <Notice
+                icon="moon-waning-crescent"
+                text={(() => {
+                  const later = upcomingBakeDays(restaurant, now)[0];
+                  return later
+                    ? `Orders for ${formatBakeDay(later, now)} have closed. Check back for the next bake day.`
+                    : 'No bake days coming up right now. Check back soon.';
+                })()}
+              />
+            )
           ) : !open ? (
             <Notice
               icon={slots.length ? 'calendar-clock' : 'moon-waning-crescent'}
@@ -328,9 +364,11 @@ export default function RestaurantDetail() {
               ) : null}
 
               <View style={{ gap: 4 }}>
-                <Text style={styles.aboutLabel}>Hours</Text>
+                <Text style={styles.aboutLabel}>{bakeDayKitchen ? 'Bake days' : 'Hours'}</Text>
                 <Text style={styles.aboutText}>
-                  {days}, {formatTime(restaurant.openTime)} – {formatTime(restaurant.closeTime)}
+                  {bakeDayKitchen
+                    ? `${describeBakeDaysLong(restaurant.bakeDays)}. Order by ${describeCutoff(restaurant.bakeDays?.[0]?.closeDaysBefore ?? 1)}.`
+                    : `${days}, ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`}
                 </Text>
               </View>
               <View style={{ gap: 4 }}>
@@ -529,6 +567,10 @@ const styles = StyleSheet.create({
   tabOn: { borderBottomColor: colors.ivory },
   tabText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textMuted },
   tabTextOn: { color: colors.ivory },
+  bakeDay: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, gap: 4, backgroundColor: colors.surface },
+  bakeDayLabel: { fontFamily: fonts.semibold, fontSize: 12 },
+  bakeDayWhen: { fontFamily: fonts.semibold, fontSize: 17, color: colors.ivory },
+  bakeDayCutoff: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
   tagline: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 23, color: colors.ivory, opacity: 0.92 },
   update: {
     borderLeftWidth: 3,

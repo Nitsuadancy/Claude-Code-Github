@@ -2,8 +2,8 @@ import type { Order, Restaurant } from '@/types';
 
 import { isNew } from './browse';
 import { type DietProfile, hasDietProfile, kitchenFits } from './diet';
-import { isOpenAt } from './hours';
 import { endedWithoutSale } from './orders';
+import { isBakeDayKitchen, orderingLine, takingOrders } from './ordering';
 
 export interface ForYouPick {
   restaurant: Restaurant;
@@ -35,9 +35,11 @@ export function pickForYou(
   const ranked = restaurants
     .filter((r) => r.status === 'live')
     .map((r) => {
-      const open = r.acceptingOrders && isOpenAt(r, context.now);
+      const open = takingOrders(r, context.now);
+      const bakeDay = isBakeDayKitchen(r);
       if (context.favoriteIds.includes(r.id)) {
-        return { r, score: 6, reason: open ? 'One of your favorites, open now' : 'One of your favorites' };
+        const suffix = bakeDay ? ', taking orders' : ', open now';
+        return { r, score: 6, reason: `One of your favorites${open ? suffix : ''}` };
       }
       if (ordered.has(r.id)) return { r, score: 5, reason: 'You ordered here before' };
       if (hasDietProfile(context.diet) && kitchenFits(r, context.diet)) return { r, score: 4, reason: 'Fits your diet' };
@@ -45,7 +47,7 @@ export function pickForYou(
         return { r, score: 3, reason: `In ${r.neighborhood}` };
       }
       if (isNew(r, context.now)) return { r, score: 2, reason: 'New to Manna' };
-      if (open) return { r, score: 1, reason: `Open now · ready in ~${r.prepMinutes} min` };
+      if (open) return { r, score: 1, reason: orderingLine(r, context.now) };
       return { r, score: 0, reason: r.ratingCount ? `Loved by neighbors · ${r.rating.toFixed(1)}` : 'Worth a try' };
     })
     .sort((a, b) => b.score - a.score || b.r.rating - a.r.rating);

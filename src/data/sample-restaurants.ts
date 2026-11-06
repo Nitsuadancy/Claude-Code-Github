@@ -253,6 +253,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_sunrise_plates',
+    orderMode: 'bake-days',
+    bakeDays: [{ day: 'saturday', pickupStart: '08:00', pickupEnd: '11:00', closeDaysBefore: 2 }],
     accent: 'champagne',
     tagline: 'Breakfast bakes, ready by 7',
     update: { text: 'Pumpkin cinnamon rolls every Saturday in November.', postedAt: daysAgo(1) },
@@ -311,6 +313,11 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_susies_sweets',
+    orderMode: 'bake-days',
+    bakeDays: [
+      { day: 'friday', pickupStart: '15:00', pickupEnd: '18:00', closeDaysBefore: 1 },
+      { day: 'saturday', pickupStart: '10:00', pickupEnd: '13:00', closeDaysBefore: 2 },
+    ],
     accent: 'berry',
     tagline: 'Pound cakes and cobblers, the Macon way',
     founding: true,
@@ -360,6 +367,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_abuela_rosa',
+    orderMode: 'bake-days',
+    bakeDays: [{ day: 'sunday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
     accent: 'terracotta',
     tagline: 'Pan dulce from Rosa’s family table',
     founding: false,

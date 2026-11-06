@@ -1,6 +1,6 @@
 import type { CategoryId, Restaurant } from '@/types';
 
-import { isOpenAt } from './hours';
+import { takingOrders } from './ordering';
 
 export type SortOption = 'recommended' | 'rating' | 'newest' | 'name';
 
@@ -72,7 +72,7 @@ export function browseRestaurants(
     if (filters.minRating !== null && r.rating < filters.minRating) return false;
     if (filters.offersOnly && !r.hasOffer) return false;
     if (filters.newOnly && !isNew(r, now)) return false;
-    if (filters.openNow && !(r.acceptingOrders && isOpenAt(r, now))) return false;
+    if (filters.openNow && !takingOrders(r, now)) return false;
     return true;
   });
 

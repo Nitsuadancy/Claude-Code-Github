@@ -31,7 +31,7 @@ import {
   ORDER_STATUS_LABEL,
 } from '@/lib/orders';
 import { publicName } from '@/lib/reviews';
-import { formatSlot } from '@/lib/schedule';
+import { formatPickup } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -83,7 +83,7 @@ export default function OrderTracking() {
               <Icon name="timer-sand" size={16} color={colors.gold} />
               <Text style={styles.etaText}>
                 {order.scheduledFor
-                  ? `Pickup ${formatSlot(order.scheduledFor, new Date())}`
+                  ? formatPickup(order.scheduledFor, order.pickupBy, new Date())
                   : `Estimated ready by ${formatClock(order.estimatedReadyAt)}`}
               </Text>
             </View>

@@ -137,10 +137,11 @@ describe('browse', () => {
     expect(offers.every((r) => r.hasOffer)).toBe(true);
   });
 
-  it('shows only kitchens open right now', () => {
+  it('shows only kitchens taking orders right now: open hours or an open bake day', () => {
     const thursdayDawn = new Date(2026, 10, 5, 6, 45);
     const open = browseRestaurants(SAMPLE_RESTAURANTS, { ...DEFAULT_FILTERS, openNow: true }, thursdayDawn);
-    expect(open.map((r) => r.name)).toEqual(['Sunrise Bakehouse']);
+    // Every hours kitchen is still closed at dawn; the three bake-day kitchens take orders ahead.
+    expect(open.map((r) => r.name).sort()).toEqual(['Abuela Rosa’s Panadería', 'Sunrise Bakehouse', 'Susie’s Sweets']);
   });
 
   it('sorts by rating and flags new kitchens', () => {

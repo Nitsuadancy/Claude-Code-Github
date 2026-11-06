@@ -73,6 +73,22 @@ export interface RestaurantDocument {
   uri: string;
 }
 
+/**
+ * "bake-days": customers order ahead for a weekly bake day and pick up in a window.
+ * "hours": customers order while the kitchen is open and pick up when it's ready.
+ */
+export type OrderMode = 'bake-days' | 'hours';
+
+/** One weekly bake day, e.g. Saturdays, pickup 9–12, orders close Thursday at 8 PM. */
+export interface BakeDaySchedule {
+  day: Weekday;
+  /** Pickup window, 24h "HH:MM". */
+  pickupStart: string;
+  pickupEnd: string;
+  /** Orders close at 8 PM this many days before the bake day (1 to 3). */
+  closeDaysBefore: number;
+}
+
 export interface KitchenUpdate {
   text: string;
   postedAt: string;
@@ -110,6 +126,14 @@ export interface Restaurant {
   update?: KitchenUpdate;
   /** Instagram username, without the @. */
   instagram?: string;
+  /** How the kitchen takes orders. Kitchens without one use set hours. */
+  orderMode?: OrderMode;
+  /** Weekly bake days, for kitchens that take orders ahead and bake in one batch. */
+  bakeDays?: BakeDaySchedule[];
+  /** Bake days the cook is skipping, as local dates like "2026-11-26". */
+  skippedBakeDays?: string[];
+  /** e.g. "Cooler on the porch, ring once". Shared with a customer once the kitchen accepts. */
+  pickupInstructions?: string;
   /** Typical minutes from order to ready. */
   prepMinutes: number;
   cuisine: string;
@@ -197,6 +221,12 @@ export interface Order {
   estimatedReadyAt: string;
   /** Pickup time the customer chose, or null for as soon as it's ready. */
   scheduledFor: string | null;
+  /** End of the pickup window, for bake-day orders. */
+  pickupBy?: string;
+  /** The kitchen's pickup instructions, shared once it accepts. */
+  pickupInstructions?: string;
+  /** When the customer tapped "I'm here" at pickup. */
+  arrivedAt?: string;
 }
 
 /** A farmer or artisan asking to sell on Manna Mart before it opens. */

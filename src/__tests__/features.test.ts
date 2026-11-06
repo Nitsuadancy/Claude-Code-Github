@@ -11,8 +11,10 @@ import { estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/o
 import { isValidContact } from '@/lib/validation';
 import { accentColor } from '@/data/accents';
 import { cleanInstagram, visibleUpdate } from '@/lib/kitchen-style';
+import { describeBakeDays, describeBakeDaysLong, describeCutoff, isValidBakeDay, openBakeDays, upcomingBakeDays } from '@/lib/bake-days';
 import { firstOrderSteps } from '@/lib/launch';
 import { moveItem } from '@/lib/menu';
+import { orderingLine, takingOrders } from '@/lib/ordering';
 import { INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
 import { withReviews } from '@/lib/reviews';
 import type { Order, Restaurant } from '@/types';
@@ -224,7 +226,7 @@ describe('for you', () => {
       favoriteIds: ['sample_abuela_rosa'],
       orders: [order({ customerId: 'me', restaurantId: 'sample_green_bowl', status: 'completed' })],
     });
-    expect(picks[0]).toMatchObject({ restaurant: { id: 'sample_abuela_rosa' }, reason: 'One of your favorites' });
+    expect(picks[0]).toMatchObject({ restaurant: { id: 'sample_abuela_rosa' }, reason: 'One of your favorites, taking orders' });
     expect(picks[1]).toMatchObject({ restaurant: { id: 'sample_green_bowl' }, reason: 'You ordered here before' });
   });
 
@@ -337,5 +339,51 @@ describe('reordering dishes', () => {
     expect(moveItem(['a', 'b', 'c'], 1, 1)).toEqual(['a', 'c', 'b']);
     expect(moveItem(['a', 'b', 'c'], 0, -1)).toEqual(['a', 'b', 'c']);
     expect(moveItem(['a', 'b', 'c'], 2, 1)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('bake days', () => {
+  const kitchen = {
+    ...SAMPLE_RESTAURANTS[0],
+    orderMode: 'bake-days' as const,
+    acceptingOrders: true,
+    bakeDays: [{ day: 'saturday' as const, pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 2 }],
+    skippedBakeDays: [],
+  };
+  // Wednesday, Nov 4 2026, 10 AM local time.
+  const wed = new Date(2026, 10, 4, 10, 0);
+
+  it('lists the next Saturdays with their order cutoff', () => {
+    const days = upcomingBakeDays(kitchen, wed);
+    // Two weeks ahead.
+    expect(days.map((d) => d.date)).toEqual(['2026-11-07', '2026-11-14']);
+    expect(new Date(days[0].closesAt)).toEqual(new Date(2026, 10, 5, 20, 0));
+    expect(new Date(days[0].pickupEnd)).toEqual(new Date(2026, 10, 7, 12, 0));
+  });
+
+  it('closes ordering at the cutoff and skips weeks the cook takes off', () => {
+    const friday = new Date(2026, 10, 6, 9, 0); // After Thursday 8 PM, so this Saturday has closed.
+    expect(openBakeDays(kitchen, friday)[0].date).toBe('2026-11-14');
+    expect(takingOrders(kitchen, friday)).toBe(true);
+    const skipping = { ...kitchen, skippedBakeDays: ['2026-11-07'] };
+    expect(openBakeDays(skipping, wed)[0].date).toBe('2026-11-14');
+    expect(upcomingBakeDays(skipping, wed, { includeSkipped: true })[0].date).toBe('2026-11-07');
+    expect(takingOrders({ ...kitchen, acceptingOrders: false }, wed)).toBe(false);
+    expect(takingOrders({ ...kitchen, bakeDays: [] }, wed)).toBe(false);
+    expect(orderingLine({ ...kitchen, bakeDays: [] }, wed)).toBe('No bake days coming up');
+  });
+
+  it('describes the schedule in plain words', () => {
+    expect(describeBakeDays(kitchen.bakeDays)).toBe('Sat 9 AM–12 PM');
+    expect(
+      describeBakeDaysLong([
+        { day: 'saturday', pickupStart: '10:00', pickupEnd: '13:00', closeDaysBefore: 1 },
+        { day: 'friday', pickupStart: '15:00', pickupEnd: '18:30', closeDaysBefore: 1 },
+      ]),
+    ).toBe('Fridays 3–6:30 PM and Saturdays 10 AM–1 PM');
+    expect(describeCutoff(1)).toBe('8 PM the day before');
+    expect(describeCutoff(2)).toBe('8 PM, 2 days before');
+    expect(isValidBakeDay({ day: 'monday', pickupStart: '12:00', pickupEnd: '09:00', closeDaysBefore: 1 })).toBe(false);
+    expect(isValidBakeDay({ day: 'monday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 5 })).toBe(false);
   });
 });

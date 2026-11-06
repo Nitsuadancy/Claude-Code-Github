@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { formatTime, isOpenAt } from '@/lib/hours';
+import { orderingLine, takingOrders } from '@/lib/ordering';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
@@ -20,14 +20,9 @@ export function formatRating(r: Restaurant, long = false): string {
   return `${r.rating.toFixed(1)} (${r.ratingCount}${long ? noun : ''})`;
 }
 
-/** True once the chef has set valid opening and closing times. */
-export function hasHours(r: Restaurant): boolean {
-  const valid = (t: string) => /^\d{1,2}:\d{2}$/.test(t);
-  return valid(r.openTime) && valid(r.closeTime);
-}
-
+/** Whether customers can order right now: open hours, or an open bake day. */
 export function isOpenNow(r: Restaurant, now: Date): boolean {
-  return r.acceptingOrders && hasHours(r) && isOpenAt(r, now);
+  return takingOrders(r, now);
 }
 
 /**
@@ -76,12 +71,6 @@ function cuisineLine(r: Restaurant): string {
   return r.cuisine.replace(/\s*•\s*/g, ' · ');
 }
 
-/** "Open now" or "Opens 10:00 AM", for the line under a kitchen's name. */
-function hoursLine(r: Restaurant, open: boolean): string {
-  if (open) return `Open · ready in ~${r.prepMinutes} min`;
-  return hasHours(r) ? `Opens ${formatTime(r.openTime)}` : 'Hours not set';
-}
-
 /** Feed entry: a photo, then the kitchen's name, the chef's byline and one line of facts. */
 export function RestaurantCard({
   restaurant,
@@ -123,7 +112,7 @@ export function RestaurantCard({
           </Text>
           <View style={styles.metaRow}>
             <Text style={[styles.meta, open && { color: colors.success }]} numberOfLines={1}>
-              {hoursLine(restaurant, open)}
+              {orderingLine(restaurant, now)}
             </Text>
             <Text style={styles.metaDot}>·</Text>
             <Text style={styles.meta} numberOfLines={1}>

@@ -24,6 +24,8 @@ import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
 import { computeCartTotals, TIP_RATES, tipFor } from '@/lib/pricing';
+import { bakeDayDate, formatBakeDay, formatCutoff, openBakeDays } from '@/lib/bake-days';
+import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { useRestaurant, useStore } from '@/state/store';
@@ -38,6 +40,7 @@ export default function Cart() {
   const [slotSheet, setSlotSheet] = useState(false);
   const [note, setNote] = useState('');
   const [tipRate, setTipRate] = useState(0);
+  const [bakeDayStart, setBakeDayStart] = useState<string | null>(null);
 
   if (!restaurant || state.cart.lines.length === 0) {
     return (
@@ -71,17 +74,26 @@ export default function Cart() {
   const slots = availableSlots(restaurant, now);
   const mode = open ? when : 'later';
   const chosen = slot && slots.includes(slot) ? slot : (slots[0] ?? null);
+  // Bake-day kitchens: the customer picks which upcoming bake day to pick up on.
+  const bakeDayKitchen = isBakeDayKitchen(restaurant);
+  const bakeDays = bakeDayKitchen && restaurant.acceptingOrders ? openBakeDays(restaurant, now).slice(0, 4) : [];
+  const bakeDay = bakeDays.find((b) => b.pickupStart === bakeDayStart) ?? bakeDays[0];
   const chefFirst = restaurant.chefName.replace(/\.$/, '');
 
   const placeOrder = () => {
     const user = state.user;
     if (!user) return;
-    if (mode === 'later' && !chosen) {
+    if (bakeDayKitchen && !bakeDay) {
+      notify('Orders closed', `${restaurant.name} isn’t taking orders for an upcoming bake day right now.`);
+      return;
+    }
+    if (!bakeDayKitchen && mode === 'later' && !chosen) {
       notify('No times available', `${restaurant.name} isn’t taking orders for the next two days.`);
       return;
     }
     const placedAt = new Date();
-    const scheduledFor = mode === 'later' ? chosen : null;
+    const scheduledFor = bakeDayKitchen ? bakeDay!.pickupStart : mode === 'later' ? chosen : null;
+    const pickupBy = bakeDayKitchen ? bakeDay!.pickupEnd : undefined;
     const cookDay = scheduledFor ? new Date(scheduledFor) : placedAt;
     const short = totals.lines.find((line) => {
       const item = restaurant.menu.find((m) => m.id === line.itemId);
@@ -119,6 +131,7 @@ export default function Cart() {
         createdAt,
         estimatedReadyAt: scheduledFor ?? estimateReadyAt(createdAt, restaurant.prepMinutes),
         scheduledFor,
+        ...(pickupBy ? { pickupBy } : {}),
       },
     });
     router.push({ pathname: '/order/[id]', params: { id: orderId, celebrate: '1' } });
@@ -196,36 +209,62 @@ export default function Cart() {
           maxLength={280}
         />
 
-        <View style={{ gap: spacing.sm }}>
-          <FieldLabel>Pickup time</FieldLabel>
-          <View style={styles.segment}>
-            <WhenOption
-              icon="lightning-bolt-outline"
-              title="When it’s ready"
-              detail={open ? `About ${restaurant.prepMinutes} min` : 'Closed right now'}
-              selected={mode === 'asap'}
-              disabled={!open}
-              onPress={() => setWhen('asap')}
-            />
-            <WhenOption
-              icon="calendar-clock"
-              title="Pick a time"
-              detail={slots.length ? 'Today or tomorrow' : 'No times available'}
-              selected={mode === 'later'}
-              disabled={!slots.length}
-              onPress={() => setWhen('later')}
-            />
+        {bakeDayKitchen ? (
+          <View style={{ gap: spacing.sm }}>
+            <FieldLabel>Bake day</FieldLabel>
+            {bakeDays.length ? (
+              <View style={{ gap: spacing.sm }}>
+                {bakeDays.map((b) => (
+                  <WhenOption
+                    key={b.pickupStart}
+                    icon="calendar-clock"
+                    title={formatBakeDay(b, now)}
+                    detail={formatCutoff(b, now)}
+                    selected={b.pickupStart === bakeDay?.pickupStart}
+                    disabled={false}
+                    onPress={() => setBakeDayStart(b.pickupStart)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <Body muted>No bake days are taking orders right now.</Body>
+            )}
+            <Text style={styles.tipNote}>
+              {chefFirst} bakes in one batch for each bake day. Pick up any time in the window.
+            </Text>
           </View>
-          {mode === 'later' && chosen ? (
-            <PickerField
-              placeholder="Choose a time"
-              icon="clock-outline"
-              value={formatSlot(chosen, now)}
-              onPress={() => setSlotSheet(true)}
-              label="Pick up at"
-            />
-          ) : null}
-        </View>
+        ) : (
+          <View style={{ gap: spacing.sm }}>
+            <FieldLabel>Pickup time</FieldLabel>
+            <View style={styles.segment}>
+              <WhenOption
+                icon="lightning-bolt-outline"
+                title="When it’s ready"
+                detail={open ? `About ${restaurant.prepMinutes} min` : 'Closed right now'}
+                selected={mode === 'asap'}
+                disabled={!open}
+                onPress={() => setWhen('asap')}
+              />
+              <WhenOption
+                icon="calendar-clock"
+                title="Pick a time"
+                detail={slots.length ? 'Today or tomorrow' : 'No times available'}
+                selected={mode === 'later'}
+                disabled={!slots.length}
+                onPress={() => setWhen('later')}
+              />
+            </View>
+            {mode === 'later' && chosen ? (
+              <PickerField
+                placeholder="Choose a time"
+                icon="clock-outline"
+                value={formatSlot(chosen, now)}
+                onPress={() => setSlotSheet(true)}
+                label="Pick up at"
+              />
+            ) : null}
+          </View>
+        )}
 
         <View style={{ gap: spacing.sm }}>
           <FieldLabel>Tip for {restaurant.chefName}</FieldLabel>
@@ -264,7 +303,13 @@ export default function Cart() {
         />
 
         <GoldButton
-          title={mode === 'later' ? `Schedule pickup · ${formatCents(grandTotal)}` : `Place order · ${formatCents(grandTotal)}`}
+          title={
+            bakeDayKitchen && bakeDay
+              ? `Order for ${bakeDayDate(bakeDay, now)} · ${formatCents(grandTotal)}`
+              : mode === 'later'
+                ? `Schedule pickup · ${formatCents(grandTotal)}`
+                : `Place order · ${formatCents(grandTotal)}`
+          }
           onPress={placeOrder}
         />
         <Body muted style={styles.note}>
