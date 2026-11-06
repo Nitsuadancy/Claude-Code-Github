@@ -54,6 +54,8 @@ export default function RestaurantInformation() {
   const [step, setStep] = useState<1 | 2>(1);
   const [sheet, setSheet] = useState<Sheet>(null);
   const [errors, setErrors] = useState<Errors>({});
+  const [spotPlace, setSpotPlace] = useState('');
+  const [spotWhen, setSpotWhen] = useState('');
   const scroller = useRef<ScrollViewInstance>(null);
 
   const next = () => {
@@ -341,6 +343,56 @@ export default function RestaurantInformation() {
               <Body muted style={styles.hint}>
                 Closing after midnight? Pick an earlier close time, like 6:00 PM to 2:00 AM.
               </Body>
+
+              <SectionTitle>Find me in person (optional)</SectionTitle>
+              <Body muted style={styles.hint}>
+                Sell at a market or a coffee shop pop-up? Add it so customers can find you there too.
+              </Body>
+              {(draft.inPerson ?? []).map((spot, i) => (
+                <View key={`${spot.place}-${i}`} style={styles.spotRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.spotPlace}>{spot.place}</Text>
+                    <Text style={styles.spotWhen}>{spot.when}</Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${spot.place}`}
+                    hitSlop={10}
+                    onPress={() => update({ inPerson: (draft.inPerson ?? []).filter((_, j) => j !== i) })}>
+                    <Icon name="close" size={18} color={colors.textMuted} />
+                  </Pressable>
+                </View>
+              ))}
+              {(draft.inPerson ?? []).length < 3 ? (
+                <View style={{ gap: spacing.sm }}>
+                  <TextField
+                    label="Where"
+                    placeholder="Saturday market, College Park"
+                    icon="map-marker-outline"
+                    value={spotPlace}
+                    onChangeText={setSpotPlace}
+                  />
+                  <TextField
+                    label="When"
+                    placeholder="Saturdays, 8 AM – noon"
+                    icon="clock-outline"
+                    value={spotWhen}
+                    onChangeText={setSpotWhen}
+                  />
+                  <GoldButton
+                    title="Add this spot"
+                    variant="outline"
+                    disabled={!spotPlace.trim() || !spotWhen.trim()}
+                    onPress={() => {
+                      update({
+                        inPerson: [...(draft.inPerson ?? []), { place: spotPlace.trim(), when: spotWhen.trim() }],
+                      });
+                      setSpotPlace('');
+                      setSpotWhen('');
+                    }}
+                  />
+                </View>
+              ) : null}
             </>
           )}
         </ScrollView>
@@ -412,6 +464,16 @@ function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  spotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  spotPlace: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  spotWhen: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   preview: { gap: spacing.sm, marginTop: spacing.sm },
   storyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatarBadge: {

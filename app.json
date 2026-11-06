@@ -47,7 +47,8 @@
           "photosPermission": "Manna uses your photos so you can add your restaurant logo and food pictures."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

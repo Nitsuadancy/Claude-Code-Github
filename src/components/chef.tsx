@@ -8,6 +8,16 @@ import type { Restaurant } from '@/types';
 import { Icon } from './icon';
 import { photoSource } from '@/lib/photo';
 
+/** Marks one of the first kitchens on Manna. */
+export function FoundingMark({ size = 12 }: { size?: number }) {
+  return (
+    <View style={styles.founding} accessible accessibilityLabel="Founding creator">
+      <Icon name="star-four-points" size={size - 2} color={colors.gold} />
+      <Text style={[styles.foundingText, { fontSize: size }]}>Founding</Text>
+    </View>
+  );
+}
+
 /** Gold seal shown next to kitchens whose documents the Manna team has checked. */
 export function VerifiedSeal({ size = 16 }: { size?: number }) {
   return (
@@ -84,6 +94,8 @@ export function ChefCard({ restaurant }: { restaurant: Restaurant }) {
 }
 
 const styles = StyleSheet.create({
+  founding: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  foundingText: { fontFamily: fonts.semibold, color: colors.gold },
   avatar: {
     borderWidth: 1,
     borderColor: colors.borderStrong,

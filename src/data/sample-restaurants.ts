@@ -33,6 +33,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_cafe_parmesan',
+    founding: true,
+    inPerson: [{ place: 'Saturday pop-up at Lantern Coffee, College Park', when: 'Saturdays, 8 AM – noon' }],
     coverUris: ['demo:olive-oil-cake', 'demo:biscotti', 'demo:country-loaf'],
     name: 'Cafe Parmesan',
     chefName: 'Chef Marco',
@@ -90,6 +92,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_blue_mountain',
+    founding: true,
+    inPerson: [{ place: 'Table at the Pine Hills Sunday market', when: 'Sundays, 10 AM – 2 PM' }],
     coverUris: ['demo:gizzada'],
     name: 'Blue Mountain Bakehouse',
     chefName: 'Marcia T.',
@@ -139,6 +143,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_jacksons_night_oven',
+    founding: true,
+    inPerson: [{ place: 'Late-night window at Mills 50 Night Bazaar', when: 'Fridays, 9 PM – midnight' }],
     coverUris: ['demo:cookies', 'demo:brownies'],
     name: 'Jackson’s Night Oven',
     chefName: 'Mr. Jackson',
@@ -184,6 +190,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_green_bowl',
+    founding: false,
     coverUris: ['demo:granola', 'demo:banana-bread'],
     name: 'The Green Pantry',
     chefName: 'Aisha K.',
@@ -228,6 +235,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_sunrise_plates',
+    founding: true,
+    inPerson: [{ place: 'Breakfast pop-up at Delaney Park Church', when: 'First Sunday of the month, 8–11 AM' }],
     coverUris: ['demo:cinnamon-rolls', 'demo:biscuits', 'demo:apricot-jam'],
     name: 'Sunrise Bakehouse',
     chefName: 'Denise R.',
@@ -280,6 +289,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_susies_sweets',
+    founding: true,
+    inPerson: [{ place: 'Bake table at Lantern Coffee, College Park', when: 'Saturdays, 8 AM – noon' }],
     coverUris: ['demo:pound-cake', 'demo:peach-cobbler'],
     name: 'Susie’s Sweets',
     chefName: 'Mrs. Susie',
@@ -324,6 +335,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_abuela_rosa',
+    founding: false,
+    inPerson: [{ place: 'Panadería table at Colonialtown Market Hall', when: 'Sundays, 9 AM – 1 PM' }],
     coverUris: ['demo:conchas'],
     name: 'Abuela Rosa’s Panadería',
     chefName: 'Rosa M.',

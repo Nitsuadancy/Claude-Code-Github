@@ -57,6 +57,11 @@ create table public.restaurants (
   close_time time,
   prep_minutes integer not null default 30 check (prep_minutes between 5 and 240),
   verified boolean not null default false,
+  -- One of the first kitchens on Manna; set by the Manna team.
+  founding boolean not null default false,
+  -- Where the cook also sells in person: [{"place": "...", "when": "..."}]
+  in_person jsonb not null default '[]'::jsonb
+    check (jsonb_typeof(in_person) = 'array' and jsonb_array_length(in_person) <= 5),
   accepting_orders boolean not null default true,
   has_offer boolean not null default false,
   status public.restaurant_status not null default 'draft',
@@ -243,6 +248,7 @@ begin
     return new;
   end if;
   if new.verified is distinct from old.verified
+     or new.founding is distinct from old.founding
      or new.rating_sum is distinct from old.rating_sum
      or new.rating_count is distinct from old.rating_count
      or new.owner_id is distinct from old.owner_id then
@@ -284,7 +290,7 @@ create policy "admins read profiles" on public.profiles
 create policy "live kitchens are public" on public.restaurants
   for select using (status = 'live' or owner_id = auth.uid() or public.is_admin());
 create policy "chefs create their kitchen" on public.restaurants
-  for insert with check (owner_id = auth.uid() and status = 'draft' and verified = false);
+  for insert with check (owner_id = auth.uid() and status = 'draft' and verified = false and founding = false);
 create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
 

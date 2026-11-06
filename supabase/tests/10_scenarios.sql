@@ -47,6 +47,8 @@ insert into public.restaurants (id, owner_id, name, chef_name, cuisine, working_
   values ('10000000-0000-0000-0000-000000000001', auth.uid(), 'Ada''s Kitchen', 'Ada Chef', 'Italian',
           array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'], '00:00', '23:59', 'UTC');
 select pg_temp.expect_error($$ update public.restaurants set verified = true $$, 'only the manna team');
+select pg_temp.expect_error($$ update public.restaurants set founding = true $$, 'only the manna team');
+update public.restaurants set in_person = '[{"place": "Lantern Coffee", "when": "Saturdays"}]';
 select pg_temp.expect_error($$ update public.restaurants set status = 'live' $$, 'after review');
 insert into public.menu_items (id, restaurant_id, name, price_cents, daily_limit) values
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'Baked Ziti', 1350, 3),

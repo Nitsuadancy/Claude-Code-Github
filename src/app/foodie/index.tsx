@@ -14,7 +14,7 @@ import {
 
 import { CoachMarks } from '@/components/coach-marks';
 import { CollectionCard } from '@/components/collection-card';
-import { DishResult, MiniKitchenCard, OrderAgainCard } from '@/components/home-rows';
+import { DishResult, ForYouCard, MiniKitchenCard, OrderAgainCard } from '@/components/home-rows';
 import { FadeIn } from '@/components/motion';
 import { OptionSheet } from '@/components/option-sheet';
 import { HeroCarousel } from '@/components/hero-carousel';
@@ -35,6 +35,7 @@ import { CATEGORIES } from '@/data/categories';
 import { DEFAULT_NEIGHBORHOOD, LAUNCH_CITY, NEIGHBORHOODS } from '@/data/neighborhoods';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import { buildActivity, unseenCount } from '@/lib/activity';
+import { pickForYou } from '@/lib/for-you';
 import { hasDietProfile, kitchenFits } from '@/lib/diet';
 import { confirmAction, notify } from '@/lib/alert';
 import {
@@ -136,6 +137,22 @@ export default function FoodieHome() {
   const favorites = useMemo(
     () => restaurants.filter((r) => r.status === 'live' && state.favoriteRestaurantIds.includes(r.id)),
     [restaurants, state.favoriteRestaurantIds],
+  );
+  const forYou = useMemo(
+    () =>
+      pickForYou(restaurants, {
+        customerId: userId,
+        orders: state.orders,
+        favoriteIds: state.favoriteRestaurantIds,
+        diet,
+        neighborhood,
+        now: new Date(),
+      }),
+    [restaurants, userId, state.orders, state.favoriteRestaurantIds, diet, neighborhood],
+  );
+  const founders = useMemo(
+    () => restaurants.filter((r) => r.status === 'live' && r.founding),
+    [restaurants],
   );
   const collections = useMemo(
     () =>
@@ -355,6 +372,21 @@ export default function FoodieHome() {
       ) : null}
 
 
+      {!searching && forYou.length ? (
+        <FadeIn delay={90} style={{ gap: spacing.md }}>
+          <SectionHeader title="For you" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+            style={{ marginHorizontal: -spacing.lg }}>
+            {forYou.map(({ restaurant, reason }) => (
+              <ForYouCard key={restaurant.id} restaurant={restaurant} reason={reason} onPress={() => open(restaurant)} />
+            ))}
+          </ScrollView>
+        </FadeIn>
+      ) : null}
+
       {!searching ? (
         <FadeIn delay={100} style={{ gap: spacing.md }}>
           <SectionHeader title="Collections" />
@@ -370,6 +402,21 @@ export default function FoodieHome() {
                 count={count}
                 onPress={() => router.push({ pathname: '/collection/[id]', params: { id: collection.id } })}
               />
+            ))}
+          </ScrollView>
+        </FadeIn>
+      ) : null}
+
+      {!searching && founders.length ? (
+        <FadeIn delay={110} style={{ gap: spacing.md }}>
+          <SectionHeader title="Founding creators" eyebrow="The first kitchens on Manna" />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+            style={{ marginHorizontal: -spacing.lg }}>
+            {founders.map((r) => (
+              <MiniKitchenCard key={r.id} restaurant={r} onPress={() => open(r)} />
             ))}
           </ScrollView>
         </FadeIn>

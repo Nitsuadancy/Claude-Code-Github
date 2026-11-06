@@ -42,6 +42,10 @@ then expand. Each phase ends with something real people can use.
 - [x] Pickup-only ordering with a single 5% movement fee, neighborhood-only kitchen locations and a private pickup address
 - [x] Orlando demo kitchens with cottage-legal menus and real photography
 - [x] Farmer & Artisan waitlist for Manna Mart
+- [x] Immersive redesign: full-screen featured kitchens, kitchen pages that open on their food, one sleek typeface
+- [x] Growth kit for chefs: an Instagram Story image with a QR code to their kitchen
+- [x] Founding Creators badge and home row; "Find me in person" spots; "For you" picks with reasons
+- [x] Phone photos of any size are resized automatically on upload
 
 ## Phase 1: Real accounts and shared data
 

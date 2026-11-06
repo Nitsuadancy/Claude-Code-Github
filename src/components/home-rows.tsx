@@ -56,6 +56,35 @@ export function OrderAgainCard({
   );
 }
 
+/** A tall pick for the "For you" row, with the reason it was picked. */
+export function ForYouCard({
+  restaurant,
+  reason,
+  onPress,
+}: {
+  restaurant: Restaurant;
+  reason: string;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${restaurant.name}. ${reason}`}
+      onPress={onPress}
+      style={styles.pick}>
+      <RestaurantCover restaurant={restaurant} style={styles.pickCover} monogramSize={48} />
+      <View style={{ gap: 3 }}>
+        <Text style={styles.pickName} numberOfLines={1}>
+          {restaurant.name}
+        </Text>
+        <Text style={styles.pickReason} numberOfLines={1}>
+          {reason}
+        </Text>
+      </View>
+    </PressableScale>
+  );
+}
+
 /** Compact kitchen tile for the favorites row. */
 export function MiniKitchenCard({ restaurant, onPress }: { restaurant: Restaurant; onPress: () => void }) {
   return (
@@ -113,6 +142,10 @@ export function DishResult({
 }
 
 const styles = StyleSheet.create({
+  pick: { width: 172, gap: spacing.sm + 2 },
+  pickCover: { width: 172, height: 216, borderRadius: radius.md, overflow: 'hidden' },
+  pickName: { fontFamily: fonts.display, fontSize: 16, letterSpacing: -0.3, color: colors.ivory },
+  pickReason: { fontFamily: fonts.medium, fontSize: 12, color: colors.gold },
   row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   again: {
     width: 290,

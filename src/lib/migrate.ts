@@ -32,6 +32,8 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     // Meal Preppers, Kids Favorites and Foodie Adventures were retired.
     categories: (r.categories ?? []).filter(isCategoryId),
     neighborhood: r.neighborhood ?? '',
+    founding: r.founding ?? false,
+    inPerson: r.inPerson ?? [],
     menu: (r.menu ?? []).map(normalizeMenuItem),
   };
 }

@@ -69,6 +69,11 @@ export interface RestaurantDocument {
   uri: string;
 }
 
+export interface InPersonSpot {
+  place: string;
+  when: string;
+}
+
 export type RestaurantStatus = 'draft' | 'live';
 
 export interface Restaurant {
@@ -84,6 +89,10 @@ export interface Restaurant {
   signatureItemId?: string;
   /** Set once the Manna team has checked the kitchen's certificate and ID. */
   verified: boolean;
+  /** One of the first kitchens on Manna. Set by the Manna team. */
+  founding?: boolean;
+  /** Where people can also find the cook in person, e.g. a market table or a coffee shop pop-up. */
+  inPerson?: InPersonSpot[];
   /** Typical minutes from order to ready. */
   prepMinutes: number;
   cuisine: string;

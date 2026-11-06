@@ -47,7 +47,7 @@ The TypeScript types in `src/types.ts` map one-to-one to the planned tables:
 | Table | Key fields | Who can read / write |
 |---|---|---|
 | `profiles` | id (= auth user), name, email, phone, role, neighborhood | Owner |
-| `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, chef_bio, chef_photo_path, signature_item_id, prep_minutes, verified, neighborhood, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes; only admins set `verified` |
+| `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, chef_bio, chef_photo_path, signature_item_id, prep_minutes, verified, founding, in_person (spots), neighborhood, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes; only admins set `verified` and `founding` |
 | `menu_items` | restaurant_id, name, description, price_cents, available, photo_path, dietary[], allergens[], daily_limit | Public reads; owner writes |
 | `restaurant_documents` | restaurant_id, kind, storage_path, review_status | Owner + admins only |
 | `restaurant_addresses` | restaurant_id, address | Owner and admins only. Copied onto an order when the chef accepts it |

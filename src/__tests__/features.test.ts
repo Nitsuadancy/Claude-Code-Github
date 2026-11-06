@@ -5,6 +5,7 @@ import { allergenSentence } from '@/lib/dietary';
 import { remainingToday, soldToday, stockLabel } from '@/lib/limits';
 import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/migrate';
 import { formatDays } from '@/lib/hours';
+import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
 import { estimateReadyAt, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
@@ -199,5 +200,34 @@ describe('photo uploads', () => {
     expect(fitWithin(3024, 4032)).toEqual({ height: 1600 });
     expect(fitWithin(1200, 900)).toBeNull();
     expect(fitWithin(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('for you', () => {
+  const base = {
+    customerId: 'me',
+    orders: [] as Order[],
+    favoriteIds: [] as string[],
+    diet: { dietary: [], avoid: [] },
+    neighborhood: '',
+    now: new Date(2026, 10, 5, 3, 0), // 3 AM: every sample kitchen is closed
+  };
+
+  it('puts favorites first, then kitchens you ordered from, each with its reason', () => {
+    const picks = pickForYou(SAMPLE_RESTAURANTS, {
+      ...base,
+      favoriteIds: ['sample_abuela_rosa'],
+      orders: [order({ customerId: 'me', restaurantId: 'sample_green_bowl', status: 'completed' })],
+    });
+    expect(picks[0]).toMatchObject({ restaurant: { id: 'sample_abuela_rosa' }, reason: 'One of your favorites' });
+    expect(picks[1]).toMatchObject({ restaurant: { id: 'sample_green_bowl' }, reason: 'You ordered here before' });
+  });
+
+  it('uses your diet and neighborhood, and caps the list', () => {
+    const vegan = pickForYou(SAMPLE_RESTAURANTS, { ...base, diet: { dietary: ['vegan'], avoid: [] } });
+    expect(vegan[0].reason).toBe('Fits your diet');
+    const local = pickForYou(SAMPLE_RESTAURANTS, { ...base, neighborhood: 'Pine Hills' });
+    expect(local[0]).toMatchObject({ restaurant: { id: 'sample_blue_mountain' }, reason: 'In Pine Hills' });
+    expect(pickForYou(SAMPLE_RESTAURANTS, base, 3)).toHaveLength(3);
   });
 });

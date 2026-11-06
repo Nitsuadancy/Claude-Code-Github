@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ChefCard, VerifiedSeal } from '@/components/chef';
+import { ChefCard, FoundingMark, VerifiedSeal } from '@/components/chef';
 import { DietNote } from '@/components/diet';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
 import { NATIVE_DRIVER } from '@/components/motion';
@@ -130,6 +130,12 @@ export default function RestaurantDetail() {
                 {restaurant.chefName}
                 {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
               </Text>
+              {restaurant.founding ? (
+                <View style={styles.foundingRow}>
+                  <FoundingMark size={13} />
+                  <Text style={styles.foundingNote}>One of the first kitchens on Manna</Text>
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -159,6 +165,23 @@ export default function RestaurantDetail() {
           ) : null}
 
           {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
+
+          {restaurant.inPerson?.length ? (
+            <View style={styles.inPerson}>
+              <Heading size={22}>Find me in person</Heading>
+              {restaurant.inPerson.map((spot) => (
+                <View key={`${spot.place}-${spot.when}`} style={styles.spot}>
+                  <View style={styles.spotIcon}>
+                    <Icon name="map-marker-outline" size={18} color={colors.gold} />
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.spotPlace}>{spot.place}</Text>
+                    <Text style={styles.spotWhen}>{spot.when}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           <View style={styles.menuHeader}>
             <Heading size={28}>Menu</Heading>
@@ -398,6 +421,20 @@ const styles = StyleSheet.create({
   factText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
   days: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, marginTop: -spacing.sm },
   notice: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  foundingRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
+  foundingNote: { fontFamily: fonts.medium, fontSize: 13, color: 'rgba(247,244,238,0.7)' },
+  inPerson: { gap: spacing.md, marginTop: spacing.sm },
+  spot: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  spotIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spotPlace: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  spotWhen: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   noticeText: { flex: 1, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.text },
   menuHeader: { marginTop: spacing.lg },
   sectionTitle: {

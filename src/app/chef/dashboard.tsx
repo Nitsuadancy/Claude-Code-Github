@@ -22,7 +22,6 @@ import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
-import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
@@ -100,6 +99,21 @@ export default function ChefDashboard() {
           <Stat label="Today" value={formatCents(todaysSales)} />
           <Stat label="All time" value={String(orders.length)} />
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Bring your Instagram followers. Make a Story with your QR code"
+          onPress={() => router.push('/chef/share')}
+          style={({ pressed }) => [styles.growth, pressed && { opacity: 0.8 }]}>
+          <View style={styles.growthIcon}>
+            <Icon name="export-variant" size={20} color={colors.bg} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.growthTitle}>Bring your followers</Text>
+            <Text style={styles.growthBody}>Make an Instagram Story with your QR code.</Text>
+          </View>
+          <Icon name="chevron-right" size={20} color={colors.textMuted} />
+        </Pressable>
 
         <SectionHeader eyebrow="Live" title="Incoming orders" />
         {active.length === 0 ? (
@@ -188,7 +202,7 @@ export default function ChefDashboard() {
           <LinkRow icon="book-open-variant" label="Menu" onPress={() => router.push('/chef/setup/menu')} />
           <LinkRow icon="storefront-outline" label="Restaurant details" onPress={() => router.push('/chef/setup/information')} />
           <LinkRow icon="file-document-outline" label="Documents" onPress={() => router.push('/chef/setup/documents')} />
-          <LinkRow icon="export-variant" label="Share your kitchen" onPress={() => shareKitchen(restaurant)} />
+          <LinkRow icon="export-variant" label="Share your kitchen on Instagram" onPress={() => router.push('/chef/share')} />
           <LinkRow
             icon="eye-outline"
             label="View my restaurant page"
@@ -304,6 +318,24 @@ function LinkRow({
 }
 
 const styles = StyleSheet.create({
+  growth: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  growthIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  growthTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
+  growthBody: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   statusCard: {
     flexDirection: 'row',
