@@ -47,26 +47,30 @@ county**:
   one of these permits is illegal in many places.
 
 **Florida (the launch market).** Manna launches in Orlando under Florida's cottage food
-law (section 500.80, Florida Statutes). As we understand it, and to be confirmed with
-FDACS or a food attorney before launch:
+law ([section 500.80, Florida Statutes](https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0500-0599/0500/Sections/0500.80.html);
+[FDACS: Cottage Foods](https://www.fdacs.gov/Business-Services/Food/Food-Establishments/Cottage-Foods)), checked on
+November 6, 2026:
 
 - Cottage food operators don't need a state permit or inspection, but may sell only
   foods that don't need refrigeration: breads, cakes and pies without cream fillings,
   cookies, candy, granola, jams and jellies, dried herbs and spice blends.
 - Sales go directly to the customer: in person, by pickup or by delivery. Wholesale to
   stores or restaurants isn't allowed.
-- There's a yearly gross sales cap per operator.
-- Every product needs a label with the operator's name and address, the ingredients and
-  allergens, and the statement that it was made in a cottage food operation not subject
-  to Florida's food safety regulations.
-- Cities, counties and HOAs may add their own rules (business tax receipts, zoning).
+- Annual gross sales of cottage food products must not exceed $250,000.
+- Every product is sold prepackaged with a label: the operation's name and address, the
+  product name, ingredients by weight, net weight or volume, allergens, nutrition facts
+  only if a claim is made, and, in at least 10-point type, "Made in a cottage food
+  operation that is not subject to Florida's food safety regulations."
+- Cities and counties can't prohibit or regulate cottage food, but operators follow the
+  state's home-based business rules (section 559.955). Taxes still apply.
 
 To do before launch:
 
 - [x] Pick the launch city: Orlando, starting with College Park.
 - [x] Limit categories to cottage foods. The demo kitchens follow this.
 - [x] Require a food handler certificate and ID in the app; a local permit is optional.
-- [ ] Confirm the rules above, the current sales cap and the exact label wording with FDACS or an attorney.
+- [x] Confirm the sales cap and exact label wording against the statute.
+- [ ] Have a food attorney review Manna's role (marketplace vs. seller) and tax collection.
 - [ ] Add the cottage food label statement to dish pages and printed order labels.
 - [ ] Decide how licensed kitchens (hot meals) join later.
 - [ ] Have someone review documents before a kitchen goes live (Roadmap Phase 3).
