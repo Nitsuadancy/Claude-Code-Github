@@ -57,6 +57,10 @@ Then do one of these:
 
 See [docs/IPHONE.md](docs/IPHONE.md): build in the cloud with Expo and install through TestFlight. No Mac needed.
 
+## Recruitment flyer and Instagram post
+
+`node marketing/render.js https://your-signup-link` renders a print-ready flyer (`marketing/out/flyer.pdf`) and an Instagram post (`marketing/out/instagram-post.png`) with a QR code to that link.
+
 ## Share a demo link
 
 The fastest way to send people a link they can open on any phone or computer:
