@@ -207,17 +207,20 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Restaurant hero: swipe between up to three cover photos, with gold dots.
+ * Kitchen hero: swipe between up to three cover photos, with gold dots.
  * Falls back to the single cover (or monogram) when there's only one.
+ * The dots sit near the top, at `dotsTop`, so they never cross the kitchen's name.
  */
 export function CoverGallery({
   restaurant,
   width,
   height,
+  dotsTop,
 }: {
   restaurant: Restaurant;
   width: number;
   height: number;
+  dotsTop: number;
 }) {
   const [index, setIndex] = useState(0);
   const covers = restaurant.coverUris;
@@ -259,7 +262,7 @@ export function CoverGallery({
         ))}
       </ScrollView>
       {fade}
-      <View style={galleryStyles.dots} pointerEvents="none">
+      <View style={[galleryStyles.dots, { top: dotsTop }]} pointerEvents="none">
         {covers.map((uri, i) => (
           <View key={uri} style={[galleryStyles.dot, i === index && galleryStyles.dotOn]} />
         ))}
@@ -271,7 +274,6 @@ export function CoverGallery({
 const galleryStyles = StyleSheet.create({
   dots: {
     position: 'absolute',
-    bottom: 172,
     left: 0,
     right: 0,
     flexDirection: 'row',

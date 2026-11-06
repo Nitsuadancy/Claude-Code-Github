@@ -175,11 +175,12 @@ describe('menu sections', () => {
 
   it('orders sections and puts unfiled dishes last', () => {
     const groups = groupMenu(
-      [dish('cake', 'Desserts'), dish('soup'), dish('pasta', 'Mains'), dish('tea', 'Drinks'), dish('sig', 'Mains')],
+      [dish('cake', 'Desserts'), dish('loaf'), dish('pie', 'Pies'), dish('jam', 'Pantry'), dish('sig', 'Pies'), dish('soup', 'Mains')],
       'sig',
     );
-    expect(groups.map((g) => g.title)).toEqual([null, 'Mains', 'Desserts', 'Drinks', 'Also on the menu']);
-    expect(groups[1].items.map((i) => i.id)).toEqual(['pasta']);
+    expect(groups.map((g) => g.title)).toEqual([null, 'Pies', 'Desserts', 'Pantry', 'Also on the menu']);
+    expect(groups[1].items.map((i) => i.id)).toEqual(['pie']);
+    expect(groups[4].items.map((i) => i.id)).toEqual(['loaf', 'soup']);
   });
 
   it('builds a share message with a link', () => {

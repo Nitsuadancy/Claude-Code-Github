@@ -114,7 +114,7 @@ export default function RestaurantDetail() {
               { scale: scrollY.interpolate({ inputRange: [-200, 0], outputRange: [1.5, 1], extrapolateRight: 'clamp' }) },
             ],
           }}>
-          <CoverGallery restaurant={restaurant} width={width} height={HERO_HEIGHT} />
+          <CoverGallery restaurant={restaurant} width={width} height={HERO_HEIGHT} dotsTop={insets.top + 30} />
         </Animated.View>
 
         <View style={styles.body}>
@@ -344,12 +344,12 @@ export default function RestaurantDetail() {
         </View>
       </Animated.ScrollView>
 
-      {/* Slim header that fades in once the hero scrolls away. */}
+      {/* Slim header that fades in before the kitchen's name reaches the buttons. */}
       <Animated.View
         pointerEvents="none"
         style={[
           styles.stickyBg,
-          { height: insets.top + 64, opacity: scrollY.interpolate({ inputRange: [HERO_HEIGHT - 120, HERO_HEIGHT - 60], outputRange: [0, 1], extrapolate: 'clamp' }) },
+          { height: insets.top + 64, opacity: scrollY.interpolate({ inputRange: [HERO_HEIGHT - 280, HERO_HEIGHT - 220], outputRange: [0, 1], extrapolate: 'clamp' }) },
         ]}>
         <Text style={[styles.stickyTitle, { marginTop: insets.top }]} numberOfLines={1}>
           {restaurant.name}

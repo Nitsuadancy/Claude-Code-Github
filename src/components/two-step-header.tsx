@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '@/theme';
 import { Icon } from './icon';
 
-/** "① Restaurant details —— ② Location & hours" progress header. */
+/** "① Kitchen details —— ② Location & hours" progress header. */
 export function TwoStepHeader({ step, labels }: { step: 1 | 2; labels: [string, string] }) {
   return (
     <View style={styles.row} accessibilityLabel={`Step ${step} of 2: ${labels[step - 1]}`}>

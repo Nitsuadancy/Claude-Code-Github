@@ -1,8 +1,20 @@
 import type { MenuItem } from '@/types';
 
-/** Sections chefs can file dishes under, in the order they appear on the menu. */
-/** In menu order. The first six suit cottage kitchens; the rest are for licensed kitchens later. */
-export const MENU_SECTIONS = ['Specials', 'Breads', 'Pastries', 'Cakes', 'Cookies', 'Pantry', 'Mains', 'Sides', 'Desserts', 'Drinks'] as const;
+/**
+ * Sections cooks can file dishes under, in the order they appear on the menu.
+ * All fit Florida cottage food law; meals and drinks need a licensed kitchen.
+ */
+export const MENU_SECTIONS = [
+  'Specials',
+  'Breads',
+  'Pastries',
+  'Cakes',
+  'Pies',
+  'Cookies',
+  'Candy',
+  'Desserts',
+  'Pantry',
+] as const;
 
 export interface MenuGroup {
   title: string | null;

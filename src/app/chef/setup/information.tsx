@@ -61,8 +61,8 @@ export default function RestaurantInformation() {
   const next = () => {
     if (step === 1) {
       const e: Errors = {};
-      if (!draft.name.trim()) e.name = 'Give your restaurant a name.';
-      if (!draft.cuisine) e.cuisine = 'Choose a restaurant type.';
+      if (!draft.name.trim()) e.name = 'Give your kitchen a name.';
+      if (!draft.cuisine) e.cuisine = 'Choose a cuisine.';
       setErrors(e);
       if (Object.keys(e).length) return;
       save({ name: draft.name.trim() });
@@ -98,7 +98,7 @@ export default function RestaurantInformation() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.topBar}>
           <BackButton onPress={() => (step === 2 ? setStep(1) : router.back())} />
-          <Text style={styles.topTitle}>Restaurant information</Text>
+          <Text style={styles.topTitle}>Kitchen details</Text>
           <View style={{ width: 44 }} />
         </View>
         <ScrollView ref={scroller} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -111,7 +111,7 @@ export default function RestaurantInformation() {
                 <RestaurantCard
                   restaurant={{
                     ...draft,
-                    name: draft.name.trim() || 'Your restaurant',
+                    name: draft.name.trim() || 'Your kitchen',
                     cuisine: draft.cuisine || 'Cuisine',
                     chefName: draft.chefName || 'you',
                     status: 'live',
@@ -124,7 +124,7 @@ export default function RestaurantInformation() {
               </View>
               <SectionTitle style={{ marginTop: spacing.sm }}>Tell us about your kitchen</SectionTitle>
               <TextField
-                label="Restaurant name"
+                label="Kitchen name"
                 placeholder="e.g. Mrs. Susie’s Kitchen"
                 icon="storefront-outline"
                 value={draft.name}
@@ -403,7 +403,7 @@ export default function RestaurantInformation() {
 
       <OptionSheet
         visible={sheet === 'cuisine'}
-        title="Restaurant Type"
+        title="Cuisine"
         options={CUISINES.map((c) => ({ value: c, label: c }))}
         selected={draft.cuisine ? [draft.cuisine] : []}
         onSelect={([cuisine]) => update({ cuisine: cuisine ?? '' })}

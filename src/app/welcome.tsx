@@ -21,14 +21,14 @@ const SLIDES = [
   {
     key: 'foodie',
     eyebrow: 'For the Foodie',
-    title: 'A world of home-cooked masterpieces',
-    body: 'Browse virtual restaurants from community chefs near you, and satisfy your deepest cravings with food made with real care.',
+    title: 'Homemade, from the kitchen next door',
+    body: 'Breads, cakes, cookies and jams from neighbors who bake at home. Order ahead and pick up nearby.',
   },
   {
     key: 'chef',
     eyebrow: 'For the Culinary Entrepreneur',
-    title: 'Your restaurant.\nNo storefront required.',
-    body: 'Have star quality and culinary expertise? Manna gives you the tools to open your own virtual restaurant and share your signature dishes with your community.',
+    title: 'Your kitchen.\nYour storefront.',
+    body: 'Sell what you bake to your neighbors and your followers. Paid upfront, picked up at the time you set, and you keep every dollar of your prices.',
   },
 ];
 

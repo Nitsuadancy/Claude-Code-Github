@@ -19,7 +19,7 @@ export default function Preview() {
   if (!restaurant) {
     return (
       <FormScreen title="Preview">
-        <Body>Start with your restaurant information first.</Body>
+        <Body>Start with your kitchen details first.</Body>
       </FormScreen>
     );
   }
@@ -36,10 +36,10 @@ export default function Preview() {
         restaurant.status === 'live' ? (
           <GoldButton title="Go to dashboard" chevron onPress={() => resetTo('/chef/dashboard')} />
         ) : (
-          <GoldButton title="Publish my restaurant" icon="check-decagram" disabled={!ready} onPress={publish} />
+          <GoldButton title="Open my kitchen" chevron disabled={!ready} onPress={publish} />
         )
       }>
-      <SectionTitle style={{ marginTop: 0 }}>How foodies will see you</SectionTitle>
+      <SectionTitle style={{ marginTop: 0 }}>How customers will see you</SectionTitle>
       <RestaurantCard
         restaurant={{ ...restaurant, status: 'live' }}
         favorite={false}
@@ -50,7 +50,7 @@ export default function Preview() {
         }
       />
       <TextLink
-        title="Open full restaurant page"
+        title="Open my full kitchen page"
         onPress={() =>
           router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id, preview: '1' } })
         }
@@ -92,8 +92,8 @@ export default function Preview() {
       ))}
 
       <Body muted style={{ fontSize: 14 }}>
-        Publishing makes your kitchen visible to foodies right away. Document review by the Manna
-        team will happen here once the admin tools are live.
+        Opening your kitchen lists it on Manna. Our team checks your documents, usually within a
+        day, and then adds the Verified badge.
       </Body>
     </FormScreen>
   );

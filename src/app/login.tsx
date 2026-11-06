@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,17 +17,14 @@ import {
   Eyebrow,
   GoldButton,
   Heading,
-  type IconName,
   Logo,
   TextField,
   TextLink,
 } from '@/components/ui';
-import { notify } from '@/lib/alert';
 import { resetTo } from '@/lib/navigation';
 import { digitsOnly, formatUsPhone, isValidUsPhone, newId } from '@/lib/validation';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
-import { Icon } from '@/components/icon';
 
 /**
  * Phone sign-in. Until the backend is connected this runs in demo mode:
@@ -61,9 +57,6 @@ export default function Login() {
     resetTo('/');
   };
 
-  const comingSoon = (provider: string) =>
-    notify(`${provider} sign-in`, `${provider} sign-in is coming soon. Use your mobile number for now.`);
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.black }}
@@ -82,8 +75,8 @@ export default function Login() {
 
         <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={{ gap: spacing.xs }}>
-            <Eyebrow>{stage === 'phone' ? 'Sign in' : 'Verify'}</Eyebrow>
-            <Heading size={28}>{stage === 'phone' ? 'Login to continue' : 'Check your messages'}</Heading>
+            <Eyebrow>{stage === 'phone' ? 'Sign in or join' : 'Verify'}</Eyebrow>
+            <Heading size={28}>{stage === 'phone' ? 'What’s your number?' : 'Check your messages'}</Heading>
           </View>
 
           {stage === 'phone' ? (
@@ -108,29 +101,6 @@ export default function Login() {
               {error ? <Text style={styles.error}>{error}</Text> : null}
               <GoldButton title="Send code" chevron onPress={sendCode} />
 
-              <View style={styles.orRow}>
-                <View style={styles.orLine} />
-                <Text style={styles.orText}>or continue with</Text>
-                <View style={styles.orLine} />
-              </View>
-              <View style={styles.socialRow}>
-                {(
-                  [
-                    ['google', 'Google'],
-                    ['facebook', 'Facebook'],
-                    ['apple', 'Apple'],
-                  ] as [IconName, string][]
-                ).map(([icon, name]) => (
-                  <Pressable
-                    key={name}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Continue with ${name}`}
-                    onPress={() => comingSoon(name)}
-                    style={({ pressed }) => [styles.social, pressed && { borderColor: colors.gold }]}>
-                    <Icon name={icon} size={24} color={colors.ivory} />
-                  </Pressable>
-                ))}
-              </View>
               <Body muted style={styles.legal}>
                 By continuing you agree to Manna’s{' '}
                 <Text accessibilityRole="link" style={styles.legalLink} onPress={() => router.push('/legal/terms')}>
@@ -210,19 +180,5 @@ const styles = StyleSheet.create({
   flag: { fontSize: 20 },
   countryCode: { fontFamily: fonts.medium, color: colors.text, fontSize: 16 },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 13, marginTop: -spacing.sm },
-  orRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  orLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-  orText: { fontFamily: fonts.body, color: colors.textMuted, fontSize: 13 },
-  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.md },
-  social: {
-    flex: 1,
-    height: 54,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   legal: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });

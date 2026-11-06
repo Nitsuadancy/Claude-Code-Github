@@ -14,13 +14,13 @@ type SetupRoute =
   | '/chef/setup/preview';
 
 const STEP_INFO: Record<SetupStep, { route: SetupRoute; blurb: string }> = {
-  information: { route: '/chef/setup/information', blurb: 'Name, cuisine, photos, location and hours.' },
+  information: { route: '/chef/setup/information', blurb: 'Name, photos, your story, pickup area and hours.' },
   documents: { route: '/chef/setup/documents', blurb: 'Your food handler certificate and ID.' },
   menu: { route: '/chef/setup/menu', blurb: 'Your signature dishes and prices.' },
-  preview: { route: '/chef/setup/preview', blurb: 'See your kitchen as foodies will, then publish.' },
+  preview: { route: '/chef/setup/preview', blurb: 'See your kitchen as customers will, then open it.' },
 };
 
-/** "Let's set up your restaurant": the four-step checklist for new chefs. */
+/** "Let's set up your kitchen": the four-step checklist for new cooks. */
 export default function SetupOverview() {
   const restaurant = useMyRestaurant();
   const done = completedSteps(restaurant);
@@ -35,9 +35,9 @@ export default function SetupOverview() {
         />
         <View style={styles.header}>
           <Eyebrow>
-            Your restaurant · {completed} of {SETUP_STEPS.length} complete
+            Your kitchen · {completed} of {SETUP_STEPS.length} complete
           </Eyebrow>
-          <Heading size={34}>Let’s set up{'\n'}your restaurant</Heading>
+          <Heading size={34}>Let’s set up{'\n'}your kitchen</Heading>
           <Body muted>Four short steps and your kitchen is open for business.</Body>
         </View>
 

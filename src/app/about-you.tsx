@@ -10,6 +10,7 @@ import { spacing } from '@/theme';
 export default function AboutYou() {
   const { state, dispatch } = useStore();
   const user = state.user;
+  const cook = (user?.role ?? state.pendingRole) === 'chef';
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
@@ -36,7 +37,11 @@ export default function AboutYou() {
           />
           <View style={styles.header}>
             <Heading>Please tell us{'\n'}about yourself</Heading>
-            <Body muted>So chefs know who they’re cooking for.</Body>
+            <Body muted>
+              {cook
+                ? 'Customers see your first name on your kitchen. We use your email for payouts and account updates.'
+                : 'Kitchens see your first name and last initial on your orders.'}
+            </Body>
           </View>
           <View style={{ gap: spacing.lg }}>
             <TextField

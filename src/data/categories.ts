@@ -25,7 +25,7 @@ export function isCategoryId(value: string): value is CategoryId {
   return CATEGORY_IDS.has(value);
 }
 
-/** Options for the "Restaurant Type" dropdown during chef onboarding. */
+/** Options for the Cuisine picker during chef onboarding. */
 export const CUISINES = [
   'American',
   'BBQ',

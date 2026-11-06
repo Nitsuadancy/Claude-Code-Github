@@ -5,7 +5,7 @@ import { isValidZip } from './validation';
 export type SetupStep = 'information' | 'documents' | 'menu' | 'preview';
 
 export const SETUP_STEPS: { key: SetupStep; title: string }[] = [
-  { key: 'information', title: 'Restaurant details' },
+  { key: 'information', title: 'Kitchen details' },
   { key: 'documents', title: 'Documents' },
   { key: 'menu', title: 'Menu' },
   { key: 'preview', title: 'Preview & publish' },
