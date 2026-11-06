@@ -308,3 +308,13 @@ export function toPersisted(state: AppState): PersistedState {
   const { hydrated: _hydrated, ...rest } = state;
   return rest;
 }
+
+/**
+ * The signed-in chef's kitchen exactly as stored. Edits must start from this,
+ * not from the copy shown on screen, which has device reviews blended into its
+ * rating (saving that copy would count those reviews twice).
+ */
+export function storedKitchen(state: Pick<AppState, 'restaurants' | 'user'>): Restaurant | undefined {
+  const userId = state.user?.id;
+  return userId ? state.restaurants.find((r) => r.ownerId === userId) : undefined;
+}

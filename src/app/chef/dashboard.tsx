@@ -6,6 +6,7 @@ import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
 import { PrepList, WeeklyChart } from '@/components/chef-insights';
 import { OrderCard } from '@/components/order-card';
+import { TodayMenu } from '@/components/today-menu';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
 import {
   Body,
@@ -22,7 +23,7 @@ import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
-import { NEXT_STATUSES } from '@/state/reducer';
+import { NEXT_STATUSES, storedKitchen } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
 import { Icon } from '@/components/icon';
@@ -70,7 +71,7 @@ export default function ChefDashboard() {
           </View>
         </View>
 
-        <View style={[styles.statusCard, live && { borderColor: colors.gold }]}>
+        <View style={[styles.statusCard, live && { borderColor: colors.success }]}>
           <View style={[styles.statusDot, { backgroundColor: live ? colors.success : colors.textFaint }]} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={styles.statusTitle}>
@@ -99,6 +100,16 @@ export default function ChefDashboard() {
           <Stat label="Today" value={formatCents(todaysSales)} />
           <Stat label="All time" value={String(orders.length)} />
         </View>
+
+        <TodayMenu
+          restaurant={restaurant}
+          orders={state.orders}
+          onMenuChange={(menu) => {
+            const stored = storedKitchen(state);
+            if (stored) dispatch({ type: 'saveRestaurant', restaurant: { ...stored, menu } });
+          }}
+          onEdit={() => router.push('/chef/setup/menu')}
+        />
 
         <Pressable
           accessibilityRole="button"
@@ -341,9 +352,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    borderRadius: radius.md,
     padding: spacing.md,
     backgroundColor: colors.surface,
   },
@@ -352,8 +363,6 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: spacing.sm },
   stat: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,

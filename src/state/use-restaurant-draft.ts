@@ -4,7 +4,8 @@ import { blankRestaurant } from '@/lib/setup';
 import { newId } from '@/lib/validation';
 import type { Restaurant } from '@/types';
 
-import { useMyRestaurant, useStore } from './store';
+import { storedKitchen } from './reducer';
+import { useStore } from './store';
 
 /**
  * A local, editable copy of the chef's restaurant (or a blank one).
@@ -12,7 +13,7 @@ import { useMyRestaurant, useStore } from './store';
  */
 export function useRestaurantDraft() {
   const { state, dispatch } = useStore();
-  const existing = useMyRestaurant();
+  const existing = storedKitchen(state);
   const [draft, setDraft] = useState<Restaurant>(
     () => existing ?? blankRestaurant(state.user!, newId('rest')),
   );

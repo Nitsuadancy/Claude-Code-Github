@@ -9,7 +9,8 @@ import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
 import { estimateReadyAt, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
-import { INITIAL_STATE, reducer } from '@/state/reducer';
+import { INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
+import { withReviews } from '@/lib/reviews';
 import type { Order, Restaurant } from '@/types';
 
 function order(partial: Partial<Order>): Order {
@@ -252,5 +253,16 @@ describe('deleting an account', () => {
     expect(after.orders.map((o) => o.id)).toEqual(['c']);
     expect(after.favoriteRestaurantIds).toEqual([]);
     expect(after.hasSeenWelcome).toBe(true);
+  });
+});
+
+describe('editing a kitchen', () => {
+  it('starts from the stored kitchen, so saving never counts device reviews twice', () => {
+    const kitchen = { ...SAMPLE_RESTAURANTS[0], id: 'mine', ownerId: 'u1', rating: 4, ratingCount: 10 };
+    const review = { id: 'rv', orderId: 'o', restaurantId: 'mine', customerId: 'c', customerName: 'Ann B.', stars: 5, tags: [], text: '', createdAt: '2026-11-01T00:00:00.000Z' };
+    const state = { user: { id: 'u1', name: 'A', email: '', phone: '', role: 'chef' as const, neighborhood: '' }, restaurants: [kitchen] };
+    expect(withReviews(kitchen, [review]).ratingCount).toBe(11);
+    expect(storedKitchen(state)?.ratingCount).toBe(10);
+    expect(storedKitchen({ ...state, user: null })).toBeUndefined();
   });
 });
