@@ -34,7 +34,6 @@ import { Icon } from '@/components/icon';
 export default function Cart() {
   const { state, dispatch } = useStore();
   const restaurant = useRestaurant(state.cart.restaurantId ?? undefined);
-  const [address, setAddress] = useState(state.user?.deliveryAddress ?? '');
   const [when, setWhen] = useState<'asap' | 'later'>('asap');
   const [slot, setSlot] = useState<string | null>(null);
   const [slotSheet, setSlotSheet] = useState(false);
@@ -73,14 +72,11 @@ export default function Cart() {
   const slots = availableSlots(restaurant, now);
   const mode = open ? when : 'later';
   const chosen = slot && slots.includes(slot) ? slot : (slots[0] ?? null);
+  const chefFirst = restaurant.chefName.replace(/\.$/, '');
 
   const placeOrder = () => {
     const user = state.user;
     if (!user) return;
-    if (!address.trim()) {
-      notify('Delivery address', 'Add where we should bring your food.');
-      return;
-    }
     if (mode === 'later' && !chosen) {
       notify('No times available', `${restaurant.name} isn’t taking orders for the next two days.`);
       return;
@@ -103,7 +99,6 @@ export default function Cart() {
     const createdAt = placedAt.toISOString();
     const orderId = newId('order');
     // Payments aren't connected yet: orders are recorded as placed without charging a card.
-    dispatch({ type: 'updateProfile', changes: { deliveryAddress: address.trim() } });
     dispatch({
       type: 'placeOrder',
       order: {
@@ -114,11 +109,10 @@ export default function Cart() {
         restaurantName: restaurant.name,
         lines: totals.lines,
         subtotalCents: totals.subtotalCents,
-        serviceFeeCents: totals.serviceFeeCents,
-        deliveryFeeCents: totals.deliveryFeeCents,
+        movementFeeCents: totals.movementFeeCents,
         tipCents: tip,
         totalCents: grandTotal,
-        deliveryAddress: address.trim(),
+        pickupAddress: [restaurant.address, restaurant.city].filter(Boolean).join(', '),
         status: 'placed',
         statusHistory: [{ status: 'placed', at: createdAt }],
         chefNote: '',
@@ -178,14 +172,17 @@ export default function Cart() {
           ))}
         </Card>
 
-        <TextField
-          label="Deliver to"
-          placeholder="Street address, apt, city"
-          icon="map-marker-outline"
-          value={address}
-          onChangeText={setAddress}
-          textContentType="fullStreetAddress"
-        />
+        <View style={styles.pickup}>
+          <Icon name="map-marker-outline" size={20} color={colors.gold} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.pickupTitle}>
+              Pickup in {restaurant.neighborhood || restaurant.city || 'the neighborhood'}
+            </Text>
+            <Text style={styles.pickupBody}>
+              {chefFirst} shares the exact address once your order is accepted.
+            </Text>
+          </View>
+        </View>
 
         <CartAllergyWarning names={risky} />
 
@@ -199,11 +196,11 @@ export default function Cart() {
         />
 
         <View style={{ gap: spacing.sm }}>
-          <FieldLabel>When</FieldLabel>
+          <FieldLabel>Pickup time</FieldLabel>
           <View style={styles.segment}>
             <WhenOption
               icon="lightning-bolt-outline"
-              title="As soon as possible"
+              title="When it’s ready"
               detail={open ? `About ${restaurant.prepMinutes} min` : 'Closed right now'}
               selected={mode === 'asap'}
               disabled={!open}
@@ -211,8 +208,8 @@ export default function Cart() {
             />
             <WhenOption
               icon="calendar-clock"
-              title="Schedule"
-              detail={slots.length ? 'Pick a time' : 'No times available'}
+              title="Pick a time"
+              detail={slots.length ? 'Today or tomorrow' : 'No times available'}
               selected={mode === 'later'}
               disabled={!slots.length}
               onPress={() => setWhen('later')}
@@ -224,7 +221,7 @@ export default function Cart() {
               icon="clock-outline"
               value={formatSlot(chosen, now)}
               onPress={() => setSlotSheet(true)}
-              label="Ready at"
+              label="Pick up at"
             />
           ) : null}
         </View>
@@ -248,23 +245,25 @@ export default function Cart() {
               );
             })}
           </View>
-          <Text style={styles.tipNote}>100% of your tip goes to {restaurant.chefName.replace(/\.$/, '')}.</Text>
+          <Text style={styles.tipNote}>100% of your tip goes to {chefFirst}.</Text>
         </View>
 
         <Card>
           <Row label="Subtotal" value={formatCents(totals.subtotalCents)} />
-          <Row label="Service fee" value={formatCents(totals.serviceFeeCents)} />
-          <Row label="Delivery" value={formatCents(totals.deliveryFeeCents)} />
+          <Row label="Movement fee (5%)" value={formatCents(totals.movementFeeCents)} />
           {tip ? <Row label={`Tip for ${restaurant.chefName}`} value={formatCents(tip)} /> : null}
           <Divider style={{ marginVertical: spacing.xs }} />
           <View style={styles.row}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>{formatCents(grandTotal)}</Text>
           </View>
+          <Text style={styles.movement}>
+            Manna’s only fee is this 5%. {chefFirst} keeps every dollar of the menu price.
+          </Text>
         </Card>
 
         <GoldButton
-          title={mode === 'later' ? `Schedule order · ${formatCents(grandTotal)}` : `Place order · ${formatCents(grandTotal)}`}
+          title={mode === 'later' ? `Schedule pickup · ${formatCents(grandTotal)}` : `Place order · ${formatCents(grandTotal)}`}
           onPress={placeOrder}
         />
         <Body muted style={styles.note}>
@@ -276,7 +275,7 @@ export default function Cart() {
       </ScrollView>
       <OptionSheet
         visible={slotSheet}
-        title="Ready at"
+        title="Pick up at"
         options={slots.map((value) => ({ value, label: formatSlot(value, now) }))}
         selected={chosen ? [chosen] : []}
         onSelect={([value]) => {
@@ -388,5 +387,18 @@ const styles = StyleSheet.create({
   whenOn: { borderColor: colors.gold, backgroundColor: colors.goldTint },
   whenTitle: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
   whenDetail: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
+  pickup: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'flex-start',
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  pickupTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory },
+  pickupBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
+  movement: { fontFamily: fonts.displayItalic, fontSize: 15, lineHeight: 20, color: colors.textMuted, marginTop: spacing.xs },
   clear: { fontFamily: fonts.medium, color: colors.textMuted, fontSize: 14 },
 });

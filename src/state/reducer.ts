@@ -123,7 +123,7 @@ export function reducer(state: AppState, action: Action): AppState {
           name: '',
           email: '',
           role: state.pendingRole,
-          deliveryAddress: '',
+          neighborhood: '',
         },
       };
     }
@@ -259,7 +259,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, activitySeenAt: action.at };
 
     case 'addReview': {
-      // One review per order, only for delivered orders by the person who placed them.
+      // One review per order, only for completed orders by the person who placed them.
       const order = state.orders.find((o) => o.id === action.review.orderId);
       if (!order || order.status !== 'completed' || order.customerId !== action.review.customerId) return state;
       if (state.reviews.some((r) => r.orderId === order.id)) return state;

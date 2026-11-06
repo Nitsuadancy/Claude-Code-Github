@@ -52,10 +52,12 @@ insert into public.menu_items (id, restaurant_id, name, price_cents, daily_limit
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'Baked Ziti', 1350, 3),
   ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'Garlic Knots', 600, null);
 insert into public.restaurant_documents (restaurant_id, kind, storage_path, file_name) values
-  ('10000000-0000-0000-0000-000000000001', 'home-kitchen-permit', 'docs/permit.pdf', 'permit.pdf'),
+  ('10000000-0000-0000-0000-000000000001', 'government-id', 'docs/id.pdf', 'id.pdf'),
   ('10000000-0000-0000-0000-000000000001', 'food-handler', 'docs/card.pdf', 'card.pdf');
 select pg_temp.expect_error(
   $$ update public.restaurant_documents set review_status = 'approved' $$, 'row-level security');
+insert into public.restaurant_addresses (restaurant_id, address)
+  values ('10000000-0000-0000-0000-000000000001', '12 Elm St, Orlando');
 update public.restaurants set status = 'pending_review';
 
 -- Not visible to customers until approved ------------------------------------
@@ -64,14 +66,14 @@ select pg_temp.check((select count(*) = 0 from public.restaurants), 'pending kit
 select pg_temp.check((select count(*) = 0 from public.menu_items), 'pending menu hidden from customers');
 select pg_temp.expect_error(
   $$ select public.place_order('10000000-0000-0000-0000-000000000001',
-       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":1}]', '1 Main St') $$,
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":1}]') $$,
   'isn''t taking orders');
 
 -- Admin approves --------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect_error($$ select public.approve_restaurant('10000000-0000-0000-0000-000000000001') $$, 'only the manna team');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
-select pg_temp.expect_error($$ select public.approve_restaurant('10000000-0000-0000-0000-000000000001') $$, 'approve the permit');
+select pg_temp.expect_error($$ select public.approve_restaurant('10000000-0000-0000-0000-000000000001') $$, 'approve the food handler');
 update public.restaurant_documents set review_status = 'approved', reviewed_by = auth.uid(), reviewed_at = now();
 select public.approve_restaurant('10000000-0000-0000-0000-000000000001');
 
@@ -79,29 +81,26 @@ select public.approve_restaurant('10000000-0000-0000-0000-000000000001');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check((select verified and status = 'live' from public.restaurants), 'kitchen live and verified');
 select pg_temp.expect_error(
-  $$ insert into public.orders (customer_id, restaurant_id, subtotal_cents, service_fee_cents, delivery_fee_cents, total_cents, delivery_address, estimated_ready_at)
-     values (auth.uid(), '10000000-0000-0000-0000-000000000001', 1, 0, 0, 1, 'x', now()) $$,
+  $$ insert into public.orders (customer_id, restaurant_id, subtotal_cents, movement_fee_cents, total_cents, estimated_ready_at)
+     values (auth.uid(), '10000000-0000-0000-0000-000000000001', 1, 0, 1, now()) $$,
   'permission denied');
-select pg_temp.expect_error(
-  $$ select public.place_order('10000000-0000-0000-0000-000000000001',
-       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":1}]', '  ') $$,
-  'delivery address');
+select pg_temp.check((select count(*) = 0 from public.restaurant_addresses), 'kitchen address private');
 create temp table first_order as
   select public.place_order('10000000-0000-0000-0000-000000000001',
     '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":2},
       {"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]',
-    '12 Street, Houston TX', 'No nuts please', null, 300) as id;
-select pg_temp.check((select subtotal_cents = 3300 and service_fee_cents = 330 and delivery_fee_cents = 299
-                             and tip_cents = 300 and total_cents = 4229 and customer_note = 'No nuts please'
+    'No nuts please', null, 300) as id;
+select pg_temp.check((select subtotal_cents = 3300 and movement_fee_cents = 165 and pickup_address = ''
+                             and tip_cents = 300 and total_cents = 3765 and customer_note = 'No nuts please'
                       from public.orders where id = (select id from first_order)), 'server-side totals');
 select pg_temp.check((select count(*) = 1 from public.order_status_events where order_id = (select id from first_order)), 'placed event');
 select pg_temp.expect_error(
   $$ select public.place_order('10000000-0000-0000-0000-000000000001',
-       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":2}]', '12 Street') $$,
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":2}]') $$,
   'only 1 baked ziti left');
 select pg_temp.expect_error(
   $$ select public.place_order('10000000-0000-0000-0000-000000000001',
-       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":1}]', '12 Street', '', null, 999999) $$,
+       '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":1}]', '', null, 999999) $$,
   'tip must be');
 select pg_temp.expect_error($$ select public.set_order_status((select id from first_order), 'accepted') $$, 'order not found');
 select pg_temp.expect_error($$ select public.add_review((select id from first_order), 5, '{}', 'Great') $$, 'after it');
@@ -128,6 +127,8 @@ select pg_temp.expect_error($$ select public.set_order_status((select id from fi
 
 -- Customer reviews, once ------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select pickup_address = '12 Elm St, Orlando' from public.orders where id = (select id from first_order)),
+  'address shared once accepted');
 select pg_temp.check((select chef_note = 'Fresh out of the oven!' from public.orders), 'customer sees chef note');
 select public.add_review((select id from first_order), 5, array['Tasted like home'], 'Wonderful');
 select pg_temp.check((select customer_name = 'Bea F.' from public.reviews), 'review shows first name and initial');

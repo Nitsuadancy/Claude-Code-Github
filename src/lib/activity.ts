@@ -13,8 +13,8 @@ const TITLES: Record<OrderStatus, (kitchen: string) => string> = {
   placed: (k) => `Order sent to ${k}`,
   accepted: (k) => `${k} accepted your order`,
   preparing: (k) => `${k} is cooking`,
-  ready: () => 'Your order is on its way',
-  completed: () => 'Delivered. Enjoy!',
+  ready: (k) => `Your order is ready at ${k}`,
+  completed: () => 'Picked up. Enjoy!',
   declined: (k) => `${k} couldn’t take your order`,
 };
 

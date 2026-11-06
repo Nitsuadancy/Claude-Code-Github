@@ -4,7 +4,7 @@ import { browseRestaurants, cuisineTags, DEFAULT_FILTERS, isNew } from '@/lib/br
 import { formatTime, isOpenAt, TIME_SLOTS, toMinutes } from '@/lib/hours';
 import { normalizeMenuItem } from '@/lib/migrate';
 import { formatCents, parsePriceToCents } from '@/lib/money';
-import { computeCartTotals, DELIVERY_FEE_CENTS } from '@/lib/pricing';
+import { computeCartTotals } from '@/lib/pricing';
 import { blankRestaurant, currentStep, isInformationComplete } from '@/lib/setup';
 import { formatUsPhone, isValidEmail, isValidUsPhone, isValidZip } from '@/lib/validation';
 import type { MenuItem, Restaurant } from '@/types';
@@ -42,9 +42,9 @@ describe('pricing', () => {
     );
     expect(totals.itemCount).toBe(3);
     expect(totals.subtotalCents).toBe(2550);
-    expect(totals.serviceFeeCents).toBe(255);
-    expect(totals.deliveryFeeCents).toBe(DELIVERY_FEE_CENTS);
-    expect(totals.totalCents).toBe(2550 + 255 + DELIVERY_FEE_CENTS);
+    // A single 5% movement fee and no delivery fee: orders are picked up.
+    expect(totals.movementFeeCents).toBe(128);
+    expect(totals.totalCents).toBe(2550 + 128);
   });
 
   it('skips unavailable and unknown items, and charges nothing for an empty cart', () => {
@@ -162,7 +162,7 @@ describe('chef setup', () => {
     email: 's@example.com',
     phone: '+15555550100',
     role: 'chef' as const,
-    deliveryAddress: '',
+    neighborhood: '',
   };
 
   it('walks through the steps in order', () => {
@@ -174,20 +174,22 @@ describe('chef setup', () => {
       ...r,
       name: 'Susie’s',
       cuisine: 'Italian',
+      neighborhood: 'College Park',
       address: '1 Main',
-      city: 'Houston',
-      areaCode: '77002',
+      city: 'Orlando',
+      areaCode: '32804',
       workingDays: ['monday'],
       openTime: '09:00',
       closeTime: '17:00',
     };
     expect(isInformationComplete(withInfo)).toBe(true);
+    expect(isInformationComplete({ ...withInfo, neighborhood: '' })).toBe(false);
     expect(currentStep(withInfo)).toBe('documents');
 
     const withDocs: Restaurant = {
       ...withInfo,
       documents: [
-        { kind: 'home-kitchen-permit', fileName: 'permit.pdf', uri: 'file://permit' },
+        { kind: 'government-id', fileName: 'id.pdf', uri: 'file://id' },
         { kind: 'food-handler', fileName: 'card.pdf', uri: 'file://card' },
       ],
     };
@@ -205,9 +207,10 @@ describe('chef setup', () => {
       ...blankRestaurant(user, 'r1'),
       name: 'X',
       cuisine: 'Thai',
+      neighborhood: 'College Park',
       address: '1 Main',
-      city: 'Houston',
-      areaCode: '77002',
+      city: 'Orlando',
+      areaCode: '32804',
       workingDays: ['monday'],
       openTime: '09:00',
       closeTime: '09:00',

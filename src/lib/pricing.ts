@@ -1,15 +1,17 @@
 import type { Cart, MenuItem, OrderLine } from '@/types';
 
-/** Platform service fee charged to the customer, as a fraction of the subtotal. */
-export const SERVICE_FEE_RATE = 0.1;
-export const DELIVERY_FEE_CENTS = 299;
+/**
+ * Manna's only fee: 5% of the food subtotal, paid by the customer. Card
+ * processing comes out of it, so kitchens keep 100% of their menu prices.
+ * Orders are picked up, so there is no delivery fee.
+ */
+export const MOVEMENT_FEE_RATE = 0.05;
 
 export interface CartTotals {
   lines: OrderLine[];
   itemCount: number;
   subtotalCents: number;
-  serviceFeeCents: number;
-  deliveryFeeCents: number;
+  movementFeeCents: number;
   totalCents: number;
 }
 
@@ -29,15 +31,13 @@ export function computeCartTotals(cart: Cart, menu: MenuItem[]): CartTotals {
   }
   const subtotalCents = lines.reduce((sum, l) => sum + l.priceCents * l.quantity, 0);
   const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
-  const serviceFeeCents = Math.round(subtotalCents * SERVICE_FEE_RATE);
-  const deliveryFeeCents = lines.length > 0 ? DELIVERY_FEE_CENTS : 0;
+  const movementFeeCents = Math.round(subtotalCents * MOVEMENT_FEE_RATE);
   return {
     lines,
     itemCount,
     subtotalCents,
-    serviceFeeCents,
-    deliveryFeeCents,
-    totalCents: subtotalCents + serviceFeeCents + deliveryFeeCents,
+    movementFeeCents,
+    totalCents: subtotalCents + movementFeeCents,
   };
 }
 

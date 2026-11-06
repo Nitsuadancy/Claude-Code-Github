@@ -21,7 +21,7 @@ import * as haptics from '@/lib/haptics';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
-import { isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
+import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
 import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
@@ -112,12 +112,14 @@ export default function ChefDashboard() {
         ) : null}
         {active.map((order) => (
           <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'}>
-            <View style={styles.deliver}>
-              <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
-              <Body muted style={{ flex: 1, fontSize: 13 }}>
-                {order.deliveryAddress}
-              </Body>
-            </View>
+            {order.scheduledFor ? null : (
+              <View style={styles.pickup}>
+                <Icon name="clock-outline" size={16} color={colors.textMuted} />
+                <Body muted style={{ flex: 1, fontSize: 13 }}>
+                  Pickup when ready, about {formatClock(order.estimatedReadyAt)}
+                </Body>
+              </View>
+            )}
             <View style={styles.actions}>
               {NEXT_STATUSES[order.status].map((status) => {
                 const decline = status === 'declined';
@@ -176,7 +178,7 @@ export default function ChefDashboard() {
           <View style={styles.emptyCard}>
             <Icon name="star-outline" size={22} color={colors.gold} />
             <Body muted style={{ flex: 1, fontSize: 14 }}>
-              After each delivery, customers are invited to rate their meal. Reviews will appear here.
+              After each pickup, customers are invited to rate their meal. Reviews will appear here.
             </Body>
           </View>
         )}
@@ -202,7 +204,7 @@ export default function ChefDashboard() {
             last
           />
         </View>
-        {showAccount ? <AccountSettings showAddress={false} /> : null}
+        {showAccount ? <AccountSettings /> : null}
 
         {past.length ? (
           <>
@@ -343,7 +345,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.md,
   },
-  deliver: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pickup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap' },
   action: {
     borderRadius: radius.pill,

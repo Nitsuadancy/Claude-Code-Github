@@ -12,12 +12,11 @@ import { GoldButton, Heading, type IconName, TextField, Wordmark } from './ui';
 import { Icon } from './icon';
 
 /** Profile editing plus role switching and sign out; shared by Foodie and Chef. */
-export function AccountSettings({ showAddress }: { showAddress: boolean }) {
+export function AccountSettings() {
   const { state, dispatch } = useStore();
   const user = state.user;
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
-  const [address, setAddress] = useState(user?.deliveryAddress ?? '');
   const [error, setError] = useState<string | null>(null);
   if (!user) return null;
 
@@ -34,7 +33,7 @@ export function AccountSettings({ showAddress }: { showAddress: boolean }) {
     setError(null);
     dispatch({
       type: 'updateProfile',
-      changes: { name: name.trim(), email: email.trim(), deliveryAddress: address.trim() },
+      changes: { name: name.trim(), email: email.trim() },
     });
     notify('Saved', 'Your profile is up to date.');
   };
@@ -72,15 +71,6 @@ export function AccountSettings({ showAddress }: { showAddress: boolean }) {
           onChangeText={setEmail}
         />
         <TextField label="Phone number" icon="lock-outline" value={formatE164UsPhone(user.phone)} editable={false} />
-        {showAddress ? (
-          <TextField
-            label="Delivery address"
-            icon="map-marker-outline"
-            placeholder="Street address, apt, city"
-            value={address}
-            onChangeText={setAddress}
-          />
-        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <GoldButton title="Save changes" variant="outline" onPress={save} />
       </View>

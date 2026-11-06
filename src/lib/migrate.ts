@@ -1,6 +1,6 @@
 import type { PersistedState } from '@/state/reducer';
 import { isCategoryId } from '@/data/categories';
-import type { MenuItem, Order, Restaurant } from '@/types';
+import type { MenuItem, Order, Restaurant, UserProfile } from '@/types';
 
 import { estimateReadyAt } from './orders';
 
@@ -31,13 +31,20 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     prepMinutes: r.prepMinutes ?? DEFAULT_PREP_MINUTES,
     // Meal Preppers, Kids Favorites and Foodie Adventures were retired.
     categories: (r.categories ?? []).filter(isCategoryId),
+    neighborhood: r.neighborhood ?? '',
     menu: (r.menu ?? []).map(normalizeMenuItem),
   };
 }
 
-export function normalizeOrder(o: Order): Order {
+/** Older orders had a 10% service fee, a delivery fee and a delivery address. */
+type LegacyOrder = Order & { serviceFeeCents?: number; deliveryAddress?: string };
+
+export function normalizeOrder(saved: Order): Order {
+  const { serviceFeeCents, deliveryAddress: _address, ...o } = saved as LegacyOrder;
   return {
     ...o,
+    movementFeeCents: o.movementFeeCents ?? serviceFeeCents ?? 0,
+    pickupAddress: o.pickupAddress ?? '',
     statusHistory: o.statusHistory?.length ? o.statusHistory : [{ status: 'placed', at: o.createdAt }],
     chefNote: o.chefNote ?? '',
     customerNote: o.customerNote ?? '',
@@ -46,10 +53,17 @@ export function normalizeOrder(o: Order): Order {
   };
 }
 
+/** Foodies used to save a delivery address; now they pick a neighborhood. */
+export function normalizeUser(saved: UserProfile): UserProfile {
+  const { deliveryAddress: _address, ...user } = saved as UserProfile & { deliveryAddress?: string };
+  return { ...user, neighborhood: user.neighborhood ?? '' };
+}
+
 export function normalizePersisted(saved: Partial<PersistedState> | null): Partial<PersistedState> | null {
   if (!saved) return saved;
   return {
     ...saved,
+    user: saved.user ? normalizeUser(saved.user) : saved.user,
     restaurants: saved.restaurants?.map(normalizeRestaurant),
     orders: saved.orders?.map(normalizeOrder),
     reviews: saved.reviews ?? [],

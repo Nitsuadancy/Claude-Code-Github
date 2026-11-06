@@ -18,7 +18,7 @@ import {
 } from '@/components/ui';
 import * as haptics from '@/lib/haptics';
 import { formatCents } from '@/lib/money';
-import { formatClock, isActive, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
+import { formatClock, isActive, isAddressShared, ORDER_HEADLINE, ORDER_PROGRESS, ORDER_STATUS_LABEL } from '@/lib/orders';
 import { publicName } from '@/lib/reviews';
 import { formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
@@ -70,7 +70,7 @@ export default function OrderTracking() {
               <Icon name="timer-sand" size={16} color={colors.gold} />
               <Text style={styles.etaText}>
                 {order.scheduledFor
-                  ? `Scheduled for ${formatSlot(order.scheduledFor, new Date())}`
+                  ? `Pickup ${formatSlot(order.scheduledFor, new Date())}`
                   : `Estimated ready by ${formatClock(order.estimatedReadyAt)}`}
               </Text>
             </View>
@@ -162,13 +162,15 @@ export default function OrderTracking() {
             <Text style={styles.fee}>{formatCents(order.subtotalCents)}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.fee}>Service fee</Text>
-            <Text style={styles.fee}>{formatCents(order.serviceFeeCents)}</Text>
+            <Text style={styles.fee}>Movement fee</Text>
+            <Text style={styles.fee}>{formatCents(order.movementFeeCents)}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.fee}>Delivery</Text>
-            <Text style={styles.fee}>{formatCents(order.deliveryFeeCents)}</Text>
-          </View>
+          {order.deliveryFeeCents ? (
+            <View style={styles.row}>
+              <Text style={styles.fee}>Delivery</Text>
+              <Text style={styles.fee}>{formatCents(order.deliveryFeeCents)}</Text>
+            </View>
+          ) : null}
           {order.tipCents ? (
             <View style={styles.row}>
               <Text style={styles.fee}>Tip for {chefName}</Text>
@@ -182,7 +184,11 @@ export default function OrderTracking() {
           <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.xs }]}>
             <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
             <Body muted style={{ flex: 1, fontSize: 13 }}>
-              {order.deliveryAddress}
+              {isAddressShared(order.status) && order.pickupAddress
+                ? `Pick up at ${order.pickupAddress}`
+                : order.status === 'declined'
+                  ? 'No pickup needed.'
+                  : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
             </Body>
           </View>
         </Card>

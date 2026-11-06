@@ -20,6 +20,7 @@ const base = {
   status: 'live' as const,
   acceptingOrders: true,
   verified: true,
+  neighborhood: 'College Park',
 };
 
 function dish(item: Partial<MenuItem> & Pick<MenuItem, 'id' | 'name' | 'description' | 'priceCents'>): MenuItem {

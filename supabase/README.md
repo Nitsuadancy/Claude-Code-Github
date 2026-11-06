@@ -9,7 +9,7 @@ connected to it yet. The app still stores everything on the device (see
 
 | Part | What it does |
 |---|---|
-| `profiles` | One row per account, created automatically at sign-up. Name, role, address, diet and allergies. |
+| `profiles` | One row per account, created automatically at sign-up. Name, role, neighborhood, diet and allergies. |
 | `restaurants`, `menu_items` | Kitchens and dishes. Customers only see kitchens that are **live**. |
 | `restaurant_documents` | Permits and certificates. Only the chef and the Manna team can see them. |
 | `orders`, `order_lines`, `order_status_events` | Orders, the dishes in them (with the price at the time), and the tracking timeline. |

@@ -28,6 +28,7 @@ import {
   TextLink,
 } from '@/components/ui';
 import { CATEGORIES, CUISINES } from '@/data/categories';
+import { NEIGHBORHOODS } from '@/data/neighborhoods';
 import { capitalize, formatTime, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
 import { pickImages } from '@/lib/images';
 import { digitsOnly, isValidZip } from '@/lib/validation';
@@ -36,15 +37,15 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { CategoryId, Weekday } from '@/types';
 import { Icon } from '@/components/icon';
 
-type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null;
+type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null | 'neighborhood';
 
 const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
   value: String(m),
   label: `About ${m} minutes`,
 }));
 
-const BIO_MAX = 400;
-type Errors = Partial<Record<'name' | 'cuisine' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
+const BIO_MAX = 280;
+type Errors = Partial<Record<'name' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
 
 const TIME_OPTIONS = TIME_SLOTS.map((t) => ({ value: t, label: formatTime(t) }));
 
@@ -68,6 +69,7 @@ export default function RestaurantInformation() {
       return;
     }
     const e: Errors = {};
+    if (!draft.neighborhood) e.neighborhood = 'Choose your neighborhood.';
     if (!draft.address.trim()) e.address = 'Enter the pickup address.';
     if (!draft.city.trim()) e.city = 'Enter a city.';
     if (!isValidZip(draft.areaCode)) e.areaCode = 'Enter a 5-digit ZIP code.';
@@ -239,9 +241,17 @@ export default function RestaurantInformation() {
           ) : (
             <>
               <SectionTitle style={{ marginTop: spacing.sm }}>Where and when you cook</SectionTitle>
+              <PickerField
+                label="Neighborhood"
+                placeholder="Choose your neighborhood"
+                icon="map-marker-radius"
+                value={draft.neighborhood}
+                onPress={() => setSheet('neighborhood')}
+                error={errors.neighborhood}
+              />
               <TextField
-                label="Address"
-                placeholder="Address"
+                label="Pickup address"
+                placeholder="Street address"
                 icon="map-marker-outline"
                 textContentType="fullStreetAddress"
                 value={draft.address}
@@ -270,6 +280,9 @@ export default function RestaurantInformation() {
                   error={errors.areaCode}
                 />
               </View>
+              <Body muted style={{ fontSize: 13 }}>
+                Customers see only your neighborhood. Your address is shared with a customer once you accept their order.
+              </Body>
 
               <View style={styles.sectionHeader}>
                 <SectionTitle>Working days</SectionTitle>
@@ -359,6 +372,14 @@ export default function RestaurantInformation() {
         options={CATEGORIES.map((c) => ({ value: c.id, label: c.label }))}
         selected={draft.categories}
         onSelect={(categories) => update({ categories })}
+        onClose={() => setSheet(null)}
+      />
+      <OptionSheet
+        visible={sheet === 'neighborhood'}
+        title="Neighborhood"
+        options={NEIGHBORHOODS.map((n) => ({ value: n, label: n }))}
+        selected={draft.neighborhood ? [draft.neighborhood] : []}
+        onSelect={([neighborhood]) => update({ neighborhood: neighborhood ?? '' })}
         onClose={() => setSheet(null)}
       />
       <OptionSheet

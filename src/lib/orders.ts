@@ -4,8 +4,8 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   placed: 'Waiting for the kitchen',
   accepted: 'Accepted',
   preparing: 'Being prepared',
-  ready: 'Ready / on the way',
-  completed: 'Delivered',
+  ready: 'Ready for pickup',
+  completed: 'Picked up',
   declined: 'Declined by kitchen',
 };
 
@@ -15,12 +15,17 @@ export const KITCHEN_ACTION_LABEL: Record<OrderStatus, string> = {
   accepted: 'Accept',
   preparing: 'Start preparing',
   ready: 'Mark ready',
-  completed: 'Mark delivered',
+  completed: 'Mark picked up',
   declined: 'Decline',
 };
 
 /** The happy path, in order, for progress bars. */
 export const ORDER_PROGRESS: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
+
+/** Home kitchens share their exact address only once they've said yes to an order. */
+export function isAddressShared(status: OrderStatus): boolean {
+  return status !== 'placed' && status !== 'declined';
+}
 
 export function isActive(status: OrderStatus): boolean {
   return status !== 'completed' && status !== 'declined';
@@ -51,8 +56,8 @@ export const ORDER_HEADLINE: Record<OrderStatus, string> = {
   placed: 'Order sent to the kitchen',
   accepted: 'The chef accepted your order',
   preparing: 'Your food is being prepared',
-  ready: 'Ready and on its way',
-  completed: 'Delivered. Enjoy!',
+  ready: 'Ready for pickup',
+  completed: 'Picked up. Enjoy!',
   declined: 'The kitchen couldn’t take this order',
 };
 

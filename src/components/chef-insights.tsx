@@ -8,7 +8,7 @@ import { Eyebrow } from './ui';
 
 const CHART_HEIGHT = 96;
 
-/** Seven slim gold bars of delivered sales, today highlighted. */
+/** Seven slim gold bars of completed sales, today highlighted. */
 export function WeeklyChart({ days }: { days: DayEarnings[] }) {
   const total = days.reduce((sum, d) => sum + d.cents, 0);
   const max = Math.max(...days.map((d) => d.cents), 1);
@@ -17,7 +17,7 @@ export function WeeklyChart({ days }: { days: DayEarnings[] }) {
     <View
       style={styles.card}
       accessible
-      accessibilityLabel={`This week: ${formatCents(total)} in delivered sales. ${days
+      accessibilityLabel={`This week: ${formatCents(total)} in completed sales. ${days
         .map((d) => `${d.label} ${formatCents(d.cents)}`)
         .join(', ')}`}>
       <View style={styles.header}>
@@ -28,7 +28,7 @@ export function WeeklyChart({ days }: { days: DayEarnings[] }) {
         {total > 0 ? (
           <Text style={styles.best}>Best day: {best.label}</Text>
         ) : (
-          <Text style={styles.best}>Delivered orders show up here</Text>
+          <Text style={styles.best}>Completed orders show up here</Text>
         )}
       </View>
       <View style={styles.chart}>

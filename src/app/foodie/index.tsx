@@ -30,6 +30,7 @@ import {
 } from '@/components/ui';
 import { CraftIcon } from '@/components/craft-icon';
 import { CATEGORIES } from '@/data/categories';
+import { DEFAULT_NEIGHBORHOOD, LAUNCH_CITY, NEIGHBORHOODS } from '@/data/neighborhoods';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import { buildActivity, unseenCount } from '@/lib/activity';
 import { hasDietProfile, kitchenFits } from '@/lib/diet';
@@ -83,7 +84,7 @@ export default function FoodieHome() {
   const restaurants = useAllRestaurants();
   const { width } = useWindowDimensions();
   const [filters, setFilters] = useState<BrowseFilters>(DEFAULT_FILTERS);
-  const [sheet, setSheet] = useState<'sort' | 'cuisines' | null>(null);
+  const [sheet, setSheet] = useState<'sort' | 'cuisines' | 'neighborhood' | null>(null);
   const now = new Date();
 
   const diet = useDietProfile();
@@ -102,7 +103,7 @@ export default function FoodieHome() {
     [restaurants],
   );
   const update = (changes: Partial<BrowseFilters>) => setFilters((f) => ({ ...f, ...changes }));
-  const address = state.user?.deliveryAddress;
+  const neighborhood = state.user?.neighborhood || DEFAULT_NEIGHBORHOOD;
   const firstName = state.user?.name.split(' ')[0];
   const searching = filters.query.trim().length > 0;
   const [searchFocused, setSearchFocused] = useState(false);
@@ -169,13 +170,13 @@ export default function FoodieHome() {
         <View style={styles.topRow}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Change delivery address"
-            onPress={() => router.navigate('/foodie/profile')}
+            accessibilityLabel={`Neighborhood: ${neighborhood}. Change`}
+            onPress={() => setSheet('neighborhood')}
             style={{ flex: 1, gap: 2 }}>
-            <Eyebrow>Deliver to</Eyebrow>
+            <Eyebrow>Pickup near</Eyebrow>
             <View style={styles.row}>
               <Text numberOfLines={1} style={styles.address}>
-                {address || 'Add your address'}
+                {neighborhood}, {LAUNCH_CITY}
               </Text>
               <Icon name="chevron-down" size={18} color={colors.gold} />
             </View>
@@ -466,6 +467,14 @@ export default function FoodieHome() {
         options={SORT_OPTIONS}
         selected={[filters.sort]}
         onSelect={([sort]) => update({ sort: sort ?? 'recommended' })}
+        onClose={() => setSheet(null)}
+      />
+      <OptionSheet
+        visible={sheet === 'neighborhood'}
+        title="Your neighborhood"
+        options={NEIGHBORHOODS.map((n) => ({ value: n, label: n }))}
+        selected={[neighborhood]}
+        onSelect={([n]) => n && dispatch({ type: 'updateProfile', changes: { neighborhood: n } })}
         onClose={() => setSheet(null)}
       />
       <OptionSheet

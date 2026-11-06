@@ -15,7 +15,7 @@ type SetupRoute =
 
 const STEP_INFO: Record<SetupStep, { route: SetupRoute; blurb: string }> = {
   information: { route: '/chef/setup/information', blurb: 'Name, cuisine, photos, location and hours.' },
-  documents: { route: '/chef/setup/documents', blurb: 'Your permit and food handler certificate.' },
+  documents: { route: '/chef/setup/documents', blurb: 'Your food handler certificate and ID.' },
   menu: { route: '/chef/setup/menu', blurb: 'Your signature dishes and prices.' },
   preview: { route: '/chef/setup/preview', blurb: 'See your kitchen as foodies will, then publish.' },
 };

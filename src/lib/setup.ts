@@ -18,13 +18,6 @@ export const DOCUMENT_TYPES: {
   required: boolean;
 }[] = [
   {
-    kind: 'home-kitchen-permit',
-    title: 'Home kitchen permit',
-    description:
-      'Your cottage food registration or home kitchen (MEHKO) permit from your city, county or state.',
-    required: true,
-  },
-  {
     kind: 'food-handler',
     title: 'Food handler certificate',
     description: 'A current food handler or food manager card (for example, ServSafe).',
@@ -34,6 +27,13 @@ export const DOCUMENT_TYPES: {
     kind: 'government-id',
     title: 'Government ID',
     description: 'Used only to verify who you are. Never shown to customers.',
+    required: true,
+  },
+  {
+    kind: 'home-kitchen-permit',
+    title: 'Local permit (if required)',
+    description:
+      'Florida cottage food kitchens don’t need a state license. Add a local business tax receipt or permit if your city or county asks for one.',
     required: false,
   },
 ];
@@ -43,6 +43,7 @@ export function isInformationComplete(r: Restaurant | undefined): boolean {
     !!r &&
     r.name.trim().length > 0 &&
     r.cuisine.trim().length > 0 &&
+    r.neighborhood.length > 0 &&
     r.address.trim().length > 0 &&
     r.city.trim().length > 0 &&
     isValidZip(r.areaCode) &&
@@ -94,6 +95,7 @@ export function blankRestaurant(user: UserProfile, id: string): Restaurant {
     address: '',
     city: '',
     areaCode: '',
+    neighborhood: '',
     workingDays: [],
     openTime: '',
     closeTime: '',

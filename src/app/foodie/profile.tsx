@@ -30,7 +30,7 @@ export default function Profile() {
             <Stat value={reviews} label={reviews === 1 ? 'Review' : 'Reviews'} />
           </View>
           <DietPreferences />
-          <AccountSettings showAddress />
+          <AccountSettings />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

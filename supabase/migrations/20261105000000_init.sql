@@ -29,7 +29,7 @@ create table public.profiles (
   email text,
   phone text,
   role public.user_role,
-  delivery_address text not null default '',
+  neighborhood text not null default '',
   dietary text[] not null default '{}',
   avoid_allergens text[] not null default '{}',
   is_admin boolean not null default false,
@@ -41,16 +41,17 @@ create table public.restaurants (
   owner_id uuid not null unique references public.profiles (id) on delete cascade,
   name text not null check (char_length(name) between 1 and 80),
   chef_name text not null default '',
-  chef_bio text not null default '' check (char_length(chef_bio) <= 400),
+  chef_bio text not null default '' check (char_length(chef_bio) <= 280),
   chef_photo_path text,
   cuisine text not null default '',
   categories text[] not null default '{}',
   logo_path text,
   cover_paths text[] not null default '{}' check (cardinality(cover_paths) <= 3),
-  address text not null default '',
+  -- Public location. The street address lives in restaurant_addresses.
+  neighborhood text not null default '',
   city text not null default '',
   zip text not null default '' check (zip = '' or zip ~ '^[0-9]{5}$'),
-  timezone text not null default 'America/Chicago',
+  timezone text not null default 'America/New_York',
   working_days text[] not null default '{}',
   open_time time,
   close_time time,
@@ -63,6 +64,13 @@ create table public.restaurants (
   rating_sum integer not null default 0,
   rating_count integer not null default 0,
   created_at timestamptz not null default now()
+);
+
+-- Home kitchens keep their street address private. Customers get it on their
+-- order once the chef accepts (see set_order_status).
+create table public.restaurant_addresses (
+  restaurant_id uuid primary key references public.restaurants (id) on delete cascade,
+  address text not null default '' check (char_length(address) <= 200)
 );
 
 create table public.menu_items (
@@ -105,17 +113,19 @@ create table public.orders (
   restaurant_id uuid not null references public.restaurants (id),
   status public.order_status not null default 'placed',
   subtotal_cents integer not null check (subtotal_cents > 0),
-  service_fee_cents integer not null check (service_fee_cents >= 0),
-  delivery_fee_cents integer not null check (delivery_fee_cents >= 0),
+  -- Manna's 5% movement fee, paid by the customer. There is no delivery fee:
+  -- orders are picked up.
+  movement_fee_cents integer not null check (movement_fee_cents >= 0),
   tip_cents integer not null default 0 check (tip_cents >= 0),
   total_cents integer not null,
-  delivery_address text not null check (char_length(delivery_address) between 1 and 200),
+  -- Filled in when the chef accepts; empty until then.
+  pickup_address text not null default '',
   customer_note text not null default '' check (char_length(customer_note) <= 280),
   chef_note text not null default '' check (char_length(chef_note) <= 280),
   scheduled_for timestamptz,
   estimated_ready_at timestamptz not null,
   created_at timestamptz not null default now(),
-  check (total_cents = subtotal_cents + service_fee_cents + delivery_fee_cents + tip_cents)
+  check (total_cents = subtotal_cents + movement_fee_cents + tip_cents)
 );
 create index on public.orders (customer_id, created_at desc);
 create index on public.orders (restaurant_id, created_at desc);
@@ -245,6 +255,7 @@ create trigger restaurants_guard before update on public.restaurants
 
 alter table public.profiles enable row level security;
 alter table public.restaurants enable row level security;
+alter table public.restaurant_addresses enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.restaurant_documents enable row level security;
 alter table public.orders enable row level security;
@@ -264,6 +275,11 @@ create policy "chefs create their kitchen" on public.restaurants
   for insert with check (owner_id = auth.uid() and status = 'draft' and verified = false);
 create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
+
+create policy "chefs manage their address" on public.restaurant_addresses
+  for all using (public.owns_restaurant(restaurant_id)) with check (public.owns_restaurant(restaurant_id));
+create policy "admins read addresses" on public.restaurant_addresses
+  for select using (public.is_admin());
 
 create policy "menus of visible kitchens" on public.menu_items
   for select using (exists (
@@ -308,7 +324,6 @@ create policy "own favorites" on public.favorites
 create function public.place_order(
   p_restaurant_id uuid,
   p_lines jsonb,
-  p_delivery_address text,
   p_customer_note text default '',
   p_scheduled_for timestamptz default null,
   p_tip_cents integer default 0
@@ -322,8 +337,7 @@ declare
   committed integer;
   cook_day date;
   subtotal integer := 0;
-  service_fee integer;
-  delivery_fee constant integer := 299;
+  movement_fee integer;
   new_id uuid;
   ready_at timestamptz;
 begin
@@ -336,9 +350,6 @@ begin
   end if;
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
     raise exception 'Your cart is empty';
-  end if;
-  if nullif(trim(p_delivery_address), '') is null then
-    raise exception 'Add a delivery address';
   end if;
   if p_scheduled_for is null then
     if not public.kitchen_open_at(r, now()) then
@@ -356,11 +367,11 @@ begin
   cook_day := (coalesce(p_scheduled_for, now()) at time zone r.timezone)::date;
 
   insert into public.orders (
-    customer_id, restaurant_id, subtotal_cents, service_fee_cents, delivery_fee_cents,
-    tip_cents, total_cents, delivery_address, customer_note, scheduled_for, estimated_ready_at
+    customer_id, restaurant_id, subtotal_cents, movement_fee_cents,
+    tip_cents, total_cents, customer_note, scheduled_for, estimated_ready_at
   ) values (
     -- Placeholder totals; the real ones are written once every line is priced.
-    auth.uid(), r.id, 1, 0, 0, 0, 1, left(trim(p_delivery_address), 200),
+    auth.uid(), r.id, 1, 0, 0, 1,
     left(coalesce(p_customer_note, ''), 280), p_scheduled_for, ready_at
   ) returning id into new_id;
 
@@ -396,14 +407,14 @@ begin
   if p_tip_cents < 0 or p_tip_cents > subtotal then
     raise exception 'Tip must be between $0 and the food subtotal';
   end if;
-  service_fee := round(subtotal * 0.10);
+  -- Mirrors MOVEMENT_FEE_RATE in src/lib/pricing.ts.
+  movement_fee := round(subtotal * 0.05);
 
   update public.orders set
     subtotal_cents = subtotal,
-    service_fee_cents = service_fee,
-    delivery_fee_cents = delivery_fee,
+    movement_fee_cents = movement_fee,
     tip_cents = p_tip_cents,
-    total_cents = subtotal + service_fee + delivery_fee + p_tip_cents
+    total_cents = subtotal + movement_fee + p_tip_cents
   where id = new_id;
 
   insert into public.order_status_events (order_id, status) values (new_id, 'placed');
@@ -434,6 +445,11 @@ begin
     raise exception 'Can''t move an order from % to %', o.status, p_status;
   end if;
   update public.orders set status = p_status where id = o.id;
+  if p_status = 'accepted' then
+    update public.orders set pickup_address = coalesce(
+      (select a.address from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), '')
+    where id = o.id;
+  end if;
   insert into public.order_status_events (order_id, status) values (o.id, p_status);
 end;
 $$;
@@ -449,7 +465,7 @@ begin
 end;
 $$;
 
--- One review per delivered order, by the person who ordered it.
+-- One review per completed order, by the person who ordered it.
 create function public.add_review(p_order_id uuid, p_stars integer, p_tags text[], p_text text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare
@@ -463,7 +479,7 @@ begin
     raise exception 'Order not found' using errcode = '42501';
   end if;
   if o.status <> 'completed' then
-    raise exception 'You can review an order after it’s delivered';
+    raise exception 'You can review an order after it’s picked up';
   end if;
   if p_stars not between 1 and 5 then
     raise exception 'Stars must be 1 to 5';
@@ -492,24 +508,26 @@ begin
     raise exception 'Only the Manna team can approve kitchens' using errcode = '42501';
   end if;
   if exists (
-    select 1 from unnest(array['home-kitchen-permit', 'food-handler']::public.document_kind[]) k(kind)
+    -- Florida cottage food operations need no state permit, so a permit is
+    -- optional. Every kitchen needs a food handler certificate and a verified ID.
+    select 1 from unnest(array['food-handler', 'government-id']::public.document_kind[]) k(kind)
     where not exists (
       select 1 from public.restaurant_documents d
       where d.restaurant_id = p_restaurant_id and d.kind = k.kind and d.review_status = 'approved'
     )
   ) then
-    raise exception 'Approve the permit and food handler certificate first';
+    raise exception 'Approve the food handler certificate and ID first';
   end if;
   update public.restaurants set verified = true, status = 'live' where id = p_restaurant_id;
 end;
 $$;
 
-revoke all on function public.place_order(uuid, jsonb, text, text, timestamptz, integer) from public;
+revoke all on function public.place_order(uuid, jsonb, text, timestamptz, integer) from public;
 revoke all on function public.set_order_status(uuid, public.order_status) from public;
 revoke all on function public.set_chef_note(uuid, text) from public;
 revoke all on function public.add_review(uuid, integer, text[], text) from public;
 revoke all on function public.approve_restaurant(uuid) from public;
-grant execute on function public.place_order(uuid, jsonb, text, text, timestamptz, integer) to authenticated;
+grant execute on function public.place_order(uuid, jsonb, text, timestamptz, integer) to authenticated;
 grant execute on function public.set_order_status(uuid, public.order_status) to authenticated;
 grant execute on function public.set_chef_note(uuid, text) to authenticated;
 grant execute on function public.add_review(uuid, integer, text[], text) to authenticated;
@@ -517,5 +535,7 @@ grant execute on function public.approve_restaurant(uuid) to authenticated;
 
 grant usage on schema public to anon, authenticated;
 grant select on all tables in schema public to anon, authenticated;
-grant insert, update, delete on public.profiles, public.restaurants, public.menu_items,
-  public.restaurant_documents, public.favorites to authenticated;
+grant insert, update, delete on public.profiles, public.restaurants, public.restaurant_addresses,
+  public.menu_items, public.restaurant_documents, public.favorites to authenticated;
+-- Signed-out visitors never need a kitchen's street address.
+revoke select on public.restaurant_addresses from anon;

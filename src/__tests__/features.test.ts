@@ -17,10 +17,9 @@ function order(partial: Partial<Order>): Order {
     restaurantName: 'R',
     lines: [],
     subtotalCents: 0,
-    serviceFeeCents: 0,
-    deliveryFeeCents: 0,
+    movementFeeCents: 0,
     totalCents: 0,
-    deliveryAddress: '',
+    pickupAddress: '',
     status: 'placed',
     statusHistory: [],
     chefNote: '',
@@ -99,6 +98,14 @@ describe('upgrading saved data from older versions', () => {
     expect(r.verified).toBe(false);
     expect(r.prepMinutes).toBe(30);
     expect(r.menu[0]).toMatchObject({ dietary: [], allergens: [], dailyLimit: null });
+  });
+
+  it('moves old orders to the movement fee and pickup', () => {
+    const old = { ...order({}), movementFeeCents: undefined, pickupAddress: undefined, serviceFeeCents: 250, deliveryAddress: '1 Main' };
+    const o = normalizeOrder(old as unknown as Order);
+    expect(o.movementFeeCents).toBe(250);
+    expect(o.pickupAddress).toBe('');
+    expect('deliveryAddress' in o).toBe(false);
   });
 
   it('drops retired categories from saved kitchens', () => {

@@ -63,7 +63,7 @@ export function ReviewCard({ review, now }: { review: Review; now: Date }) {
   );
 }
 
-/** Bottom sheet for rating a delivered order: stars, quick compliments, a note. */
+/** Bottom sheet for rating a picked-up order: stars, quick compliments, a note. */
 export function RateOrderSheet({
   visible,
   restaurantName,

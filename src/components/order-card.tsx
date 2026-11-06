@@ -8,7 +8,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order } from '@/types';
 import { Icon } from './icon';
 
-/** Gold progress bar across placed → accepted → preparing → ready → delivered. */
+/** Gold progress bar across placed → accepted → preparing → ready → picked up. */
 export function OrderProgress({ order }: { order: Order }) {
   if (order.status === 'declined') return null;
   const step = ORDER_PROGRESS.indexOf(order.status);
@@ -50,7 +50,7 @@ export function OrderCard({
       {order.scheduledFor && active ? (
         <View style={styles.scheduled}>
           <Icon name="calendar-clock" size={14} color={colors.gold} />
-          <Text style={styles.scheduledText}>Scheduled for {formatSlot(order.scheduledFor, new Date())}</Text>
+          <Text style={styles.scheduledText}>Pickup {formatSlot(order.scheduledFor, new Date())}</Text>
         </View>
       ) : null}
       {order.customerNote ? (

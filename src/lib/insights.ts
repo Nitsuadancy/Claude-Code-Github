@@ -111,7 +111,7 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
  * The chef's earnings (food subtotal plus tips, before Manna's fees) for the last 7 days,
- * oldest first. Only delivered orders count.
+ * oldest first. Only completed orders count.
  */
 export function weeklyEarnings(orders: Order[], restaurantId: string, now: Date): DayEarnings[] {
   const days: DayEarnings[] = [];

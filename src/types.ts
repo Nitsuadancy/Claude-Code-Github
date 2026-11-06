@@ -24,7 +24,8 @@ export interface UserProfile {
   email: string;
   phone: string;
   role: Role | null;
-  deliveryAddress: string;
+  /** Where the foodie browses from, e.g. "College Park". Empty until they choose. */
+  neighborhood: string;
   /** Diets the customer follows; dishes that match get a "Fits your diet" tag. */
   dietary?: DietaryTag[];
   /** Allergens the customer avoids; dishes containing them show a warning. */
@@ -81,7 +82,7 @@ export interface Restaurant {
   chefPhotoUri?: string;
   /** Menu item the chef is proudest of; shown first with a "Signature" label. */
   signatureItemId?: string;
-  /** Set once the Manna team has checked the kitchen's permit and certificate. */
+  /** Set once the Manna team has checked the kitchen's certificate and ID. */
   verified: boolean;
   /** Typical minutes from order to ready. */
   prepMinutes: number;
@@ -89,9 +90,12 @@ export interface Restaurant {
   categories: CategoryId[];
   logoUri?: string;
   coverUris: string[];
+  /** Pickup address. Shown to a customer only once the chef accepts their order. */
   address: string;
   city: string;
   areaCode: string;
+  /** Public location, e.g. "College Park". */
+  neighborhood: string;
   workingDays: Weekday[];
   /** 24h "HH:MM". */
   openTime: string;
@@ -145,12 +149,15 @@ export interface Order {
   restaurantName: string;
   lines: OrderLine[];
   subtotalCents: number;
-  serviceFeeCents: number;
-  deliveryFeeCents: number;
+  /** Manna's 5% movement fee, paid by the customer. Card processing comes out of it. */
+  movementFeeCents: number;
+  /** Only on orders from before Manna went pickup-only. */
+  deliveryFeeCents?: number;
   /** Tip for the chef; all of it goes to the kitchen. */
   tipCents?: number;
   totalCents: number;
-  deliveryAddress: string;
+  /** The kitchen's pickup address when the order was placed. */
+  pickupAddress: string;
   status: OrderStatus;
   /** Every status the order has been in, oldest first, with timestamps. */
   statusHistory: OrderStatusChange[];
@@ -160,7 +167,7 @@ export interface Order {
   customerNote: string;
   createdAt: string;
   estimatedReadyAt: string;
-  /** When the customer wants the food, or null for as soon as possible. */
+  /** Pickup time the customer chose, or null for as soon as it's ready. */
   scheduledFor: string | null;
 }
 
