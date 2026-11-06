@@ -1,6 +1,6 @@
 # Demo photo credits
 
-These photos illustrate the fictional demo kitchens. They come from Wikimedia Commons under the licenses below and were cropped to 3:2, resized and lightly color-graded. Replace them with chefs' own photos before launch.
+These photos illustrate the fictional demo kitchens. They come from Wikimedia Commons under the licenses below and were cropped close on the food, resized to 3:2 and given one shared color grade (warmer, softer highlights, a light vignette and grain) so they read as one series. Replace them with chefs' own photos before launch.
 
 | File | Original | Author | License |
 |---|---|---|---|
@@ -8,7 +8,6 @@ These photos illustrate the fictional demo kitchens. They come from Wikimedia Co
 | `cookies.jpg` | [Cherry chocolate chip cookies on a baking sheet.jpg](https://commons.wikimedia.org/wiki/File:Cherry_chocolate_chip_cookies_on_a_baking_sheet.jpg) | Infrogmation of New Orleans | CC BY-SA 4.0 |
 | `olive-oil-cake.jpg` | [Lemon and polenta cake.jpg](https://commons.wikimedia.org/wiki/File:Lemon_and_polenta_cake.jpg) | Alpha from Melbourne, Australia | CC BY-SA 2.0 |
 | `biscotti.jpg` | [Biscotti 1.jpg](https://commons.wikimedia.org/wiki/File:Biscotti_1.jpg) | Mokkie | CC BY-SA 4.0 |
-| `country-loaf.jpg` | [Herculaneum loaf 2.jpg](https://commons.wikimedia.org/wiki/File:Herculaneum_loaf_2.jpg) | Shisma | CC BY 4.0 |
 | `gizzada.jpg` | [Jamaican Gizzada.jpg](https://commons.wikimedia.org/wiki/File:Jamaican_Gizzada.jpg) | Xaymacan | CC BY-SA 4.0 |
 | `brownies.jpg` | [Brownie IMG 001.jpg](https://commons.wikimedia.org/wiki/File:Brownie_IMG_001.jpg) | Phadke09 | CC BY-SA 4.0 |
 | `granola.jpg` | [Homemade granola (12272245254).jpg](https://commons.wikimedia.org/wiki/File:Homemade_granola_(12272245254).jpg) | Karen and Brad Emerson | CC BY 2.0 |
@@ -18,3 +17,4 @@ These photos illustrate the fictional demo kitchens. They come from Wikimedia Co
 | `apricot-jam.jpg` | [-2020-11-14 Homemade Apricot Jam, Trimingham.JPG](https://commons.wikimedia.org/wiki/File:-2020-11-14_Homemade_Apricot_Jam,_Trimingham.JPG) | Kolforn | CC BY-SA 4.0 |
 | `pound-cake.jpg` | [Black tea pound cake (1).jpg](https://commons.wikimedia.org/wiki/File:Black_tea_pound_cake_(1).jpg) | Roozitaa | CC BY-SA 4.0 |
 | `conchas.jpg` | [Concha (pan dulce mexicano) 01.JPG](https://commons.wikimedia.org/wiki/File:Concha_(pan_dulce_mexicano)_01.JPG) | ProtoplasmaKid | CC BY-SA 4.0 |
+| `country-loaf.jpg` | [6312 sourdough bread.jpg](https://commons.wikimedia.org/wiki/File:6312_sourdough_bread.jpg) | Virtual-Pano | CC BY-SA 4.0 |
