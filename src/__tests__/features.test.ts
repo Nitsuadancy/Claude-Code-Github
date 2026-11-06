@@ -9,6 +9,7 @@ import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
 import { estimateReadyAt, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
+import { firstOrderSteps } from '@/lib/launch';
 import { INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
 import { withReviews } from '@/lib/reviews';
 import type { Order, Restaurant } from '@/types';
@@ -274,5 +275,22 @@ describe('reporting a review', () => {
     s = reducer(s, { type: 'reportReview', reviewId: 'r1' });
     s = reducer(s, { type: 'reportReview', reviewId: 'r1' });
     expect(s.reportedReviewIds).toEqual(['r1']);
+  });
+});
+
+describe('first-order checklist', () => {
+  it('ticks off photos, story and sharing', () => {
+    const kitchen = { ...SAMPLE_RESTAURANTS[0], chefBio: '', menu: SAMPLE_RESTAURANTS[0].menu.map((m) => ({ ...m, photoUri: undefined })) };
+    expect(firstOrderSteps(kitchen, []).map((s) => s.done)).toEqual([false, false, false, false]);
+    const ready = firstOrderSteps(SAMPLE_RESTAURANTS[0], ['link']);
+    expect(ready.map((s) => [s.id, s.done])).toEqual([
+      ['photos', true],
+      ['bio', true],
+      ['story', false],
+      ['link', true],
+    ]);
+    let s = reducer(INITIAL_STATE, { type: 'markShared', step: 'story' });
+    s = reducer(s, { type: 'markShared', step: 'story' });
+    expect(s.sharedSteps).toEqual(['story']);
   });
 });

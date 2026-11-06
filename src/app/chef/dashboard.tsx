@@ -6,6 +6,7 @@ import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
 import { PrepList, WeeklyChart } from '@/components/chef-insights';
 import { OrderCard } from '@/components/order-card';
+import { FirstOrders } from '@/components/first-orders';
 import { TodayMenu } from '@/components/today-menu';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
 import {
@@ -20,10 +21,12 @@ import {
 } from '@/components/ui';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
+import { firstOrderSteps, type FirstOrderStep } from '@/lib/launch';
 import { formatTime, isOpenAt } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
+import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES, storedKitchen } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
@@ -48,6 +51,18 @@ export default function ChefDashboard() {
   const prep = prepList(state.orders, restaurant.id);
   const week = weeklyEarnings(state.orders, restaurant.id, new Date());
   const live = restaurant.acceptingOrders && inHours;
+  // Until the first order arrives, a checklist replaces the empty sales charts.
+  const isNew = orders.length === 0;
+  const steps = firstOrderSteps(restaurant, state.sharedSteps);
+  const onStep = (step: FirstOrderStep) => {
+    if (step.id === 'photos') router.push('/chef/setup/menu');
+    else if (step.id === 'bio') router.push('/chef/setup/information');
+    else if (step.id === 'story') router.push('/chef/share');
+    else {
+      dispatch({ type: 'markShared', step: 'link' });
+      void shareKitchen(restaurant);
+    }
+  };
 
   return (
     <Screen>
@@ -96,11 +111,15 @@ export default function ChefDashboard() {
           />
         </View>
 
-        <View style={styles.stats}>
-          <Stat label="Active" value={String(active.length)} />
-          <Stat label="Today" value={formatCents(todaysSales)} />
-          <Stat label="All time" value={String(orders.length)} />
-        </View>
+        {isNew ? (
+          <FirstOrders steps={steps} onStep={onStep} />
+        ) : (
+          <View style={styles.stats}>
+            <Stat label="Active" value={String(active.length)} />
+            <Stat label="Today" value={formatCents(todaysSales)} />
+            <Stat label="All time" value={String(orders.length)} />
+          </View>
+        )}
 
         <TodayMenu
           restaurant={restaurant}
@@ -112,20 +131,22 @@ export default function ChefDashboard() {
           onEdit={() => router.push('/chef/setup/menu')}
         />
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Bring your Instagram followers. Make a Story with your QR code"
-          onPress={() => router.push('/chef/share')}
-          style={({ pressed }) => [styles.growth, pressed && { opacity: 0.8 }]}>
-          <View style={styles.growthIcon}>
-            <Icon name="export-variant" size={20} color={colors.bg} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.growthTitle}>Bring your followers</Text>
-            <Text style={styles.growthBody}>Make an Instagram Story with your QR code.</Text>
-          </View>
-          <Icon name="chevron-right" size={20} color={colors.textMuted} />
-        </Pressable>
+        {isNew ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Bring your Instagram followers. Make a Story with your QR code"
+            onPress={() => router.push('/chef/share')}
+            style={({ pressed }) => [styles.growth, pressed && { opacity: 0.8 }]}>
+            <View style={styles.growthIcon}>
+              <Icon name="export-variant" size={20} color={colors.bg} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.growthTitle}>Bring your followers</Text>
+              <Text style={styles.growthBody}>Make an Instagram Story with your QR code.</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={colors.textMuted} />
+          </Pressable>
+        )}
 
         <SectionHeader eyebrow="Live" title="Incoming orders" />
         {active.length === 0 ? (
@@ -184,7 +205,7 @@ export default function ChefDashboard() {
           </>
         ) : null}
 
-        <WeeklyChart days={week} />
+        {isNew ? null : <WeeklyChart days={week} />}
 
         <SectionHeader title="Reviews" />
         {reviews.length ? (

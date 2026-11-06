@@ -1,3 +1,4 @@
+import type { SharedStep } from '@/lib/launch';
 import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
@@ -35,6 +36,8 @@ export interface AppState {
   growerApplication: GrowerApplication | null;
   /** Reviews this person reported. They are hidden here and sent to Manna's team to check. */
   reportedReviewIds: string[];
+  /** Sharing a new cook has done, for the "Get your first order" checklist. */
+  sharedSteps: SharedStep[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -57,6 +60,7 @@ export const INITIAL_STATE: AppState = {
   dietNudgeDismissed: false,
   growerApplication: null,
   reportedReviewIds: [],
+  sharedSteps: [],
 };
 
 export type Action =
@@ -88,6 +92,7 @@ export type Action =
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
   | { type: 'reportReview'; reviewId: string }
+  | { type: 'markShared'; step: SharedStep }
   | { type: 'markActivitySeen'; at: string }
   | { type: 'rememberSearch'; query: string }
   | { type: 'clearSearches' }
@@ -288,6 +293,10 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'reportReview':
       if (state.reportedReviewIds.includes(action.reviewId)) return state;
       return { ...state, reportedReviewIds: [...state.reportedReviewIds, action.reviewId] };
+
+    case 'markShared':
+      if (state.sharedSteps.includes(action.step)) return state;
+      return { ...state, sharedSteps: [...state.sharedSteps, action.step] };
 
     case 'markActivitySeen':
       return { ...state, activitySeenAt: action.at };

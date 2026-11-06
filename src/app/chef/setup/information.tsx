@@ -247,7 +247,7 @@ export default function RestaurantInformation() {
                 label="Neighborhood"
                 placeholder="Choose your neighborhood"
                 icon="map-marker-radius"
-                value={draft.neighborhood}
+                value={draft.neighborhood || null}
                 onPress={() => setSheet('neighborhood')}
                 error={errors.neighborhood}
               />

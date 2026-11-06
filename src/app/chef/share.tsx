@@ -9,7 +9,7 @@ import { notify } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import { kitchenShareMessage } from '@/lib/menu';
 import { shareKitchen } from '@/lib/share';
-import { useMyRestaurant } from '@/state/store';
+import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
 
 const TIPS = [
@@ -21,6 +21,7 @@ const TIPS = [
 /** Turns a chef's kitchen into a ready-to-post Instagram Story, so their followers order on Manna. */
 export default function ShareKitchen() {
   const restaurant = useMyRestaurant();
+  const { dispatch } = useStore();
   const { width } = useWindowDimensions();
   const card = useRef<ComponentRef<typeof View>>(null);
   const [busy, setBusy] = useState(false);
@@ -37,6 +38,7 @@ export default function ShareKitchen() {
       if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing unavailable');
       haptics.success();
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `${restaurant.name} on Manna`, UTI: 'public.png' });
+      dispatch({ type: 'markShared', step: 'story' });
     } catch {
       notify('Open Manna on your phone', 'Saving the Story image works in the Manna app on your phone. You can still share your link.');
     } finally {
@@ -62,7 +64,14 @@ export default function ShareKitchen() {
 
         <View style={{ gap: spacing.sm }}>
           <GoldButton title="Share Story image" icon="export-variant" loading={busy} onPress={shareImage} />
-          <GoldButton title="Share my kitchen link" variant="outline" onPress={() => shareKitchen(restaurant)} />
+          <GoldButton
+            title="Share my kitchen link"
+            variant="outline"
+            onPress={() => {
+              dispatch({ type: 'markShared', step: 'link' });
+              void shareKitchen(restaurant);
+            }}
+          />
         </View>
 
         <View style={styles.tips}>
