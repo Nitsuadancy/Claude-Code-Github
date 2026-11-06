@@ -125,6 +125,16 @@ select public.set_order_status((select id from first_order), 'completed');
 select pg_temp.check((select count(*) = 5 from public.order_status_events where order_id = (select id from first_order)), 'five events');
 select pg_temp.expect_error($$ select public.set_order_status((select id from first_order), 'declined') $$, 'can''t move');
 
+-- Grower waitlist: anyone can join, only admins can read ---------------------
+select pg_temp.act_as(null);
+insert into public.grower_waitlist (business_name, offering, contact)
+  values ('Lake Ivanhoe Honey', 'Wildflower honey', 'bees@example.com');
+select pg_temp.check((select count(*) = 0 from public.grower_waitlist), 'visitors cannot read the waitlist');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select count(*) = 0 from public.grower_waitlist), 'customers cannot read the waitlist');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) = 1 from public.grower_waitlist), 'admins read the waitlist');
+
 -- Customer reviews, once ------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check((select pickup_address = '12 Elm St, Orlando' from public.orders where id = (select id from first_order)),

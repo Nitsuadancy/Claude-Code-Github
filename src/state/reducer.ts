@@ -1,6 +1,7 @@
 import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
+  GrowerApplication,
   Order,
   OrderStatus,
   Restaurant,
@@ -30,6 +31,8 @@ export interface AppState {
   recentSearches: string[];
   /** Hides the "Personalize your feed" card on home. */
   dietNudgeDismissed: boolean;
+  /** Set once someone on this device joins the Farmer & Artisan waitlist. */
+  growerApplication: GrowerApplication | null;
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -50,11 +53,13 @@ export const INITIAL_STATE: AppState = {
   activitySeenAt: null,
   recentSearches: [],
   dietNudgeDismissed: false,
+  growerApplication: null,
 };
 
 export type Action =
   | { type: 'hydrate'; state: Partial<PersistedState> | null }
   | { type: 'completeWelcome' }
+  | { type: 'joinGrowerWaitlist'; application: GrowerApplication }
   | { type: 'completeCoachMarks' }
   | { type: 'chooseRole'; role: Role }
   | { type: 'signIn'; userId: string; phone: string }
@@ -100,6 +105,9 @@ export function reducer(state: AppState, action: Action): AppState {
 
     case 'completeWelcome':
       return { ...state, hasSeenWelcome: true };
+
+    case 'joinGrowerWaitlist':
+      return { ...state, growerApplication: action.application };
 
     case 'completeCoachMarks':
       return { ...state, hasSeenCoachMarks: true };

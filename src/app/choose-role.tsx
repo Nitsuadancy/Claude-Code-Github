@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -8,7 +9,9 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Role } from '@/types';
 import { Icon } from '@/components/icon';
 
-const OPTIONS: { role: Role; title: string; tagline: string; body: string; icon: IconName }[] = [
+type Choice = Role | 'grower';
+
+const OPTIONS: { role: Choice; title: string; tagline: string; body: string; icon: IconName }[] = [
   {
     role: 'foodie',
     title: 'Foodie',
@@ -23,14 +26,25 @@ const OPTIONS: { role: Role; title: string; tagline: string; body: string; icon:
     body: 'Set your menu and your hours. No lease or storefront needed.',
     icon: 'chef-hat',
   },
+  {
+    role: 'grower',
+    title: 'Farmer or Artisan',
+    tagline: 'Money stays in your zip code.',
+    body: 'Sell farm-direct to neighbors and home cooks. Manna Mart opens soon: join the waitlist.',
+    icon: 'wheat',
+  },
 ];
 
 export default function ChooseRole() {
   const { state, dispatch } = useStore();
-  const [role, setRole] = useState<Role | null>(state.user?.role ?? state.pendingRole);
+  const [role, setRole] = useState<Choice | null>(state.user?.role ?? state.pendingRole);
 
   const onContinue = () => {
     if (!role) return;
+    if (role === 'grower') {
+      router.push('/grow');
+      return;
+    }
     dispatch({ type: 'chooseRole', role });
     resetTo(state.user ? '/' : '/login');
   };

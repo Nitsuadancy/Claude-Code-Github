@@ -73,6 +73,17 @@ create table public.restaurant_addresses (
   address text not null default '' check (char_length(address) <= 200)
 );
 
+-- Farmers and artisans waiting for Manna Mart. Anyone may sign up; only the
+-- Manna team can read the list.
+create table public.grower_waitlist (
+  id uuid primary key default gen_random_uuid(),
+  business_name text not null check (char_length(business_name) between 1 and 80),
+  offering text not null check (char_length(offering) between 1 and 280),
+  neighborhood text not null default '' check (char_length(neighborhood) <= 80),
+  contact text not null check (char_length(contact) between 3 and 120),
+  created_at timestamptz not null default now()
+);
+
 create table public.menu_items (
   id uuid primary key default gen_random_uuid(),
   restaurant_id uuid not null references public.restaurants (id) on delete cascade,
@@ -256,6 +267,7 @@ create trigger restaurants_guard before update on public.restaurants
 alter table public.profiles enable row level security;
 alter table public.restaurants enable row level security;
 alter table public.restaurant_addresses enable row level security;
+alter table public.grower_waitlist enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.restaurant_documents enable row level security;
 alter table public.orders enable row level security;
@@ -275,6 +287,11 @@ create policy "chefs create their kitchen" on public.restaurants
   for insert with check (owner_id = auth.uid() and status = 'draft' and verified = false);
 create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
+
+create policy "anyone joins the grower waitlist" on public.grower_waitlist
+  for insert with check (true);
+create policy "admins read the grower waitlist" on public.grower_waitlist
+  for select using (public.is_admin());
 
 create policy "chefs manage their address" on public.restaurant_addresses
   for all using (public.owns_restaurant(restaurant_id)) with check (public.owns_restaurant(restaurant_id));
@@ -539,3 +556,4 @@ grant insert, update, delete on public.profiles, public.restaurants, public.rest
   public.menu_items, public.restaurant_documents, public.favorites to authenticated;
 -- Signed-out visitors never need a kitchen's street address.
 revoke select on public.restaurant_addresses from anon;
+grant insert on public.grower_waitlist to anon, authenticated;

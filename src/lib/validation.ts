@@ -35,3 +35,11 @@ export function isValidZip(value: string): boolean {
 export function newId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
+
+/** True for a US mobile number or an email address. */
+export function isValidContact(value: string): boolean {
+  const v = value.trim();
+  if (v.includes('@')) return isValidEmail(v);
+  const d = digitsOnly(v);
+  return d.length === 10 || (d.length === 11 && d.startsWith('1'));
+}

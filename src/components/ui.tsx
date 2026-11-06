@@ -228,7 +228,8 @@ export function GoldButton({
       disabled={disabled || loading}
       style={({ pressed }) => [
         fullWidth ? { alignSelf: 'stretch' } : { alignSelf: 'center', minWidth: 220 },
-        primary && !disabled && goldGlow,
+        // The radius keeps the glow's shape round on web, where shadows follow the box.
+        primary && !disabled && [goldGlow, { borderRadius: radius.pill }],
         disabled && { opacity: 0.4 },
         pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
         style,

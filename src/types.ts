@@ -171,6 +171,18 @@ export interface Order {
   scheduledFor: string | null;
 }
 
+/** A farmer or artisan asking to sell on Manna Mart before it opens. */
+export interface GrowerApplication {
+  id: string;
+  businessName: string;
+  /** What they grow or make, in their words. */
+  offering: string;
+  neighborhood: string;
+  /** Phone number or email. */
+  contact: string;
+  createdAt: string;
+}
+
 export interface Review {
   id: string;
   orderId: string;

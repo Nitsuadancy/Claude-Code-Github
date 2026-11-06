@@ -4,7 +4,8 @@ import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { allergenSentence } from '@/lib/dietary';
 import { remainingToday, soldToday, stockLabel } from '@/lib/limits';
 import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/migrate';
-import { estimateReadyAt } from '@/lib/orders';
+import { estimateReadyAt, isAddressShared } from '@/lib/orders';
+import { isValidContact } from '@/lib/validation';
 import { INITIAL_STATE, reducer } from '@/state/reducer';
 import type { Order, Restaurant } from '@/types';
 
@@ -136,5 +137,38 @@ describe('sample kitchens', () => {
       expect(r.verified).toBe(true);
       expect(r.menu.some((m) => m.id === r.signatureItemId)).toBe(true);
     }
+  });
+});
+
+describe('pickup', () => {
+  it('shares the kitchen address only after the chef says yes', () => {
+    expect(isAddressShared('placed')).toBe(false);
+    expect(isAddressShared('declined')).toBe(false);
+    expect(isAddressShared('accepted')).toBe(true);
+    expect(isAddressShared('completed')).toBe(true);
+  });
+});
+
+describe('farmer and artisan waitlist', () => {
+  it('accepts a phone number or an email', () => {
+    expect(isValidContact('(407) 555-0100')).toBe(true);
+    expect(isValidContact('+1 407 555 0100')).toBe(true);
+    expect(isValidContact('grower@example.com')).toBe(true);
+    expect(isValidContact('407-555')).toBe(false);
+    expect(isValidContact('grower@')).toBe(false);
+  });
+
+  it('remembers the application on this device', () => {
+    const application = {
+      id: 'g1',
+      businessName: 'Lake Ivanhoe Honey',
+      offering: 'Wildflower honey',
+      neighborhood: 'Ivanhoe Village',
+      contact: 'bees@example.com',
+      createdAt: '2026-11-06T12:00:00.000Z',
+    };
+    expect(INITIAL_STATE.growerApplication).toBeNull();
+    const s = reducer(INITIAL_STATE, { type: 'joinGrowerWaitlist', application });
+    expect(s.growerApplication).toEqual(application);
   });
 });
