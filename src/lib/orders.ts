@@ -29,6 +29,21 @@ export function endedWithoutSale(status: OrderStatus): boolean {
   return status === 'declined' || status === 'cancelled';
 }
 
+/** After the order is ready, or once a bake day's pickup window opens, the customer can say "I'm here". */
+export function canSayArrived(
+  order: { status: OrderStatus; scheduledFor: string | null; pickupBy?: string; arrivedAt?: string },
+  now: Date,
+): boolean {
+  if (order.arrivedAt || !isActive(order.status) || order.status === 'placed') return false;
+  if (order.status === 'ready') return true;
+  return !!order.pickupBy && !!order.scheduledFor && now >= new Date(order.scheduledFor) && now <= new Date(order.pickupBy);
+}
+
+/** Grace period after the pickup window before an uncollected order counts as a no-show. */
+export const NO_SHOW_GRACE_MINUTES = 30;
+/** On-demand orders should be picked up within this long of being ready. */
+export const PICKUP_WITHIN_HOURS = 2;
+
 /** Customers can cancel only while the kitchen hasn't said yes yet. */
 export function canCustomerCancel(status: OrderStatus): boolean {
   return status === 'placed';

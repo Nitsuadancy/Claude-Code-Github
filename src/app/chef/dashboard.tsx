@@ -47,7 +47,10 @@ export default function ChefDashboard() {
   if (!restaurant || restaurant.status !== 'live') return <Redirect href="/chef/setup" />;
 
   const orders = state.orders.filter((o) => o.restaurantId === restaurant.id);
-  const active = orders.filter((o) => isActive(o.status));
+  // Customers waiting at the door come first.
+  const active = orders
+    .filter((o) => isActive(o.status))
+    .sort((a, b) => Number(!!b.arrivedAt) - Number(!!a.arrivedAt));
   const past = orders.filter((o) => !isActive(o.status));
   const today = new Date().toDateString();
   const todaysSales = orders
@@ -217,6 +220,12 @@ export default function ChefDashboard() {
         ) : null}
         {active.map((order) => (
           <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'}>
+            {order.arrivedAt ? (
+              <View style={styles.arrived}>
+                <Icon name="map-marker-outline" size={16} color={colors.bg} />
+                <Text style={styles.arrivedText}>Here for pickup · {formatClock(order.arrivedAt)}</Text>
+              </View>
+            ) : null}
             {order.scheduledFor ? null : (
               <View style={styles.pickup}>
                 <Icon name="clock-outline" size={16} color={colors.textMuted} />
@@ -440,6 +449,16 @@ const styles = StyleSheet.create({
   growthTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
   growthBody: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
+  arrived: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.success,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  arrivedText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.bg },
   statusCard: {
     flexDirection: 'row',
     alignItems: 'center',

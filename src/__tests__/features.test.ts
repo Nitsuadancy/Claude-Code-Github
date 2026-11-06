@@ -7,7 +7,7 @@ import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/m
 import { formatDays } from '@/lib/hours';
 import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
-import { estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/orders';
+import { canSayArrived, estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
 import { accentColor } from '@/data/accents';
 import { cleanInstagram, visibleUpdate } from '@/lib/kitchen-style';
@@ -23,7 +23,7 @@ import {
 import { firstOrderSteps } from '@/lib/launch';
 import { moveItem } from '@/lib/menu';
 import { orderingLine, takingOrders } from '@/lib/ordering';
-import { INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
+import { type AppState, INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
 import { withReviews } from '@/lib/reviews';
 import type { Order, Restaurant } from '@/types';
 
@@ -413,5 +413,25 @@ describe('next bake day on the dashboard', () => {
     expect(nextBakeDayStatus(kitchen, orders, new Date(2026, 10, 6, 21))?.phase).toBe('baking');
     expect(nextBakeDayStatus(kitchen, orders, new Date(2026, 10, 7, 10))?.phase).toBe('pickup');
     expect(nextBakeDayStatus({ ...kitchen, bakeDays: [] }, orders, new Date(2026, 10, 5))).toBeNull();
+  });
+});
+
+describe('pickup handoff', () => {
+  it('lets the customer say they are here once the order is ready or the pickup window opens', () => {
+    const now = new Date('2026-11-07T15:30:00Z');
+    expect(canSayArrived({ status: 'ready', scheduledFor: null }, now)).toBe(true);
+    expect(canSayArrived({ status: 'placed', scheduledFor: null }, now)).toBe(false);
+    expect(canSayArrived({ status: 'preparing', scheduledFor: null }, now)).toBe(false);
+    const bake = { status: 'accepted' as const, scheduledFor: '2026-11-07T15:00:00Z', pickupBy: '2026-11-07T18:00:00Z' };
+    expect(canSayArrived(bake, now)).toBe(true);
+    expect(canSayArrived(bake, new Date('2026-11-07T14:00:00Z'))).toBe(false);
+    expect(canSayArrived({ ...bake, arrivedAt: '2026-11-07T15:10:00Z' }, now)).toBe(false);
+
+    const ready: Order = { ...order({ id: 'r', customerId: 'c1', restaurantId: 'k' }), status: 'ready' };
+    let s: AppState = { ...INITIAL_STATE, orders: [ready] };
+    s = reducer(s, { type: 'markArrived', orderId: 'r', customerId: 'someone-else' });
+    expect(s.orders[0].arrivedAt).toBeUndefined();
+    s = reducer(s, { type: 'markArrived', orderId: 'r', customerId: 'c1', at: '2026-11-07T15:31:00Z' });
+    expect(s.orders[0].arrivedAt).toBe('2026-11-07T15:31:00Z');
   });
 });

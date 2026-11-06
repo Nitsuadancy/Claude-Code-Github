@@ -1,5 +1,5 @@
 import type { SharedStep } from '@/lib/launch';
-import { canCustomerCancel } from '@/lib/orders';
+import { canCustomerCancel, isActive } from '@/lib/orders';
 import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
@@ -91,6 +91,7 @@ export type Action =
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
   | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'cancelOrder'; orderId: string; customerId: string; at?: string }
+  | { type: 'markArrived'; orderId: string; customerId: string; at?: string }
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
   | { type: 'reportReview'; reviewId: string }
@@ -258,6 +259,16 @@ export function reducer(state: AppState, action: Action): AppState {
                   { status: action.status, at: action.at ?? new Date().toISOString() },
                 ],
               }
+            : o,
+        ),
+      };
+
+    case 'markArrived':
+      return {
+        ...state,
+        orders: state.orders.map((o) =>
+          o.id === action.orderId && o.customerId === action.customerId && !o.arrivedAt && isActive(o.status) && o.status !== 'placed'
+            ? { ...o, arrivedAt: action.at ?? new Date().toISOString() }
             : o,
         ),
       };

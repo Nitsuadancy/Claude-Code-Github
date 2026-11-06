@@ -20,6 +20,7 @@ import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import {
   canCustomerCancel,
+  canSayArrived,
   endedWithoutSale,
   formatClock,
   formatOrderTime,
@@ -29,6 +30,7 @@ import {
   ORDER_HEADLINE,
   ORDER_PROGRESS,
   ORDER_STATUS_LABEL,
+  PICKUP_WITHIN_HOURS,
 } from '@/lib/orders';
 import { publicName } from '@/lib/reviews';
 import { formatPickup } from '@/lib/schedule';
@@ -171,18 +173,50 @@ export default function OrderTracking() {
           ]}
           totalCents={order.totalCents}
           footer={
-            <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
-              <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
-              <Body muted style={{ flex: 1, fontSize: 13 }}>
-                {isAddressShared(order.status) && order.pickupAddress
-                  ? `Pick up at ${order.pickupAddress}`
-                  : declined
-                    ? 'No pickup needed.'
-                    : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
-              </Body>
+            <View style={{ gap: spacing.sm }}>
+              <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
+                <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
+                <Body muted style={{ flex: 1, fontSize: 13 }}>
+                  {isAddressShared(order.status) && order.pickupAddress
+                    ? `Pick up at ${order.pickupAddress}`
+                    : declined
+                      ? 'No pickup needed.'
+                      : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
+                </Body>
+              </View>
+              {isAddressShared(order.status) && order.pickupInstructions ? (
+                <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
+                  <Icon name="home-heart" size={16} color={colors.textMuted} />
+                  <Body style={{ flex: 1, fontSize: 13 }}>{order.pickupInstructions}</Body>
+                </View>
+              ) : null}
+              {isActive(order.status) ? (
+                <Body muted style={{ fontSize: 12, lineHeight: 17 }}>
+                  {order.pickupBy
+                    ? `Pick up by ${formatClock(order.pickupBy)}.`
+                    : `Pick up within ${PICKUP_WITHIN_HOURS} hours of your order being ready.`}{' '}
+                  Food that isn’t picked up is still paid to {chefName}, since it was made for you.
+                </Body>
+              ) : null}
             </View>
           }
         />
+
+        {order.customerId === state.user?.id && canSayArrived(order, new Date()) ? (
+          <GoldButton
+            title="I’m here"
+            icon="map-marker-outline"
+            onPress={() => {
+              haptics.success();
+              dispatch({ type: 'markArrived', orderId: order.id, customerId: order.customerId });
+            }}
+          />
+        ) : null}
+        {order.arrivedAt && isActive(order.status) ? (
+          <Body muted style={{ textAlign: 'center' }}>
+            {chefName} knows you’re here. Hang tight.
+          </Body>
+        ) : null}
 
         {canCustomerCancel(order.status) && order.customerId === state.user?.id ? (
           <GoldButton
