@@ -7,6 +7,7 @@ import { Ticket } from '@/components/ticket';
 import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { OptionSheet } from '@/components/option-sheet';
+import { SwipeToRemove } from '@/components/swipe-to-remove';
 import {
   Body,
   FieldLabel,
@@ -137,7 +138,10 @@ export default function Cart() {
 
         <View>
           {totals.lines.map((line, i) => (
-            <View key={line.itemId}>
+            <SwipeToRemove
+              key={line.itemId}
+              label={line.name}
+              onRemove={() => dispatch({ type: 'setCartQuantity', itemId: line.itemId, quantity: 0 })}>
               <View style={[styles.line, i > 0 && styles.lineRule]}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.itemName}>{line.name}</Text>
@@ -165,7 +169,7 @@ export default function Cart() {
                   </Pressable>
                 </View>
               </View>
-            </View>
+            </SwipeToRemove>
           ))}
         </View>
 
@@ -327,9 +331,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: { padding: spacing.lg, gap: spacing.lg },
-  line: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.bg,
+  },
   kitchen: { fontFamily: fonts.displayItalic, fontSize: 18, color: colors.gold },
-  lineRule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: spacing.md, marginTop: spacing.sm },
+  lineRule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   itemName: { fontFamily: fonts.display, fontSize: 19, color: colors.ivory },
   each: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   stepper: {

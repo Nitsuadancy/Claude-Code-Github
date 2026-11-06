@@ -7,6 +7,7 @@ import { DarkTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-r
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DialogHost } from '@/components/dialog-host';
@@ -78,10 +79,12 @@ export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider style={{ backgroundColor: colors.bg }}>
-      <StoreProvider>
-        <AppStack />
-      </StoreProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SafeAreaProvider style={{ backgroundColor: colors.bg }}>
+        <StoreProvider>
+          <AppStack />
+        </StoreProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
