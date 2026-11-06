@@ -57,6 +57,8 @@ Then do one of these:
 
 See [docs/IPHONE.md](docs/IPHONE.md): build in the cloud with Expo and install through TestFlight. No Mac needed.
 
+The App Store listing (name, description, keywords, privacy answers, review notes) is in [docs/APP_STORE.md](docs/APP_STORE.md), and the screenshots are in `store/screenshots/`.
+
 ## Recruitment flyer and Instagram post
 
 `node marketing/render.js https://your-signup-link` renders a print-ready flyer (`marketing/out/flyer.pdf`) and an Instagram post (`marketing/out/instagram-post.png`) with a QR code to that link.
