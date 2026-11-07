@@ -16,6 +16,9 @@ import { StoreProvider, useStore } from '@/state/store';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// The launch screen uses the app's own background, so fading it out reveals
+// the first screen without a flash (iOS; Android's system splash has its own exit).
+SplashScreen.setOptions({ duration: 350, fade: true });
 
 const navTheme = {
   ...DarkTheme,
