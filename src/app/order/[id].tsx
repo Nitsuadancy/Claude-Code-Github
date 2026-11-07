@@ -7,6 +7,7 @@ import { captureRef } from 'react-native-view-shot';
 import { ChefAvatar } from '@/components/chef';
 import { Pulse } from '@/components/motion';
 import { OrderCelebration } from '@/components/order-celebration';
+import { MessageButton } from '@/components/message-button';
 import { OrderHelpSheet } from '@/components/order-help-sheet';
 import { RateOrderSheet, Stars } from '@/components/reviews';
 import { Ticket } from '@/components/ticket';
@@ -37,6 +38,7 @@ import {
   ORDER_STATUS_LABEL,
   PICKUP_WITHIN_HOURS,
 } from '@/lib/orders';
+import { chatState } from '@/lib/order-chat';
 import { directionsUrl, helpTopicsFor, pickupEvent } from '@/lib/order-extras';
 import { publicName } from '@/lib/reviews';
 import { formatPickup } from '@/lib/schedule';
@@ -80,6 +82,9 @@ export default function OrderTracking() {
   const addressShared = isAddressShared(order.status) && order.pickupAddress.trim().length > 0;
   const helpTopics = helpTopicsFor(order.status);
   const helpLabel = helpTopics.find((t) => t.kind === order.issue?.kind)?.label;
+  const chat = chatState(order, new Date());
+  const hasMessages = state.messages.some((m) => m.orderId === order.id);
+  const openChat = () => router.push({ pathname: '/chat/[orderId]', params: { orderId: order.id } });
 
   const saveReceipt = async () => {
     setSavingReceipt(true);
@@ -254,6 +259,14 @@ export default function OrderTracking() {
           </View>
         ) : null}
 
+        {mine && (chat === 'open' || hasMessages) ? (
+          <MessageButton
+            orderId={order.id}
+            label={chat === 'open' ? `Message ${chefName}` : 'View messages'}
+            onPress={openChat}
+          />
+        ) : null}
+
         {order.customerId === state.user?.id && canSayArrived(order, new Date()) ? (
           <GoldButton
             title="I’m here"
@@ -317,6 +330,15 @@ export default function OrderTracking() {
       <OrderHelpSheet
         visible={helping}
         topics={helpTopics}
+        onMessageKitchen={
+          chat === 'open'
+            ? () => {
+                setHelping(false);
+                openChat();
+              }
+            : undefined
+        }
+        kitchenName={chefName}
         onClose={() => setHelping(false)}
         onSend={(kind, note) => {
           haptics.success();

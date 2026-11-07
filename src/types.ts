@@ -254,6 +254,29 @@ export type OrderIssueKind =
   | 'charge'
   | 'other';
 
+/** Which side of an order a chat message comes from. */
+export type ChatSide = 'customer' | 'kitchen';
+
+/**
+ * A message in an order's chat between the customer and the kitchen, for
+ * changes and timing ("running 10 minutes late", "can I swap the scones?").
+ */
+export interface OrderMessage {
+  id: string;
+  orderId: string;
+  senderId: string;
+  side: ChatSide;
+  text: string;
+  at: string;
+}
+
+/** One person stopped messages from another. Either side can block. */
+export interface Block {
+  blockerId: string;
+  blockedId: string;
+  at: string;
+}
+
 /** "Need help with this order?": what went wrong, in the customer's words, for Manna's support team. */
 export interface OrderIssue {
   kind: OrderIssueKind;

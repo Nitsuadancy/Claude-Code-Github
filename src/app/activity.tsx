@@ -8,7 +8,7 @@ import { BackButton, Heading, type IconName, Screen } from '@/components/ui';
 import { type ActivityItem, buildActivity } from '@/lib/activity';
 import { formatClock } from '@/lib/orders';
 import { relativeDay } from '@/lib/reviews';
-import { useStore } from '@/state/store';
+import { useStore, useVisibleMessages } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
 
@@ -21,12 +21,14 @@ const ICONS: Record<ActivityItem['kind'], IconName> = {
   declined: 'close-circle-outline',
   cancelled: 'close-circle-outline',
   note: 'message-text-outline',
+  message: 'message-text-outline',
 };
 
-/** Order updates and chef notes, opened from the bell on the home screen. */
+/** Order updates, chef notes and kitchen messages, opened from the bell on the home screen. */
 export default function Activity() {
   const { state, dispatch } = useStore();
-  const items = useMemo(() => buildActivity(state.orders, state.user?.id ?? ''), [state.orders, state.user?.id]);
+  const visible = useVisibleMessages();
+  const items = useMemo(() => buildActivity(state.orders, state.user?.id ?? '', visible), [state.orders, state.user?.id, visible]);
   // Remember what was unseen when the screen opened, so new items stay highlighted.
   const [seenBefore] = useState(state.activitySeenAt);
 
@@ -55,7 +57,11 @@ export default function Activity() {
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={`${item.title}. ${item.body}`}
-                onPress={() => router.push({ pathname: '/order/[id]', params: { id: item.orderId } })}
+                onPress={() =>
+                  item.kind === 'message'
+                    ? router.push({ pathname: '/chat/[orderId]', params: { orderId: item.orderId } })
+                    : router.push({ pathname: '/order/[id]', params: { id: item.orderId } })
+                }
                 style={[styles.item, fresh && styles.fresh]}>
                 <View style={[styles.icon, item.kind === 'note' && { borderColor: colors.gold }]}>
                   <Icon

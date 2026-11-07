@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
 import { PrepList, WeeklyChart } from '@/components/chef-insights';
+import { MessageButton } from '@/components/message-button';
 import { OrderCard } from '@/components/order-card';
 import { BakeDayCard } from '@/components/bake-day-card';
 import { FirstOrders } from '@/components/first-orders';
@@ -31,6 +32,7 @@ import { firstOrderSteps, type FirstOrderStep } from '@/lib/launch';
 import { formatTime, hoursOn, isOpenAt, nextOpening, WEEKDAYS } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
+import { chatState } from '@/lib/order-chat';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { shareKitchen } from '@/lib/share';
@@ -260,6 +262,14 @@ export default function ChefDashboard() {
                 );
               })}
             </View>
+            {chatState(order, new Date()) === 'open' ? (
+              <MessageButton
+                compact
+                orderId={order.id}
+                label={`Message ${(order.customerName || 'customer').split(' ')[0]}`}
+                onPress={() => router.push({ pathname: '/chat/[orderId]', params: { orderId: order.id } })}
+              />
+            ) : null}
             <NoteEditor
               note={order.chefNote}
               onSave={(note) => dispatch({ type: 'setOrderNote', orderId: order.id, note })}

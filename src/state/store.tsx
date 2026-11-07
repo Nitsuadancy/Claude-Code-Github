@@ -12,8 +12,9 @@ import {
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { SAMPLE_REVIEWS } from '@/data/sample-reviews';
 import type { DietProfile } from '@/lib/diet';
+import { readKey, unreadCount } from '@/lib/order-chat';
 import { withReviews } from '@/lib/reviews';
-import type { Restaurant, Review } from '@/types';
+import type { OrderMessage, Restaurant, Review } from '@/types';
 
 import {
   type Action,
@@ -117,4 +118,27 @@ export function useDietProfile(): DietProfile {
   const dietary = state.user?.dietary;
   const avoid = state.user?.avoidAllergens;
   return useMemo(() => ({ dietary: dietary ?? [], avoid: avoid ?? [] }), [dietary, avoid]);
+}
+
+/** Every chat message the signed-in person should see: none they reported, none from people they blocked. */
+export function useVisibleMessages(): OrderMessage[] {
+  const { state } = useStore();
+  const me = state.user?.id;
+  return useMemo(
+    () =>
+      state.messages.filter(
+        (m) =>
+          !state.reportedMessageIds.includes(m.id) &&
+          !state.blocks.some((b) => b.blockerId === me && b.blockedId === m.senderId),
+      ),
+    [state.messages, state.reportedMessageIds, state.blocks, me],
+  );
+}
+
+/** How many messages from the other side of this order this person hasn't seen yet. */
+export function useUnreadMessages(orderId: string): number {
+  const { state } = useStore();
+  const visible = useVisibleMessages();
+  const me = state.user?.id ?? '';
+  return unreadCount(visible, orderId, me, state.chatReadAt[readKey(orderId, me)]);
 }

@@ -1,13 +1,16 @@
 import type { SharedStep } from '@/lib/launch';
 import { canCustomerCancel, isActive } from '@/lib/orders';
 import { canSendHelp, helpTopicsFor, HELP_NOTE_MAX } from '@/lib/order-extras';
+import { chatState, cleanMessage, isBlockedBetween, kitchenParticipantId, readKey, sideFor } from '@/lib/order-chat';
 import { isReadyToOpen } from '@/lib/setup';
 import { normalizePersisted } from '@/lib/migrate';
 import type {
+  Block,
   Cart,
   GrowerApplication,
   Order,
   OrderIssueKind,
+  OrderMessage,
   OrderStatus,
   Restaurant,
   Review,
@@ -44,6 +47,14 @@ export interface AppState {
   sharedSteps: SharedStep[];
   /** When this cook asked to hear about Manna Pro. Kept on the device until billing exists. */
   proInterestAt: string | null;
+  /** Order chat messages between customers and kitchens. */
+  messages: OrderMessage[];
+  /** When each person last opened each order's chat, keyed by `readKey(orderId, userId)`. */
+  chatReadAt: Record<string, string>;
+  /** Messages this person reported. Hidden for them and sent to Manna's team to check. */
+  reportedMessageIds: string[];
+  /** Who has blocked whom. A block stops the chat both ways. */
+  blocks: Block[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -68,6 +79,10 @@ export const INITIAL_STATE: AppState = {
   reportedReviewIds: [],
   sharedSteps: [],
   proInterestAt: null,
+  messages: [],
+  chatReadAt: {},
+  reportedMessageIds: [],
+  blocks: [],
 };
 
 export type Action =
@@ -98,6 +113,20 @@ export type Action =
   | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'cancelOrder'; orderId: string; customerId: string; at?: string }
   | { type: 'markArrived'; orderId: string; customerId: string; at?: string }
+  | {
+      type: 'sendMessage';
+      orderId: string;
+      senderId: string;
+      /** The kitchen's participant id (see kitchenParticipantId), so either side can be checked. */
+      kitchenId: string;
+      text: string;
+      id: string;
+      at?: string;
+    }
+  | { type: 'markChatRead'; orderId: string; userId: string; at?: string }
+  | { type: 'reportMessage'; messageId: string }
+  | { type: 'blockUser'; blockerId: string; blockedId: string; at?: string }
+  | { type: 'unblockUser'; blockerId: string; blockedId: string }
   | { type: 'reportOrderIssue'; orderId: string; customerId: string; kind: OrderIssueKind; note: string; at?: string }
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
@@ -176,6 +205,13 @@ export function reducer(state: AppState, action: Action): AppState {
         restaurants: state.restaurants.filter((r) => !mine.has(r.id)),
         orders: state.orders.filter((o) => o.customerId !== userId && !mine.has(o.restaurantId)),
         reviews: state.reviews.filter((r) => r.customerId !== userId && !mine.has(r.restaurantId)),
+        // Chats go with the orders they belong to; anything else this person sent goes too.
+        messages: state.messages.filter(
+          (m) =>
+            m.senderId !== userId &&
+            state.orders.some((o) => o.id === m.orderId && o.customerId !== userId && !mine.has(o.restaurantId)),
+        ),
+        blocks: state.blocks.filter((b) => b.blockerId !== userId && b.blockedId !== userId),
       };
     }
 
@@ -279,6 +315,61 @@ export function reducer(state: AppState, action: Action): AppState {
             ? { ...o, arrivedAt: action.at ?? new Date().toISOString() }
             : o,
         ),
+      };
+
+    case 'sendMessage': {
+      const order = state.orders.find((o) => o.id === action.orderId);
+      if (!order) return state;
+      const at = action.at ?? new Date().toISOString();
+      // A kitchen made on this device must be messaged as its real owner.
+      const stored = state.restaurants.find((r) => r.id === order.restaurantId);
+      if (stored && kitchenParticipantId(stored) !== action.kitchenId) return state;
+      const side = sideFor(order, action.senderId, action.kitchenId);
+      const text = cleanMessage(action.text);
+      const other = side === 'customer' ? action.kitchenId : order.customerId;
+      if (
+        !side ||
+        !text ||
+        chatState(order, new Date(at)) !== 'open' ||
+        isBlockedBetween(state.blocks, action.senderId, other) ||
+        state.messages.some((m) => m.id === action.id)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        messages: [...state.messages, { id: action.id, orderId: order.id, senderId: action.senderId, side, text, at }],
+        // Sending counts as reading everything before it.
+        chatReadAt: { ...state.chatReadAt, [readKey(order.id, action.senderId)]: at },
+      };
+    }
+
+    case 'markChatRead':
+      return {
+        ...state,
+        chatReadAt: { ...state.chatReadAt, [readKey(action.orderId, action.userId)]: action.at ?? new Date().toISOString() },
+      };
+
+    case 'reportMessage':
+      if (state.reportedMessageIds.includes(action.messageId)) return state;
+      return { ...state, reportedMessageIds: [...state.reportedMessageIds, action.messageId] };
+
+    case 'blockUser':
+      if (
+        action.blockerId === action.blockedId ||
+        state.blocks.some((b) => b.blockerId === action.blockerId && b.blockedId === action.blockedId)
+      ) {
+        return state;
+      }
+      return {
+        ...state,
+        blocks: [...state.blocks, { blockerId: action.blockerId, blockedId: action.blockedId, at: action.at ?? new Date().toISOString() }],
+      };
+
+    case 'unblockUser':
+      return {
+        ...state,
+        blocks: state.blocks.filter((b) => !(b.blockerId === action.blockerId && b.blockedId === action.blockedId)),
       };
 
     case 'reportOrderIssue': {

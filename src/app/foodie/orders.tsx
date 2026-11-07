@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
+import { UnreadMessagesLine } from '@/components/message-button';
 import { OrderCard } from '@/components/order-card';
 import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { Stars } from '@/components/reviews';
@@ -41,6 +42,7 @@ export default function Orders() {
             onPress={() => router.push({ pathname: '/order/[id]', params: { id: item.id } })}
             style={({ pressed }) => pressed && { opacity: 0.85 }}>
             <OrderCard order={item} title={item.restaurantName}>
+              <UnreadMessagesLine orderId={item.id} />
               {item.status === 'completed' && !reviewed.has(item.id) ? (
                 <View style={styles.rate}>
                   <Stars value={0} size={16} />

@@ -29,9 +29,14 @@ export function OrderHelpSheet({
   topics,
   onClose,
   onSend,
+  onMessageKitchen,
+  kitchenName,
 }: {
   visible: boolean;
   topics: HelpTopic[];
+  /** When the order chat is open, changes and timing are quicker to sort out with the cook. */
+  onMessageKitchen?: () => void;
+  kitchenName?: string;
   onClose: () => void;
   onSend: (kind: OrderIssueKind, note: string) => void;
 }) {
@@ -53,6 +58,14 @@ export function OrderHelpSheet({
                 This goes to Manna’s support team, not the kitchen. We reply within 24 hours.
               </Body>
             </View>
+            {onMessageKitchen ? (
+              <Pressable accessibilityRole="button" onPress={onMessageKitchen} style={styles.kitchenLink}>
+                <Text style={styles.kitchenLinkText}>
+                  To change your order or pickup time, message {kitchenName ?? 'the kitchen'} first.
+                </Text>
+                <Text style={styles.kitchenLinkAction}>Message</Text>
+              </Pressable>
+            ) : null}
             <View accessibilityRole="radiogroup">
               {topics.map((t, i) => {
                 const on = kind === t.kind;
@@ -137,5 +150,15 @@ const styles = StyleSheet.create({
   },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   optionText: { flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.text },
+  kitchenLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: 14,
+    backgroundColor: colors.goldTint,
+  },
+  kitchenLinkText: { flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text },
+  kitchenLinkAction: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold },
   demo: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textFaint, textAlign: 'center' },
 });

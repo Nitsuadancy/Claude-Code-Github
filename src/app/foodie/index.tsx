@@ -48,7 +48,7 @@ import {
 import * as haptics from '@/lib/haptics';
 import { orderingLine } from '@/lib/ordering';
 import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
-import { useAllRestaurants, useDietProfile, useStore } from '@/state/store';
+import { useAllRestaurants, useDietProfile, useStore, useVisibleMessages } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
@@ -132,9 +132,10 @@ export default function FoodieHome() {
     [restaurants],
   );
   const userId = state.user?.id ?? '';
+  const visibleMessages = useVisibleMessages();
   const unseen = useMemo(
-    () => unseenCount(buildActivity(state.orders, userId), state.activitySeenAt),
-    [state.orders, userId, state.activitySeenAt],
+    () => unseenCount(buildActivity(state.orders, userId, visibleMessages), state.activitySeenAt),
+    [state.orders, userId, visibleMessages, state.activitySeenAt],
   );
   const againOrders = useMemo(() => recentKitchenOrders(state.orders, userId), [state.orders, userId]);
   const favorites = useMemo(

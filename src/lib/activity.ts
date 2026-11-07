@@ -1,10 +1,10 @@
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderMessage, OrderStatus } from '@/types';
 
 export interface ActivityItem {
   id: string;
   orderId: string;
   at: string;
-  kind: OrderStatus | 'note';
+  kind: OrderStatus | 'note' | 'message';
   title: string;
   body: string;
 }
@@ -19,8 +19,8 @@ const TITLES: Record<OrderStatus, (kitchen: string) => string> = {
   cancelled: (k) => `You cancelled your order from ${k}`,
 };
 
-/** A customer's order updates and chef notes, newest first. */
-export function buildActivity(orders: Order[], customerId: string): ActivityItem[] {
+/** A customer's order updates, chef notes and messages from kitchens, newest first. */
+export function buildActivity(orders: Order[], customerId: string, messages: OrderMessage[] = []): ActivityItem[] {
   const items: ActivityItem[] = [];
   for (const order of orders) {
     if (order.customerId !== customerId) continue;
@@ -47,6 +47,19 @@ export function buildActivity(orders: Order[], customerId: string): ActivityItem
         body: `“${order.chefNote}”`,
       });
     }
+  }
+  const mine = new Map(orders.filter((o) => o.customerId === customerId).map((o) => [o.id, o]));
+  for (const m of messages) {
+    const order = mine.get(m.orderId);
+    if (!order || m.side !== 'kitchen') continue;
+    items.push({
+      id: `${m.orderId}:message:${m.id}`,
+      orderId: m.orderId,
+      at: m.at,
+      kind: 'message',
+      title: `Message from ${order.restaurantName}`,
+      body: m.text.length > 120 ? `${m.text.slice(0, 117)}…` : m.text,
+    });
   }
   return items.sort((a, b) => b.at.localeCompare(a.at));
 }
