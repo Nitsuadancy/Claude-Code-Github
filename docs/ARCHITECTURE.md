@@ -29,6 +29,8 @@ Expo (React Native) app ── one codebase for iOS, Android and web
 | Documents / photos | Stored as local file paths | Uploaded to private cloud storage |
 | Document review | Skipped; publishing is instant | Admin approves before the kitchen goes live |
 | Order updates | Same device only | Realtime subscription |
+| Help with an order | Saved on the phone; the sheet says so | `order_issues` table, sent to Manna's support inbox |
+| Pull to refresh | Redraws with the current time | Refetches orders |
 
 ## Next: backend
 

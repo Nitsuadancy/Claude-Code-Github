@@ -38,9 +38,11 @@ export const PRIVACY_POLICY: LegalDocument = {
         '- Account details: your mobile number, name and email.',
         '- Preferences: your neighborhood, and the diets and allergens you choose to tell us about.',
         '- Orders: what you order, from which kitchen, pickup times, notes to the chef, tips, your reviews and any reviews you report.',
+        '- Help requests: what you tell our support team when you ask for help with an order. The kitchen does not see them.',
         '- For kitchens: your kitchen details, menu, photos, pickup address, opening hours, and the documents you upload for verification, such as a food handler certificate and ID.',
         '- Payments: handled by our payment provider. Manna does not store full card numbers.',
         '- Device information: app version, device type and crash reports, so we can fix problems.',
+        '- If you add a pickup to your calendar, the event is saved in your phone’s calendar, not sent to Manna. On iPhone, Manna asks only to add events and cannot read your calendar.',
       ],
     },
     {

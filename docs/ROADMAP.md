@@ -55,6 +55,9 @@ then expand. Each phase ends with something real people can use.
 - [x] "Get your first order" checklist for new kitchens; customers can cancel before the kitchen accepts
 - [x] Bake days: weekly pickup windows with an 8 PM order cutoff, chosen at checkout; cooks skip a week from the dashboard. The default for new kitchens
 - [x] Pickup handoff: private pickup instructions, "I'm here", and a written no-show rule (paid to the cook after a 30-minute grace period)
+- [x] Design quality pass: sharper photos, Manna's own status glyphs and switches, one title-bar style
+- [x] Finishing details: blurred photo previews, springy touch feedback, drawn empty states, steady numbers, scroll to top, pull to refresh, a sharper icon and a seamless launch screen
+- [x] Order extras: directions, add to calendar, save the receipt as an image, and "Need help with this order?" for Manna's support team
 
 ## Phase 1: Real accounts and shared data
 
@@ -69,6 +72,8 @@ Without this, a chef and a customer on different phones can't see each other.
 - [ ] Photo and document uploads to private storage
 - [ ] Live order updates, so the chef's dashboard updates the moment an order is placed
 - [ ] Edge Function that removes the sign-in when someone deletes their account
+- [ ] Support inbox for "Need help with this order?" (the `order_issues` table is ready): email or text the team on each new request, and a simple admin view to reply and resolve
+- [ ] Link previews: a kitchen link shared in iMessage or Instagram shows its photo and name (needs the website)
 
 ## Phase 2: Getting paid
 

@@ -96,6 +96,7 @@ All data below is **linked to the user** and **not used for tracking**.
 | Financial info: Payment info | Handled by Stripe; Manna never sees full card numbers. Declare it only if Stripe's SDK runs in the app | App functionality |
 | Purchases: Purchase history | Orders | App functionality |
 | User content: Photos | Menu, kitchen and chef photos (cooks only) | App functionality |
+| User content: Customer support | "Need help with this order?" requests | Customer support |
 | User content: Other user content | Reviews, reports, notes to the chef, cook verification documents | App functionality |
 | Identifiers: User ID | Account ID | App functionality |
 | Diagnostics: Crash data | Only once crash reporting is added | App functionality |
@@ -124,6 +125,9 @@ where you can accept the order you placed as the customer.
 
 Account deletion: Profile > Delete account.
 Reporting reviews: any kitchen page > Reviews > Report.
+Order help: any order > "Need help with this order?" goes to our support
+team, never the cook. "Add to calendar" asks for write-only calendar access
+only when tapped.
 ```
 
 ## Guideline checklist
@@ -131,7 +135,7 @@ Reporting reviews: any kitchen page > Reviews > Report.
 - [x] **5.1.1(v) Account deletion.** Profile → Delete account removes the account in the app.
 - [x] **1.2 User-generated content.** Reviews can be reported, reports are checked within 24 hours, the terms forbid abusive content, and admins can remove reviews (`remove_review`). There is no messaging between users, so blocking isn't needed for launch.
 - [x] **4.8 Sign in with Apple.** Not required: Manna signs in with a phone number only, with no Google or Facebook login.
-- [x] **5.1.1 Permission strings.** Photo library (choose photos) and photo saving (Story card) are explained in `app.json`.
+- [x] **5.1.1 Permission strings.** Photo library (choose photos), photo saving (Story card) and calendar (add a pickup) are explained in `app.json`. Calendar access is write-only on iOS 17 and later, so Manna can't read anyone's calendar, and it's only asked for when someone taps "Add to calendar". Android asks for no calendar permission.
 - [x] **Export compliance.** `usesNonExemptEncryption: false` is set, so there's no question at upload.
 - [ ] **2.1 App completeness.** Needs a live backend and payments.
 - [ ] **5.1.1 Privacy policy.** Needs a public URL and an attorney's review.

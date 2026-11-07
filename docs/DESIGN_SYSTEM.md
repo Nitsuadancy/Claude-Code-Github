@@ -75,7 +75,12 @@ buttons, use `onGold` (`#140F06`) for text.
 
 ## Motion and touch
 
-- Keep motion slow and soft. The rays rotate over 24 seconds, and fades last 400–900ms. Nothing should bounce hard.
+- Keep motion slow and soft. The rays rotate over 24 seconds, and fades last 400–900ms.
+- Small springs answer a touch, and only a touch (`src/components/motion.tsx`):
+  buttons sink while held (`usePressScale`), cards sink (`PressableScale`), the heart and the
+  cart icon pop (`Pop`), and the "+" grows into the quantity stepper (`SpringIn`). Nothing
+  bounces on its own.
+- All of it is skipped when the phone's Reduce Motion setting is on.
 - Vibration (`src/lib/haptics.ts`) is reserved for moments that matter: a light tap when adding to the cart or changing order status, and a success pulse when an order is placed.
 - Every celebration can be skipped with a tap.
 
@@ -90,14 +95,22 @@ menu-style letter codes (V, VG, GF, DF, H), not pictograms.
 
 - **Photography leads, full-bleed.** No badges on photos; kitchens are introduced by their food.
 - **No luxury clichés.** No gold gradients or glows, no letter-spaced gold capitals, no ornate serifs in the interface, no icons in circles.
-- **Motion with purpose.** Slow drift on the hero, paging between kitchens, a celebration when an order is placed. Nothing bounces.
+- **Motion with purpose.** Slow drift on the hero, paging between kitchens, a celebration when an order is placed. Springs only answer a tap.
 - **Restraint.** Gold appears a few times per screen at most.
 
 ## Updating the logo
 
-Replace `assets/images/icon.png` with the full logo on black (1024×1024). Then rebuild
-`logo.png`, `wordmark.png` and `rays.png` with transparent backgrounds. The splash
-screen and Android icons use these same files.
+The source art is `logo.png` (the full logo on transparent, 1024×1024), `rays.png` (just its
+gold rays on the same grid) and `wordmark.png` (just the lettering). The launch screen and the
+animated logo use these directly.
+
+The app icons are built from them with `python3 scripts/build-icons.py`. The icon draws the
+rays a little thicker than the logo so they still read at Settings and Spotlight sizes, and
+writes `icon.png`, the Android adaptive and themed icons and the web favicon. After changing
+the logo, replace the three source files and run the script.
+
+The launch screen's background is the app background (`#0B0B0B`), and on iPhone it fades
+into the first screen instead of cutting.
 
 ## Kitchen personalization
 
@@ -125,3 +138,21 @@ relearn the app. Cooks make their page their own with a few controlled choices:
 - **Pickers** always end in a chevron; only time pickers show a clock.
 - **Photos** ship at 2100 × 1400 with a light grade (`assets/photos/CREDITS.md`), so full-screen
   heroes stay sharp on a 3× phone.
+
+## Loading, empty and number details
+
+- **Photos** fade in over a blurred preview of themselves. Use `<Photo uri=… />`
+  (`src/components/photo.tsx`) for any food or kitchen photo. Demo photos have their previews in
+  `src/data/demo-photo-blurhash.ts` (rebuild with `scripts/demo-photo-blurhash.py`). Uploaded
+  photos will get theirs from the backend.
+- **Empty screens** use `EmptyState` (`src/components/empty-state.tsx`): a small gold line
+  drawing (bag, ticket, bell, plate, review, oven), a plain title, one sentence on what will
+  appear, and at most one action. Draw new ones on the same 120 × 110 grid with a 2px stroke.
+- **Loading** uses `Skeleton` shapes that match the content coming in
+  (`src/components/skeleton.tsx`), never a lone spinner. Nothing loads over the network yet,
+  so they aren't shown today.
+- **Numbers** that change or line up (prices, totals, counts, stats) use tabular figures,
+  `fontVariant: ['tabular-nums']`, so they don't shift as digits change.
+- **Lists** scroll to the top when you tap the tab you're already on. Orders and the cook
+  dashboard refresh when pulled down, with a gold spinner.
+
