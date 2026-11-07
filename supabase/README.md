@@ -68,6 +68,10 @@ Still to do when the project exists:
    calls `delete_my_account()` as the user and then `auth.admin.deleteUser()`.
 5. **Payments:** charge with Stripe when the kitchen accepts; see docs/ROADMAP.md.
 6. **Most ordered:** call `popular_menu_items()` and pass the ids to `restaurantFromRow`.
+7. **Order chat:** read and send through `order_messages` (the policies check that the chat is
+   open and nobody is blocked), subscribe to new rows with Realtime (the migration adds
+   `orders` and `order_messages` to the `supabase_realtime` publication), save read times in
+   `order_chat_reads`, and send a push notification for each new message.
 
 ## Test it locally
 

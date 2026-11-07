@@ -38,7 +38,8 @@ FOR FOOD LOVERS
 • See ingredients and allergens before you order, and filter by diet
 • Order ahead for a cook's bake day, or pick up as soon as it's ready
 • Follow your order from oven to pickup, then tap "I'm here" when you arrive
-• Pay upfront in the app. No DMs, no Venmo requests, no guessing
+• Message the cook about your order once it's accepted: a swap, running late, which door
+• Pay upfront in the app. No ordering through Instagram DMs, no Venmo requests, no guessing
 • One small fee at checkout (8%, at least $1). Cooks keep every dollar of their prices, and every tip
 
 FOR HOME COOKS
@@ -48,6 +49,7 @@ FOR HOME COOKS
 • Make your page yours: accent color, tagline, a pinned update and your Instagram
 • Today's menu: turn dishes on and off as you sell out
 • A prep list that tells you what to bake today
+• Message customers about an order: offer a swap, share timing, sort out pickup
 • A ready-to-post Instagram Story with your QR code, so your followers can order in one tap
 • Free to join. Founding kitchens get their storefront set up and photographed for free
 
@@ -56,7 +58,8 @@ SAFE AND HONEST
 • Every kitchen is labeled: "Licensed kitchen" when a permit or license is on file, or "Home kitchen · not inspected"
 • Cooks confirm they follow their local food laws before they open
 • Your pickup address stays private until you accept an order
-• Report any review that breaks the rules; our team checks every report within 24 hours
+• Your phone number stays private. Order chats close a day after pickup
+• Report any review or message that breaks the rules, or block someone; our team checks every report within 24 hours
 
 Made in Orlando.
 ```
@@ -71,7 +74,7 @@ Made in Orlando.
 
 - **Primary category:** Food & Drink
 - **Secondary category:** Shopping
-- **Age rating questionnaire:** answer "None" to everything except **user-generated content: Yes**, because of reviews. Reviews are moderated (reporting, 24-hour checks, removal), and there is no chat or messaging between users. App Store Connect works out the rating from these answers.
+- **Age rating questionnaire:** answer "None" to everything except **user-generated content: Yes** and **messaging and chat: Yes**, because of reviews and order chat. Both are moderated: anyone can report a review or a message, reports are checked within 24 hours, and either side of a chat can block the other. Chat is limited to one order, between its customer and its kitchen, and closes 24 hours after pickup. App Store Connect works out the rating from these answers.
 - **Price:** Free. Payments for food go through Stripe, not Apple, because the food is a physical good picked up outside the app (guideline 3.1.5(a)).
 
 ## URLs
@@ -97,7 +100,7 @@ All data below is **linked to the user** and **not used for tracking**.
 | Purchases: Purchase history | Orders | App functionality |
 | User content: Photos | Menu, kitchen and chef photos (cooks only) | App functionality |
 | User content: Customer support | "Need help with this order?" requests | Customer support |
-| User content: Other user content | Reviews, reports, notes to the chef, cook verification documents | App functionality |
+| User content: Other user content | Reviews, order messages, reports, notes to the chef, cook verification documents | App functionality |
 | Identifiers: User ID | Account ID | App functionality |
 | Diagnostics: Crash data | Only once crash reporting is added | App functionality |
 
@@ -125,6 +128,9 @@ where you can accept the order you placed as the customer.
 
 Account deletion: Profile > Delete account.
 Reporting reviews: any kitchen page > Reviews > Report.
+Order chat: once the demo cook accepts the order, both accounts can message
+each other from the order screen and the dashboard. Long-press a message to
+report it; the ... menu blocks the other person.
 Order help: any order > "Need help with this order?" goes to our support
 team, never the cook. "Add to calendar" asks for write-only calendar access
 only when tapped.
@@ -133,7 +139,7 @@ only when tapped.
 ## Guideline checklist
 
 - [x] **5.1.1(v) Account deletion.** Profile → Delete account removes the account in the app.
-- [x] **1.2 User-generated content.** Reviews can be reported, reports are checked within 24 hours, the terms forbid abusive content, and admins can remove reviews (`remove_review`). There is no messaging between users, so blocking isn't needed for launch.
+- [x] **1.2 User-generated content.** Reviews and order messages can be reported, reports are checked within 24 hours, the terms forbid abusive content, admins can remove reviews (`remove_review`) and reported messages, and either side of an order chat can block the other (a block stops the chat both ways).
 - [x] **4.8 Sign in with Apple.** Not required: Manna signs in with a phone number only, with no Google or Facebook login.
 - [x] **5.1.1 Permission strings.** Photo library (choose photos), photo saving (Story card) and calendar (add a pickup) are explained in `app.json`. Calendar access is write-only on iOS 17 and later, so Manna can't read anyone's calendar, and it's only asked for when someone taps "Add to calendar". Android asks for no calendar permission.
 - [x] **Export compliance.** `usesNonExemptEncryption: false` is set, so there's no question at upload.

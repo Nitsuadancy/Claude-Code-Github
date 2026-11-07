@@ -58,6 +58,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Design quality pass: sharper photos, Manna's own status glyphs and switches, one title-bar style
 - [x] Finishing details: blurred photo previews, springy touch feedback, drawn empty states, steady numbers, scroll to top, pull to refresh, a sharper icon and a seamless launch screen
 - [x] Order extras: directions, add to calendar, save the receipt as an image, and "Need help with this order?" for Manna's support team
+- [x] Order chat: customer and kitchen message each other from acceptance until a day after pickup, with quick replies, unread counts, report, block and a reminder to keep payments in Manna (`order_messages`, `user_blocks`, `message_reports` in the database)
 
 ## Phase 1: Real accounts and shared data
 
@@ -87,14 +88,16 @@ Without this, a chef and a customer on different phones can't see each other.
 - [ ] Admin review queue: approve chefs only after checking their food handler card and ID
 - [x] Allergen fields on menu items, shown clearly to customers
 - [x] Report a review (App Store guideline 1.2), with `remove_review()` for the team
-- [ ] Report a problem with an order
+- [x] Report a problem with an order ("Need help with this order?")
+- [x] Report and block in order chat
+- [ ] Admin view for reported messages and help requests
 - [ ] Attorney review of the Terms of Service and Privacy Policy (drafts in the app), plus a chef agreement (see [COMPANY_SETUP.md](COMPANY_SETUP.md))
 
 ## Phase 4: Notifications
 
 Pickup only for launch (see Launch decisions). Delivery can come back as an option once there's demand.
 
-- [ ] Push notifications for new orders (chef) and status changes (customer)
+- [ ] Push notifications for new orders (chef), status changes (customer) and new order messages (both)
 - [ ] Text-message fallback for chefs who turn push off
 
 ## Phase 5: Launch

@@ -19,7 +19,7 @@ const SHOTS = [
   ['01-home', 'Made in College Park', 'Homemade, from the kitchen next door.'],
   ['03-kitchen', 'Real cooks, verified', 'Meet the cook behind every dish.'],
   ['05-dish', 'Every ingredient, upfront', 'Know what’s in it before you order.'],
-  ['08-order', 'No DMs, no guessing', 'Follow your order from oven to pickup.'],
+  ['08-order', 'Live from the kitchen', 'Follow your order from oven to pickup.'],
   ['07-cart-total', 'Cooks keep 100% of their prices', 'One small fee. Nothing hidden.'],
   ['09-chef', 'For home cooks', 'Your kitchen, now a storefront.'],
   ['11-share', 'Bring your followers', 'Turn your Instagram into orders.'],

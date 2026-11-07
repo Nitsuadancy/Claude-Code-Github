@@ -54,7 +54,7 @@ export default function ShareKitchen() {
           <Heading size={30}>Bring your followers</Heading>
           <Body muted>
             Your Instagram audience is your first customer base. Share this Story and they can order from you on Manna,
-            paid upfront, with a pickup time, and no DMs.
+            paid upfront, with a pickup time, and no back-and-forth in your DMs.
           </Body>
         </View>
 

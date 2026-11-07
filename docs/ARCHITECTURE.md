@@ -31,6 +31,7 @@ Expo (React Native) app ── one codebase for iOS, Android and web
 | Order updates | Same device only | Realtime subscription |
 | Help with an order | Saved on the phone; the sheet says so | `order_issues` table, sent to Manna's support inbox |
 | Pull to refresh | Redraws with the current time | Refetches orders |
+| Order chat | Messages stay on the phone; the chat says so | `order_messages` with Realtime, plus push notifications |
 
 ## Next: backend
 

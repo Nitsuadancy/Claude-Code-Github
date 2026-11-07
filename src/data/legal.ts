@@ -39,6 +39,7 @@ export const PRIVACY_POLICY: LegalDocument = {
         '- Preferences: your neighborhood, and the diets and allergens you choose to tell us about.',
         '- Orders: what you order, from which kitchen, pickup times, notes to the chef, tips, your reviews and any reviews you report.',
         '- Help requests: what you tell our support team when you ask for help with an order. The kitchen does not see them.',
+        '- Order messages: what you and the kitchen write to each other in an order’s chat, and when you read them. Your phone number is never shared.',
         '- For kitchens: your kitchen details, menu, photos, pickup address, opening hours, and the documents you upload for verification, such as a food handler certificate and ID.',
         '- Payments: handled by our payment provider. Manna does not store full card numbers.',
         '- Device information: app version, device type and crash reports, so we can fix problems.',
@@ -50,7 +51,7 @@ export const PRIVACY_POLICY: LegalDocument = {
       body: [
         '- To run Manna: show kitchens, take orders, and keep customers and kitchens updated about each order.',
         '- To verify kitchens: we review documents before a kitchen is marked Verified.',
-        '- To keep Manna safe: prevent fraud, enforce our terms, and respond to reports.',
+        '- To keep Manna safe: prevent fraud, enforce our terms, and respond to reports. Our team reads order messages only when someone reports them.',
         '- To support you and improve the app.',
         '- To send messages you need, like sign-in codes and order updates.',
       ],
@@ -152,7 +153,15 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       heading: 'Reviews and content',
       body: [
         'Reviews must be honest and about a real order. You keep ownership of what you post, and you allow Manna to show it in the app and to promote Manna.',
-        'Manna has no tolerance for abusive or objectionable content. Anyone can report a review from the app. We check every report within 24 hours, remove content that breaks these terms, and may close the account that posted it.',
+        'Manna has no tolerance for abusive or objectionable content. Anyone can report a review or a message from the app. We check every report within 24 hours, remove content that breaks these terms, and may close the account that posted it.',
+      ],
+    },
+    {
+      heading: 'Order messages',
+      body: [
+        'Once a kitchen accepts your order, you and the kitchen can message each other about it until 24 hours after pickup. Keep messages about the order: changes, timing and pickup.',
+        'Pay for orders in Manna. Payments made outside the app, such as by Venmo, Cash App or Zelle, aren’t covered by Manna if something goes wrong.',
+        'Either of you can block the other at any time, which stops the chat both ways, and report any message to our team.',
       ],
     },
     {

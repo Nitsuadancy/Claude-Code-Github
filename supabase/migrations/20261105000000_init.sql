@@ -246,6 +246,43 @@ create table public.order_issues (
   check (kind <> 'other' or char_length(btrim(note)) >= 3)
 );
 
+-- Order chat: the customer and the kitchen message each other about one
+-- order, from when the kitchen accepts it until 24 hours after pickup.
+create table public.order_messages (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders (id) on delete cascade,
+  sender_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  body text not null check (char_length(btrim(body)) between 1 and 500),
+  created_at timestamptz not null default now()
+);
+create index on public.order_messages (order_id, created_at);
+
+-- When each person last opened each order's chat, for unread counts.
+create table public.order_chat_reads (
+  order_id uuid not null references public.orders (id) on delete cascade,
+  user_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  read_at timestamptz not null default now(),
+  primary key (order_id, user_id)
+);
+
+-- Either side can block the other. A block stops the chat both ways.
+create table public.user_blocks (
+  blocker_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  blocked_id uuid not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id),
+  check (blocker_id <> blocked_id)
+);
+
+-- Messages people flag. The team checks each one within 24 hours (App Store guideline 1.2).
+create table public.message_reports (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid not null references public.order_messages (id) on delete cascade,
+  reporter_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (message_id, reporter_id)
+);
+
 -- ---------------------------------------------------------------------------
 -- Helpers
 -- ---------------------------------------------------------------------------
@@ -271,6 +308,43 @@ $$;
 create function public.owns_restaurant(rid uuid) returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.restaurants where id = rid and owner_id = auth.uid());
+$$;
+
+-- True for the order's customer and the owner of its kitchen.
+create function public.in_order_chat(oid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.orders o
+    where o.id = oid and (o.customer_id = auth.uid() or public.owns_restaurant(o.restaurant_id))
+  );
+$$;
+
+-- The chat opens when the kitchen accepts and closes 24 hours after pickup.
+create function public.order_chat_open(oid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.orders o
+    where o.id = oid and (
+      o.status in ('accepted', 'preparing', 'ready')
+      or (o.status = 'completed' and exists (
+        select 1 from public.order_status_events e
+        where e.order_id = o.id and e.status = 'completed' and e.at > now() - interval '24 hours'
+      ))
+    )
+  );
+$$;
+
+-- Whether a block stands between the signed-in person and the other side of this order.
+create function public.order_chat_blocked(oid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.orders o
+    join public.restaurants r on r.id = o.restaurant_id
+    join public.user_blocks b on
+      (b.blocker_id = o.customer_id and b.blocked_id = r.owner_id)
+      or (b.blocker_id = r.owner_id and b.blocked_id = o.customer_id)
+    where o.id = oid
+  );
 $$;
 
 -- Mirrors isOpenAt in src/lib/hours.ts: overnight hours (e.g. 20:00-02:00)
@@ -389,6 +463,10 @@ alter table public.reviews enable row level security;
 alter table public.favorites enable row level security;
 alter table public.review_reports enable row level security;
 alter table public.order_issues enable row level security;
+alter table public.order_messages enable row level security;
+alter table public.order_chat_reads enable row level security;
+alter table public.user_blocks enable row level security;
+alter table public.message_reports enable row level security;
 
 create policy "own profile" on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
@@ -463,6 +541,35 @@ create policy "customers and admins read help requests" on public.order_issues
   for select using (customer_id = auth.uid() or public.is_admin());
 create policy "admins resolve help requests" on public.order_issues
   for update using (public.is_admin()) with check (public.is_admin());
+
+-- Each side reads its order's chat, minus anyone they blocked. The team sees
+-- only messages someone reported.
+create policy "both sides read the order chat" on public.order_messages
+  for select using (
+    (public.in_order_chat(order_id)
+      and not exists (select 1 from public.user_blocks b where b.blocker_id = auth.uid() and b.blocked_id = sender_id))
+    or (public.is_admin() and exists (select 1 from public.message_reports r where r.message_id = order_messages.id))
+  );
+create policy "both sides message while the chat is open" on public.order_messages
+  for insert with check (
+    sender_id = auth.uid()
+    and public.in_order_chat(order_id)
+    and public.order_chat_open(order_id)
+    and not public.order_chat_blocked(order_id)
+  );
+create policy "admins remove reported messages" on public.order_messages
+  for delete using (public.is_admin());
+create policy "own chat read times" on public.order_chat_reads
+  for all using (user_id = auth.uid()) with check (user_id = auth.uid() and public.in_order_chat(order_id));
+create policy "own blocks" on public.user_blocks
+  for all using (blocker_id = auth.uid()) with check (blocker_id = auth.uid());
+create policy "people report messages they can see" on public.message_reports
+  for insert with check (
+    reporter_id = auth.uid()
+    and exists (select 1 from public.order_messages m where m.id = message_id and public.in_order_chat(m.order_id))
+  );
+create policy "reporters and admins read message reports" on public.message_reports
+  for select using (reporter_id = auth.uid() or public.is_admin());
 
 -- ---------------------------------------------------------------------------
 -- Functions the app calls
@@ -786,6 +893,10 @@ begin
   delete from public.favorites where customer_id = me;
   delete from public.review_reports where reporter_id = me;
   delete from public.order_issues where customer_id = me;
+  delete from public.order_messages where sender_id = me;
+  delete from public.order_chat_reads where user_id = me;
+  delete from public.user_blocks where blocker_id = me or blocked_id = me;
+  delete from public.message_reports where reporter_id = me;
   delete from public.restaurant_addresses a using public.restaurants r
     where a.restaurant_id = r.id and r.owner_id = me;
   delete from public.restaurant_documents d using public.restaurants r
@@ -835,3 +946,15 @@ grant insert on public.grower_waitlist to anon, authenticated;
 grant insert on public.review_reports to authenticated;
 grant insert (order_id, kind, note) on public.order_issues to authenticated;
 grant update (resolved_at) on public.order_issues to authenticated;
+grant insert (order_id, body), delete on public.order_messages to authenticated;
+grant insert (order_id, read_at), update (read_at) on public.order_chat_reads to authenticated;
+grant insert (blocked_id), delete on public.user_blocks to authenticated;
+grant insert (message_id) on public.message_reports to authenticated;
+
+-- Live updates for the order screen and the chat, where Supabase Realtime is available.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    alter publication supabase_realtime add table public.orders, public.order_messages;
+  end if;
+end $$;

@@ -226,6 +226,50 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 update public.order_issues set resolved_at = now();
 select pg_temp.check((select resolved_at is not null from public.order_issues), 'the team resolves requests');
 
+-- Order chat ------------------------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.expect_error($$ insert into public.order_messages (order_id, body) values ((select id from first_order), 'hi') $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_error($$ insert into public.order_messages (order_id, body) values ((select id from first_order), '   ') $$,
+  'check constraint');
+insert into public.order_messages (order_id, body) values ((select id from first_order), 'Thank you, it was perfect!');
+insert into public.order_chat_reads (order_id) values ((select id from first_order));
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select count(*) = 1 from public.order_messages), 'the kitchen reads the customer');
+insert into public.order_messages (order_id, body) values ((select id from first_order), 'So glad! See you next week.');
+insert into public.message_reports (message_id) values ((select id from public.order_messages where body like 'Thank you%'));
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select count(*) = 0 from public.order_messages), 'strangers read nothing');
+select pg_temp.expect_error($$ insert into public.message_reports (message_id) values (gen_random_uuid()) $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) = 1 from public.order_messages), 'the team sees only reported messages');
+
+-- A block stops the chat both ways and hides the blocked person's messages.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+insert into public.user_blocks (blocked_id) values ('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select count(*) = 1 from public.order_messages), 'blocked customer''s messages hidden from the kitchen');
+select pg_temp.expect_error($$ insert into public.order_messages (order_id, body) values ((select id from first_order), 'hi') $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select count(*) = 0 from public.user_blocks), 'nobody sees who blocked them');
+select pg_temp.expect_error($$ insert into public.order_messages (order_id, body) values ((select id from first_order), 'hi') $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+delete from public.user_blocks;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+insert into public.order_messages (order_id, body) values ((select id from first_order), 'One more thing!');
+
+-- The chat closes a day after pickup.
+reset role;
+update public.order_status_events set at = now() - interval '25 hours'
+  where order_id = (select id from first_order) and status = 'completed';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_error($$ insert into public.order_messages (order_id, body) values ((select id from first_order), 'Late!') $$,
+  'row-level security');
+select pg_temp.check((select count(*) = 3 from public.order_messages), 'the history stays readable');
+
 -- Bake days ---------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 update public.restaurant_addresses set instructions = 'Cooler on the porch, ring once.';
@@ -300,6 +344,10 @@ select pg_temp.check((select name = '' and phone is null and deleted_at is not n
   'deleted account details cleared');
 select pg_temp.check((select count(*) = 0 from public.favorites), 'favorites removed');
 select pg_temp.check((select count(*) = 0 from public.order_issues), 'help requests removed');
+reset role;
+select pg_temp.check((select count(*) = 0 from public.order_messages where sender_id = '00000000-0000-0000-0000-00000000000b'),
+  'their messages removed');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check((select customer_name = 'Former customer' from public.reviews), 'review kept without the name');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 select public.delete_my_account();
