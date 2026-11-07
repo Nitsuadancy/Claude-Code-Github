@@ -325,5 +325,5 @@ const styles = StyleSheet.create({
   line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
   fee: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   totalLabel: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
-  totalValue: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
+  totalValue: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold, fontVariant: ['tabular-nums'] },
 });

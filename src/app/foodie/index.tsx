@@ -21,7 +21,6 @@ import { HeroCarousel } from '@/components/hero-carousel';
 import { isOpenNow, RestaurantCard } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import {
-  Body,
   Chip,
   Eyebrow,
   Heading,
@@ -53,6 +52,7 @@ import { useAllRestaurants, useDietProfile, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
+import { EmptyState } from '@/components/empty-state';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'recommended', label: 'Recommended' },
@@ -505,10 +505,7 @@ export default function FoodieHome() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Icon name="silverware-variant" size={40} color={colors.goldDeep} />
-            <Body muted style={{ textAlign: 'center' }}>
-              No kitchens match those filters yet.
-            </Body>
+            <EmptyState art="plate" compact title="Nothing matches yet" body="No kitchens match those filters yet." />
             <Pressable onPress={() => setFilters(DEFAULT_FILTERS)} hitSlop={8}>
               <Text style={styles.reset}>Reset filters</Text>
             </Pressable>

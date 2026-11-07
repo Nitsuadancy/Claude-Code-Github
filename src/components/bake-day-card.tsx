@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   count: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
-  countNumber: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
+  countNumber: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory, fontVariant: ['tabular-nums'] },
   link: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
   skipped: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   skippedText: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },

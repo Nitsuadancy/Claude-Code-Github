@@ -48,6 +48,7 @@ import type { MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
 import { photoSource } from '@/lib/photo';
 import { Photo } from '@/components/photo';
+import { EmptyState } from '@/components/empty-state';
 
 /** The hero fills most of the first screen, so a kitchen opens on its food. */
 const HERO_HEIGHT = 520;
@@ -306,7 +307,7 @@ export default function RestaurantDetail() {
                                   <Icon name="minus" size={15} color={colors.bg} />
                                 </Pressable>
                                 <Pop trigger={q} to={1.3}>
-                                  <Text style={[styles.qty, styles.tabular]}>{q}</Text>
+                                  <Text style={styles.qty}>{q}</Text>
                                 </Pop>
                                 <Pressable
                                   accessibilityRole="button"
@@ -411,7 +412,12 @@ export default function RestaurantDetail() {
                 ))}
               </View>
             ) : (
-              <Body muted>No reviews yet. Reviews appear here after customers pick up their orders.</Body>
+              <EmptyState
+                art="review"
+                compact
+                title="No reviews yet"
+                body="Reviews appear here after customers pick up their orders."
+              />
             )
           ) : null}
           <Text style={styles.finePrint}>
@@ -616,7 +622,7 @@ const styles = StyleSheet.create({
   itemName: { fontFamily: fonts.display, fontSize: 17, letterSpacing: -0.3, color: colors.ivory },
   description: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textMuted },
   itemFoot: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: 2 },
-  price: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  price: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, fontVariant: ['tabular-nums'] },
   thumbWrap: { width: 104, alignItems: 'center' },
   thumb: { width: 104, height: 104, borderRadius: radius.md },
   thumbEmpty: { width: 104, height: 52 },
@@ -651,8 +657,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 34,
   },
-  qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.bg, minWidth: 12, textAlign: 'center' },
-  tabular: { fontVariant: ['tabular-nums'] },
+  qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.bg, minWidth: 12, textAlign: 'center', fontVariant: ['tabular-nums'] },
   footer: {
     position: 'absolute',
     left: 0,

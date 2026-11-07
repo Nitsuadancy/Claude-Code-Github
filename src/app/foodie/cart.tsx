@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CartAllergyWarning } from '@/components/diet';
+import { EmptyState } from '@/components/empty-state';
 import { Ticket } from '@/components/ticket';
 import { isOpenNow } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
@@ -45,16 +46,12 @@ export default function Cart() {
   if (!restaurant || state.cart.lines.length === 0) {
     return (
       <Screen edges={['top']} style={styles.empty}>
-        <View style={styles.emptyIcon}>
-          <Icon name="shopping-outline" size={30} color={colors.gold} />
-        </View>
-        <Heading size={24} style={{ textAlign: 'center' }}>
-          Your cart is empty
-        </Heading>
-        <Body muted style={{ textAlign: 'center' }}>
-          Find a kitchen you love and add a few dishes.
-        </Body>
-        <GoldButton title="Browse kitchens" fullWidth={false} onPress={() => router.navigate('/foodie')} />
+        <EmptyState
+          art="bag"
+          title="Your cart is empty"
+          body="Find a kitchen you love and add a few dishes."
+          action={{ title: 'Browse kitchens', onPress: () => router.navigate('/foodie') }}
+        />
       </Screen>
     );
   }
@@ -367,15 +364,6 @@ function WhenOption({
 
 const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   content: { padding: spacing.lg, gap: spacing.lg },
   line: {
     flexDirection: 'row',
@@ -398,11 +386,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 40,
   },
-  qty: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, minWidth: 14, textAlign: 'center' },
+  qty: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, minWidth: 14, textAlign: 'center', fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   rowText: { fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
   totalLabel: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
-  totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold },
+  totalValue: { fontFamily: fonts.semibold, fontSize: 18, color: colors.gold, fontVariant: ['tabular-nums'] },
   note: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
   segment: { flexDirection: 'row', gap: spacing.sm },
   tips: { flexDirection: 'row', gap: spacing.sm },

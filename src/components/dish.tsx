@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { padding: spacing.lg, gap: spacing.sm },
-  price: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
+  price: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold, fontVariant: ['tabular-nums'] },
   allergens: {
     flexDirection: 'row',
     alignItems: 'center',

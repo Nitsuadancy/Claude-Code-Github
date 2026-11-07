@@ -10,6 +10,7 @@ import * as haptics from '@/lib/haptics';
 import { useAllRestaurants, useStore } from '@/state/store';
 import { colors, spacing } from '@/theme';
 import { CraftIcon } from '@/components/craft-icon';
+import { EmptyState } from '@/components/empty-state';
 
 /** One editorial collection: a short intro and its kitchens. */
 export default function CollectionScreen() {
@@ -69,7 +70,7 @@ export default function CollectionScreen() {
             />
           </FadeIn>
         )}
-        ListEmptyComponent={<Body muted style={{ textAlign: 'center' }}>No kitchens here yet.</Body>}
+        ListEmptyComponent={<EmptyState art="plate" compact title="No kitchens here yet" body="Check back soon. New kitchens open every week." />}
       />
     </Screen>
   );

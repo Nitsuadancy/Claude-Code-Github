@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   title: { fontFamily: fonts.display, fontSize: 20, color: colors.ivory },
-  total: { fontFamily: fonts.mono, fontSize: 14, color: colors.ivory },
+  total: { fontFamily: fonts.mono, fontSize: 14, color: colors.ivory, fontVariant: ['tabular-nums'] },
   number: { fontFamily: fonts.mono, fontSize: 11, color: colors.textFaint },
   status: { fontFamily: fonts.medium, fontSize: 13 },
   progress: { flexDirection: 'row', gap: 4 },

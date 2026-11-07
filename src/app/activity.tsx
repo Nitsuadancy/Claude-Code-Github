@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 
+import { EmptyState } from '@/components/empty-state';
 import { FadeIn, PressableScale } from '@/components/motion';
-import { BackButton, Body, Heading, type IconName, Screen } from '@/components/ui';
+import { BackButton, Heading, type IconName, Screen } from '@/components/ui';
 import { type ActivityItem, buildActivity } from '@/lib/activity';
 import { formatClock } from '@/lib/orders';
 import { relativeDay } from '@/lib/reviews';
@@ -80,17 +81,11 @@ export default function Activity() {
           );
         }}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Icon name="bell-outline" size={28} color={colors.gold} />
-            </View>
-            <Heading size={22} style={{ textAlign: 'center' }}>
-              All quiet for now
-            </Heading>
-            <Body muted style={{ textAlign: 'center' }}>
-              Updates from kitchens about your orders will appear here.
-            </Body>
-          </View>
+          <EmptyState
+            art="bell"
+            title="All quiet for now"
+            body="Updates from kitchens about your orders will appear here."
+          />
         }
       />
     </Screen>
@@ -126,13 +121,4 @@ const styles = StyleSheet.create({
   when: { fontFamily: fonts.medium, fontSize: 11, color: colors.textFaint, marginTop: 2 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold, marginTop: 6 },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

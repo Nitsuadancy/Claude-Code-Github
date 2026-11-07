@@ -38,6 +38,7 @@ import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
+import { EmptyArtwork } from '@/components/empty-state';
 
 export default function ChefDashboard() {
   const { state, dispatch } = useStore();
@@ -211,7 +212,7 @@ export default function ChefDashboard() {
         <SectionHeader eyebrow="Live" title="Incoming orders" />
         {active.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Icon name="bell-ring-outline" size={22} color={colors.gold} />
+            <EmptyArtwork art="oven" size={56} />
             <Body muted style={{ flex: 1, fontSize: 14 }}>
               No active orders. New orders appear here the moment they’re placed.
             </Body>
@@ -301,7 +302,7 @@ export default function ChefDashboard() {
           </>
         ) : (
           <View style={styles.emptyCard}>
-            <Icon name="star-outline" size={22} color={colors.gold} />
+            <EmptyArtwork art="review" size={56} />
             <Body muted style={{ flex: 1, fontSize: 14 }}>
               After each pickup, customers are invited to rate their meal. Reviews will appear here.
             </Body>
@@ -483,7 +484,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: 4,
   },
-  statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory },
+  statValue: { fontFamily: fonts.display, fontSize: 22, color: colors.ivory, fontVariant: ['tabular-nums'] },
   statLabel: {
     fontFamily: fonts.semibold,
     fontSize: 13,
