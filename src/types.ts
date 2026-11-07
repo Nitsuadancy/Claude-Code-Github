@@ -240,6 +240,25 @@ export interface Order {
   pickupInstructions?: string;
   /** When the customer tapped "I'm here" at pickup. */
   arrivedAt?: string;
+  /** The customer's request for help with this order, if they sent one. */
+  issue?: OrderIssue;
+}
+
+export type OrderIssueKind =
+  | 'late'
+  | 'pickup'
+  | 'change'
+  | 'missing'
+  | 'quality'
+  | 'not-received'
+  | 'charge'
+  | 'other';
+
+/** "Need help with this order?": what went wrong, in the customer's words, for Manna's support team. */
+export interface OrderIssue {
+  kind: OrderIssueKind;
+  note: string;
+  at: string;
 }
 
 /** A farmer or artisan asking to sell on Manna Mart before it opens. */

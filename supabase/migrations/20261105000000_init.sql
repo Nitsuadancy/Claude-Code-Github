@@ -232,6 +232,20 @@ create table public.review_reports (
   unique (review_id, reporter_id)
 );
 
+-- "Need help with this order?" requests. They go to Manna's support team,
+-- never to the kitchen, and the team replies within 24 hours. One per order.
+create table public.order_issues (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null unique references public.orders (id) on delete cascade,
+  customer_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  kind text not null check (kind in ('late', 'pickup', 'change', 'missing', 'quality', 'not-received', 'charge', 'other')),
+  note text not null default '' check (char_length(note) <= 500),
+  resolved_at timestamptz,
+  created_at timestamptz not null default now(),
+  -- "Something else" needs a few words so the team knows what happened.
+  check (kind <> 'other' or char_length(btrim(note)) >= 3)
+);
+
 -- ---------------------------------------------------------------------------
 -- Helpers
 -- ---------------------------------------------------------------------------
@@ -374,6 +388,7 @@ alter table public.order_status_events enable row level security;
 alter table public.reviews enable row level security;
 alter table public.favorites enable row level security;
 alter table public.review_reports enable row level security;
+alter table public.order_issues enable row level security;
 
 create policy "own profile" on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
@@ -438,6 +453,16 @@ create policy "people report reviews" on public.review_reports
   for insert with check (reporter_id = auth.uid());
 create policy "reporters and admins read reports" on public.review_reports
   for select using (reporter_id = auth.uid() or public.is_admin());
+
+create policy "customers ask for help with their orders" on public.order_issues
+  for insert with check (
+    customer_id = auth.uid()
+    and exists (select 1 from public.orders o where o.id = order_id and o.customer_id = auth.uid())
+  );
+create policy "customers and admins read help requests" on public.order_issues
+  for select using (customer_id = auth.uid() or public.is_admin());
+create policy "admins resolve help requests" on public.order_issues
+  for update using (public.is_admin()) with check (public.is_admin());
 
 -- ---------------------------------------------------------------------------
 -- Functions the app calls
@@ -760,6 +785,7 @@ begin
   end if;
   delete from public.favorites where customer_id = me;
   delete from public.review_reports where reporter_id = me;
+  delete from public.order_issues where customer_id = me;
   delete from public.restaurant_addresses a using public.restaurants r
     where a.restaurant_id = r.id and r.owner_id = me;
   delete from public.restaurant_documents d using public.restaurants r
@@ -807,3 +833,5 @@ grant insert, update, delete on public.profiles, public.restaurants, public.rest
 revoke select on public.restaurant_addresses from anon;
 grant insert on public.grower_waitlist to anon, authenticated;
 grant insert on public.review_reports to authenticated;
+grant insert (order_id, kind, note) on public.order_issues to authenticated;
+grant update (resolved_at) on public.order_issues to authenticated;

@@ -1,10 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as Sharing from 'expo-sharing';
+import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 
 import { ChefAvatar } from '@/components/chef';
 import { Pulse } from '@/components/motion';
 import { OrderCelebration } from '@/components/order-celebration';
+import { OrderHelpSheet } from '@/components/order-help-sheet';
 import { RateOrderSheet, Stars } from '@/components/reviews';
 import { Ticket } from '@/components/ticket';
 import {
@@ -14,9 +17,11 @@ import {
   Eyebrow,
   GoldButton,
   Heading,
+  type IconName,
   Screen,
 } from '@/components/ui';
-import { confirmAction } from '@/lib/alert';
+import { confirmAction, notify } from '@/lib/alert';
+import { addPickupToCalendar } from '@/lib/calendar';
 import * as haptics from '@/lib/haptics';
 import {
   canCustomerCancel,
@@ -32,6 +37,7 @@ import {
   ORDER_STATUS_LABEL,
   PICKUP_WITHIN_HOURS,
 } from '@/lib/orders';
+import { directionsUrl, helpTopicsFor, pickupEvent } from '@/lib/order-extras';
 import { publicName } from '@/lib/reviews';
 import { formatPickup } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
@@ -47,6 +53,9 @@ export default function OrderTracking() {
   const restaurant = useRestaurant(order?.restaurantId);
   const [celebrating, setCelebrating] = useState(celebrate === '1');
   const [rating, setRating] = useState(false);
+  const [helping, setHelping] = useState(false);
+  const [savingReceipt, setSavingReceipt] = useState(false);
+  const receipt = useRef<ComponentRef<typeof View>>(null);
   const myReview = state.reviews.find((r) => r.orderId === id);
   const endCelebration = useCallback(() => setCelebrating(false), []);
 
@@ -67,6 +76,25 @@ export default function OrderTracking() {
   const declined = endedWithoutSale(order.status);
   const current = ORDER_PROGRESS.indexOf(order.status);
   const timeFor = (status: string) => order.statusHistory.find((h) => h.status === status)?.at;
+  const mine = order.customerId === state.user?.id;
+  const addressShared = isAddressShared(order.status) && order.pickupAddress.trim().length > 0;
+  const helpTopics = helpTopicsFor(order.status);
+  const helpLabel = helpTopics.find((t) => t.kind === order.issue?.kind)?.label;
+
+  const saveReceipt = async () => {
+    setSavingReceipt(true);
+    try {
+      // view-shot's types predate React Native's new element type.
+      const uri = await captureRef(receipt as Parameters<typeof captureRef>[0], { format: 'png', quality: 1 });
+      if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing unavailable');
+      haptics.success();
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `Receipt No. ${orderNumber(order.id)}`, UTI: 'public.png' });
+    } catch {
+      notify('Open Manna on your phone', 'Saving a receipt image works in the Manna app on your phone.');
+    } finally {
+      setSavingReceipt(false);
+    }
+  };
 
   return (
     <Screen>
@@ -164,45 +192,67 @@ export default function OrderTracking() {
           </View>
         ) : null}
 
-        <Ticket
-          heading={`No. ${orderNumber(order.id)} · ${formatOrderTime(order.createdAt)}`}
-          items={order.lines.map((l) => ({ label: `${l.quantity} × ${l.name}`, cents: l.priceCents * l.quantity }))}
-          charges={[
-            { label: 'Subtotal', cents: order.subtotalCents },
-            { label: 'Movement fee', cents: order.movementFeeCents },
-            ...(order.deliveryFeeCents ? [{ label: 'Delivery', cents: order.deliveryFeeCents }] : []),
-            ...(order.tipCents ? [{ label: `Tip for ${chefName}`, cents: order.tipCents }] : []),
-          ]}
-          totalCents={order.totalCents}
-          footer={
-            <View style={{ gap: spacing.sm }}>
-              <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
-                <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
-                <Body muted style={{ flex: 1, fontSize: 13 }}>
-                  {isAddressShared(order.status) && order.pickupAddress
-                    ? `Pick up at ${order.pickupAddress}`
-                    : declined
-                      ? 'No pickup needed.'
-                      : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
-                </Body>
-              </View>
-              {isAddressShared(order.status) && order.pickupInstructions ? (
+        <View ref={receipt} collapsable={false} style={styles.receipt}>
+          <Ticket
+            heading={`No. ${orderNumber(order.id)} · ${formatOrderTime(order.createdAt)}`}
+            items={order.lines.map((l) => ({ label: `${l.quantity} × ${l.name}`, cents: l.priceCents * l.quantity }))}
+            charges={[
+              { label: 'Subtotal', cents: order.subtotalCents },
+              { label: 'Movement fee', cents: order.movementFeeCents },
+              ...(order.deliveryFeeCents ? [{ label: 'Delivery', cents: order.deliveryFeeCents }] : []),
+              ...(order.tipCents ? [{ label: `Tip for ${chefName}`, cents: order.tipCents }] : []),
+            ]}
+            totalCents={order.totalCents}
+            footer={
+              <View style={{ gap: spacing.sm }}>
                 <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
-                  <Icon name="home-heart" size={16} color={colors.textMuted} />
-                  <Body style={{ flex: 1, fontSize: 13 }}>{order.pickupInstructions}</Body>
+                  <Icon name="map-marker-outline" size={16} color={colors.textMuted} />
+                  <Body muted style={{ flex: 1, fontSize: 13 }}>
+                    {isAddressShared(order.status) && order.pickupAddress
+                      ? `Pick up at ${order.pickupAddress}`
+                      : declined
+                        ? 'No pickup needed.'
+                        : `Pickup in ${restaurant?.neighborhood || 'the neighborhood'}. The exact address appears here once ${chefName} accepts.`}
+                  </Body>
                 </View>
-              ) : null}
-              {isActive(order.status) ? (
-                <Body muted style={{ fontSize: 12, lineHeight: 17 }}>
-                  {order.pickupBy
-                    ? `Pick up by ${formatClock(order.pickupBy)}.`
-                    : `Pick up within ${PICKUP_WITHIN_HOURS} hours of your order being ready.`}{' '}
-                  Food that isn’t picked up is still paid to {chefName}, since it was made for you.
-                </Body>
-              ) : null}
-            </View>
-          }
-        />
+                {isAddressShared(order.status) && order.pickupInstructions ? (
+                  <View style={[styles.row, { justifyContent: 'flex-start', gap: spacing.sm }]}>
+                    <Icon name="home-heart" size={16} color={colors.textMuted} />
+                    <Body style={{ flex: 1, fontSize: 13 }}>{order.pickupInstructions}</Body>
+                  </View>
+                ) : null}
+                {isActive(order.status) ? (
+                  <Body muted style={{ fontSize: 12, lineHeight: 17 }}>
+                    {order.pickupBy
+                      ? `Pick up by ${formatClock(order.pickupBy)}.`
+                      : `Pick up within ${PICKUP_WITHIN_HOURS} hours of your order being ready.`}{' '}
+                    Food that isn’t picked up is still paid to {chefName}, since it was made for you.
+                  </Body>
+                ) : null}
+              </View>
+            }
+          />
+        </View>
+
+        {mine && !declined ? (
+          <View style={styles.actions}>
+            {isActive(order.status) && addressShared ? (
+              <OrderAction
+                icon="navigation"
+                label="Directions"
+                onPress={() => void Linking.openURL(directionsUrl(order.pickupAddress, Platform.OS))}
+              />
+            ) : null}
+            {isActive(order.status) ? (
+              <OrderAction
+                icon="calendar-plus"
+                label="Add to calendar"
+                onPress={() => void addPickupToCalendar(pickupEvent(order, restaurant?.neighborhood))}
+              />
+            ) : null}
+            <OrderAction icon="image-down" label="Save receipt" busy={savingReceipt} onPress={saveReceipt} />
+          </View>
+        ) : null}
 
         {order.customerId === state.user?.id && canSayArrived(order, new Date()) ? (
           <GoldButton
@@ -243,7 +293,37 @@ export default function OrderTracking() {
             onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: restaurant.id } })}
           />
         ) : null}
+
+        {mine && order.issue ? (
+          <View style={styles.issue}>
+            <Icon name="lifebuoy" size={18} color={colors.gold} />
+            <Body style={{ flex: 1, fontSize: 14 }}>
+              We have your message{helpLabel ? ` about “${helpLabel.toLowerCase()}”` : ''}, sent{' '}
+              {formatOrderTime(order.issue.at)}. Manna’s team replies within 24 hours.
+            </Body>
+          </View>
+        ) : mine ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setHelping(true)}
+            hitSlop={8}
+            style={({ pressed }) => [styles.helpRow, pressed && { opacity: 0.7 }]}>
+            <Icon name="lifebuoy" size={18} color={colors.textMuted} />
+            <Text style={styles.helpText}>Need help with this order?</Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
+
+      <OrderHelpSheet
+        visible={helping}
+        topics={helpTopics}
+        onClose={() => setHelping(false)}
+        onSend={(kind, note) => {
+          haptics.success();
+          dispatch({ type: 'reportOrderIssue', orderId: order.id, customerId: order.customerId, kind, note });
+          setHelping(false);
+        }}
+      />
 
       <RateOrderSheet
         visible={rating}
@@ -275,7 +355,50 @@ export default function OrderTracking() {
   );
 }
 
+/** One of the small square buttons under the receipt (directions, calendar, save). */
+function OrderAction({
+  icon,
+  label,
+  onPress,
+  busy,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  busy?: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ busy: !!busy }}
+      disabled={busy}
+      onPress={onPress}
+      style={({ pressed }) => [styles.action, (pressed || busy) && { backgroundColor: colors.surfaceRaised }]}>
+      <Icon name={icon} size={18} color={colors.gold} />
+      <Text style={styles.actionText} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  receipt: { backgroundColor: colors.bg },
+  actions: { flexDirection: 'row', gap: spacing.sm },
+  action: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  actionText: { fontFamily: fonts.medium, fontSize: 12, color: colors.text },
+  helpRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'center', paddingVertical: spacing.sm },
+  helpText: { fontFamily: fonts.medium, fontSize: 14, color: colors.textMuted },
+  issue: { flexDirection: 'row', gap: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.goldTint },
   ticketNo: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 0.4, color: colors.textMuted },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   header: { gap: spacing.sm, marginTop: spacing.sm },

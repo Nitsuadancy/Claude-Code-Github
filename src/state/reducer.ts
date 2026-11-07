@@ -1,11 +1,13 @@
 import type { SharedStep } from '@/lib/launch';
 import { canCustomerCancel, isActive } from '@/lib/orders';
+import { canSendHelp, helpTopicsFor, HELP_NOTE_MAX } from '@/lib/order-extras';
 import { isReadyToOpen } from '@/lib/setup';
 import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
   GrowerApplication,
   Order,
+  OrderIssueKind,
   OrderStatus,
   Restaurant,
   Review,
@@ -96,6 +98,7 @@ export type Action =
   | { type: 'setOrderNote'; orderId: string; note: string }
   | { type: 'cancelOrder'; orderId: string; customerId: string; at?: string }
   | { type: 'markArrived'; orderId: string; customerId: string; at?: string }
+  | { type: 'reportOrderIssue'; orderId: string; customerId: string; kind: OrderIssueKind; note: string; at?: string }
   | { type: 'toggleFavorite'; restaurantId: string }
   | { type: 'addReview'; review: Review }
   | { type: 'reportReview'; reviewId: string }
@@ -277,6 +280,22 @@ export function reducer(state: AppState, action: Action): AppState {
             : o,
         ),
       };
+
+    case 'reportOrderIssue': {
+      const note = action.note.trim().slice(0, HELP_NOTE_MAX);
+      return {
+        ...state,
+        orders: state.orders.map((o) =>
+          o.id === action.orderId &&
+          o.customerId === action.customerId &&
+          !o.issue &&
+          canSendHelp(action.kind, note) &&
+          helpTopicsFor(o.status).some((t) => t.kind === action.kind)
+            ? { ...o, issue: { kind: action.kind, note, at: action.at ?? new Date().toISOString() } }
+            : o,
+        ),
+      };
+    }
 
     case 'cancelOrder':
       return {

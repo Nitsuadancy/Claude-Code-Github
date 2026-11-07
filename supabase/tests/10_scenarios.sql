@@ -205,6 +205,27 @@ select pg_temp.expect_error($$ insert into public.review_reports (review_id) val
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check((select count(*) = 1 from public.review_reports), 'admins see reports');
 
+-- Help with an order ------------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.expect_error($$ insert into public.order_issues (order_id, kind) values ((select id from first_order), 'missing') $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_error($$ insert into public.order_issues (order_id, kind, note) values ((select id from first_order), 'other', ' ') $$,
+  'check constraint');
+select pg_temp.expect_error($$ insert into public.order_issues (order_id, kind) values ((select id from first_order), 'refund-me') $$,
+  'check constraint');
+insert into public.order_issues (order_id, kind, note) values ((select id from first_order), 'missing', 'No jam in the box');
+select pg_temp.check((select count(*) = 1 from public.order_issues), 'customer sees their request');
+select pg_temp.expect_error($$ insert into public.order_issues (order_id, kind) values ((select id from first_order), 'quality') $$,
+  'duplicate key');
+update public.order_issues set resolved_at = now();
+select pg_temp.check((select resolved_at is null from public.order_issues), 'customers cannot close their own request');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select count(*) = 0 from public.order_issues), 'the kitchen never sees help requests');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+update public.order_issues set resolved_at = now();
+select pg_temp.check((select resolved_at is not null from public.order_issues), 'the team resolves requests');
+
 -- Bake days ---------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 update public.restaurant_addresses set instructions = 'Cooler on the porch, ring once.';
@@ -278,6 +299,7 @@ select public.delete_my_account();
 select pg_temp.check((select name = '' and phone is null and deleted_at is not null from public.profiles where id = auth.uid()),
   'deleted account details cleared');
 select pg_temp.check((select count(*) = 0 from public.favorites), 'favorites removed');
+select pg_temp.check((select count(*) = 0 from public.order_issues), 'help requests removed');
 select pg_temp.check((select customer_name = 'Former customer' from public.reviews), 'review kept without the name');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 select public.delete_my_account();
