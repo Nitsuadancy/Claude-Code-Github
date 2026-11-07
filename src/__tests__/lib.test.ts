@@ -4,7 +4,7 @@ import { browseRestaurants, cuisineTags, DEFAULT_FILTERS, isNew } from '@/lib/br
 import { formatTime, isOpenAt, TIME_SLOTS, toMinutes } from '@/lib/hours';
 import { normalizeMenuItem } from '@/lib/migrate';
 import { formatCents, parsePriceToCents } from '@/lib/money';
-import { computeCartTotals } from '@/lib/pricing';
+import { computeCartTotals, movementFee } from '@/lib/pricing';
 import { blankRestaurant, currentStep, isInformationComplete } from '@/lib/setup';
 import { formatUsPhone, isValidEmail, isValidUsPhone, isValidZip } from '@/lib/validation';
 import type { MenuItem, Restaurant } from '@/types';
@@ -42,9 +42,17 @@ describe('pricing', () => {
     );
     expect(totals.itemCount).toBe(3);
     expect(totals.subtotalCents).toBe(2550);
-    // A single 5% movement fee and no delivery fee: orders are picked up.
-    expect(totals.movementFeeCents).toBe(128);
-    expect(totals.totalCents).toBe(2550 + 128);
+    // One movement fee, 8% with a $1 minimum, and no delivery fee: orders are picked up.
+    expect(totals.movementFeeCents).toBe(204);
+    expect(totals.totalCents).toBe(2550 + 204);
+  });
+
+  it('charges at least $1 on small orders', () => {
+    expect(movementFee(0)).toBe(0);
+    expect(movementFee(800)).toBe(100);
+    expect(movementFee(1250)).toBe(100);
+    expect(movementFee(1300)).toBe(104);
+    expect(movementFee(4000)).toBe(320);
   });
 
   it('skips unavailable and unknown items, and charges nothing for an empty cart', () => {

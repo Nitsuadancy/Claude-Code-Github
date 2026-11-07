@@ -152,7 +152,7 @@ create table public.orders (
   customer_name text not null default '',
   restaurant_name text not null default '',
   subtotal_cents integer not null check (subtotal_cents > 0),
-  -- Manna's 5% movement fee, paid by the customer. There is no delivery fee:
+  -- Manna's movement fee (8%, at least $1), paid by the customer. There is no delivery fee:
   -- orders are picked up.
   movement_fee_cents integer not null check (movement_fee_cents >= 0),
   tip_cents integer not null default 0 check (tip_cents >= 0),
@@ -525,8 +525,8 @@ begin
   if p_tip_cents < 0 or p_tip_cents > subtotal then
     raise exception 'Tip must be between $0 and the food subtotal';
   end if;
-  -- Mirrors MOVEMENT_FEE_RATE in src/lib/pricing.ts.
-  movement_fee := round(subtotal * 0.05);
+  -- 8% of the food, at least $1. Mirrors movementFee() in src/lib/pricing.ts.
+  movement_fee := greatest(round(subtotal * 0.08), 100);
 
   update public.orders set
     subtotal_cents = subtotal,

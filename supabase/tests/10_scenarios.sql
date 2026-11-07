@@ -92,8 +92,8 @@ create temp table first_order as
     '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":2},
       {"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]',
     'No nuts please', null, 300) as id;
-select pg_temp.check((select subtotal_cents = 3300 and movement_fee_cents = 165 and pickup_address = ''
-                             and tip_cents = 300 and total_cents = 3765 and customer_note = 'No nuts please'
+select pg_temp.check((select subtotal_cents = 3300 and movement_fee_cents = 264 and pickup_address = ''
+                             and tip_cents = 300 and total_cents = 3864 and customer_note = 'No nuts please'
                       from public.orders where id = (select id from first_order)), 'server-side totals');
 select pg_temp.check((select count(*) = 1 from public.order_status_events where order_id = (select id from first_order)), 'placed event');
 select pg_temp.expect_error(
@@ -155,6 +155,9 @@ select public.place_order('10000000-0000-0000-0000-000000000001',
 select pg_temp.act_as(null);
 select pg_temp.check((select menu_item_id = '20000000-0000-0000-0000-000000000002' from public.popular_menu_items()),
   'garlic knots are the most ordered after three orders');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select bool_and(movement_fee_cents = 100) from public.orders where subtotal_cents = 600),
+  'small orders pay the $1 minimum fee');
 
 -- Grower waitlist: anyone can join, only admins can read ---------------------
 select pg_temp.act_as(null);

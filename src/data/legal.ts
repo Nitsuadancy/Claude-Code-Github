@@ -1,3 +1,5 @@
+import { MOVEMENT_FEE_TERMS } from '@/lib/pricing';
+
 /**
  * Manna's privacy policy and terms of service, shown in the app.
  *
@@ -117,7 +119,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       heading: 'Ordering',
       body: [
         '- Kitchens set their own prices, menus, hours and daily limits.',
-        '- Manna adds a 5% movement fee at checkout. Tips go entirely to the kitchen.',
+        `- Manna adds a movement fee at checkout: ${MOVEMENT_FEE_TERMS}. Kitchens keep 100% of their prices, and tips go entirely to the kitchen.`,
         '- Orders are for pickup at the time you choose. The kitchen shares its pickup address once it accepts your order.',
         '- If a kitchen declines your order or cancels a bake day, you are not charged, or you get a full refund.',
         '- You can cancel an order until the kitchen accepts it.',

@@ -201,7 +201,7 @@ export interface Order {
   restaurantName: string;
   lines: OrderLine[];
   subtotalCents: number;
-  /** Manna's 5% movement fee, paid by the customer. Card processing comes out of it. */
+  /** Manna's movement fee (8%, at least $1), paid by the customer. Card processing comes out of it. */
   movementFeeCents: number;
   /** Only on orders from before Manna went pickup-only. */
   deliveryFeeCents?: number;

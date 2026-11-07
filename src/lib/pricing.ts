@@ -1,11 +1,21 @@
 import type { Cart, MenuItem, OrderLine } from '@/types';
 
 /**
- * Manna's only fee: 5% of the food subtotal, paid by the customer. Card
- * processing comes out of it, so kitchens keep 100% of their menu prices.
- * Orders are picked up, so there is no delivery fee.
+ * Manna's only fee: 8% of the food subtotal, at least $1, paid by the
+ * customer. Card processing comes out of it, so kitchens keep 100% of their
+ * menu prices. Orders are picked up, so there is no delivery fee.
+ * Mirrors movement_fee() in the database.
  */
-export const MOVEMENT_FEE_RATE = 0.05;
+export const MOVEMENT_FEE_RATE = 0.08;
+export const MOVEMENT_FEE_MIN_CENTS = 100;
+
+export function movementFee(subtotalCents: number): number {
+  if (subtotalCents <= 0) return 0;
+  return Math.max(Math.round(subtotalCents * MOVEMENT_FEE_RATE), MOVEMENT_FEE_MIN_CENTS);
+}
+
+/** "8%, at least $1", for checkout and the terms. */
+export const MOVEMENT_FEE_TERMS = '8% of the food subtotal, at least $1';
 
 export interface CartTotals {
   lines: OrderLine[];
@@ -31,7 +41,7 @@ export function computeCartTotals(cart: Cart, menu: MenuItem[]): CartTotals {
   }
   const subtotalCents = lines.reduce((sum, l) => sum + l.priceCents * l.quantity, 0);
   const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
-  const movementFeeCents = Math.round(subtotalCents * MOVEMENT_FEE_RATE);
+  const movementFeeCents = movementFee(subtotalCents);
   return {
     lines,
     itemCount,

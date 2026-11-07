@@ -23,7 +23,7 @@ import { allergenConflicts } from '@/lib/diet';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
-import { computeCartTotals, TIP_RATES, tipFor } from '@/lib/pricing';
+import { computeCartTotals, MOVEMENT_FEE_TERMS, TIP_RATES, tipFor } from '@/lib/pricing';
 import { bakeDayDate, formatBakeDay, formatCutoff, openBakeDays } from '@/lib/bake-days';
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
@@ -292,13 +292,13 @@ export default function Cart() {
         <Ticket
           charges={[
             { label: 'Subtotal', cents: totals.subtotalCents },
-            { label: 'Movement fee (5%)', cents: totals.movementFeeCents },
+            { label: 'Movement fee', cents: totals.movementFeeCents },
             ...(tip ? [{ label: `Tip for ${chefFirst}`, cents: tip }] : []),
           ]}
           totalCents={grandTotal}
           footer={
             <Text style={styles.movement}>
-              Manna’s only fee is this 5%. {chefFirst} keeps every dollar of the menu price.
+              Manna’s only fee: {MOVEMENT_FEE_TERMS}. {chefFirst} keeps every dollar of the menu price.
             </Text>
           }
         />
