@@ -106,7 +106,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'What Manna is',
       body: [
-        'Manna connects customers with independent home kitchens. Each kitchen is its own business: it makes, packages, labels and sells its food. Manna provides the app, takes payment on the kitchen’s behalf, and helps coordinate pickup.',
+        'Manna connects customers with independent home cooks and kitchens. Each kitchen is its own business and the seller of its food: it makes, packages, labels and sells it. Manna is not the seller. Manna provides the app, takes payment on the kitchen’s behalf, and helps coordinate pickup.',
       ],
     },
     {
@@ -130,14 +130,17 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'Food safety and allergies',
       body: [
-        'Home kitchens on Manna sell under their state’s home-food (cottage food) law. Their products are not made in a licensed or inspected kitchen; each kitchen’s page shows the statement its state requires, such as Florida’s: “Made in a cottage food operation that is not subject to Florida’s food safety regulations.”',
-        'Each kitchen lists its ingredients and allergens. Always check them, and tell the chef about allergies in your order note. Manna does not inspect kitchens; a Verified badge means our team reviewed the kitchen’s documents.',
+        'Manna does not inspect kitchens or test food. Kitchens marked “Home kitchen · not inspected” have no food permit or license on file with Manna and may not be licensed or inspected by any authority. Kitchens marked “Licensed kitchen” have a permit or license that our team reviewed. A Verified badge means our team checked the cook’s ID and food handler certificate.',
+        'You decide which kitchens to order from. Each kitchen lists its ingredients and allergens: always check them, and tell the cook about allergies in your order note.',
       ],
     },
     {
       heading: 'For kitchens',
       body: [
-        '- You are responsible for following your state’s cottage food law, including what you may sell, labeling, any annual sales limit, permits, taxes, and any home-business rules.',
+        '- You are solely responsible for following the food laws of your state, county and city for everything you sell, including what you may sell from home, permits and licenses, labels, sales limits, taxes and home-business rules. You confirm this before opening your kitchen. Manna does not check that you comply.',
+        '- Only upload permits and licenses that are real, current and yours. Tell us if one expires or is revoked.',
+        '- We strongly recommend product liability insurance.',
+        '- You agree to cover Manna’s costs, including reasonable legal fees, for claims arising from your food, your kitchen or your breach of these terms.',
         '- List accurate ingredients, allergens, prices and photos of your own food.',
         '- Honor the orders you accept, and keep customers’ information private.',
         '- Payouts and any fees are described in the app before you publish your kitchen.',
@@ -153,7 +156,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'Things you can’t do',
       body: [
-        '- Break the law, or sell foods that your state’s cottage food law doesn’t allow.',
+        '- Break the law, or sell food you aren’t allowed to sell where you live.',
         '- Mislead customers or kitchens, or post fake reviews.',
         '- Harass anyone, or misuse anyone’s personal information.',
         '- Interfere with how Manna works.',
@@ -168,7 +171,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'Our responsibility',
       body: [
-        'Manna is provided as is. Kitchens, not Manna, are responsible for the food they make. To the extent the law allows, Manna is not liable for indirect losses, and our total liability for any claim is limited to the fees you paid Manna in the 12 months before it.',
+        'Manna is provided as is. Kitchens, not Manna, are responsible for the food they make and sell, including its safety and its compliance with the law. To the extent the law allows, Manna is not liable for indirect losses, and our total liability for any claim is limited to the fees you paid Manna in the 12 months before it.',
       ],
     },
     {

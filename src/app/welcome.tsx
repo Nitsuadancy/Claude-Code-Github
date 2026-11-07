@@ -22,7 +22,7 @@ const SLIDES = [
     key: 'foodie',
     eyebrow: 'For the Foodie',
     title: 'Homemade, from the kitchen next door',
-    body: 'Breads, cakes, cookies and jams from neighbors who bake at home. Order ahead and pick up nearby.',
+    body: 'Home-cooked plates, breads and sweets from neighbors who cook at home. Order ahead and pick up nearby.',
   },
   {
     key: 'chef',

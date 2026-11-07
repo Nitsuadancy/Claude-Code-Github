@@ -1,5 +1,6 @@
 import type { CategoryId, Restaurant } from '@/types';
 
+import { LICENSED_BOOST } from './kitchen-kind';
 import { takingOrders } from './ordering';
 
 export type SortOption = 'recommended' | 'rating' | 'newest' | 'name';
@@ -94,7 +95,9 @@ export function browseRestaurants(
 function score(r: Restaurant): number {
   const prior = 4.0;
   const weight = 20;
-  return (r.rating * r.ratingCount + prior * weight) / (r.ratingCount + weight);
+  const rating = (r.rating * r.ratingCount + prior * weight) / (r.ratingCount + weight);
+  // Licensed kitchens get a small lift, so the home page leads with them.
+  return rating + (r.licensed ? LICENSED_BOOST : 0);
 }
 
 export function allCuisineTags(restaurants: Restaurant[]): string[] {

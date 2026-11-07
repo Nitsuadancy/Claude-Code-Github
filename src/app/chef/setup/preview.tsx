@@ -6,7 +6,8 @@ import { RestaurantCard } from '@/components/restaurant-card';
 import { Body, GoldButton, SectionTitle, TextLink } from '@/components/ui';
 import { isOpenState, stateName } from '@/data/regions';
 import { resetTo } from '@/lib/navigation';
-import { completedSteps, SETUP_STEPS } from '@/lib/setup';
+import { LAW_ATTESTATION } from '@/lib/kitchen-kind';
+import { completedSteps, isReadyToOpen, SETUP_STEPS } from '@/lib/setup';
 import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
@@ -15,7 +16,7 @@ export default function Preview() {
   const { dispatch } = useStore();
   const restaurant = useMyRestaurant();
   const done = completedSteps(restaurant);
-  const ready = done.information && done.documents && done.menu;
+  const ready = isReadyToOpen(restaurant);
 
   if (!restaurant) {
     return (
@@ -68,6 +69,23 @@ export default function Preview() {
           <Text style={styles.checkText}>{s.title}</Text>
         </View>
       ))}
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: !!restaurant.lawAttestedAt }}
+        onPress={() =>
+          dispatch({
+            type: 'saveRestaurant',
+            restaurant: { ...restaurant, lawAttestedAt: restaurant.lawAttestedAt ? undefined : new Date().toISOString() },
+          })
+        }
+        style={styles.attest}>
+        <Icon
+          name={restaurant.lawAttestedAt ? 'check-circle' : 'checkbox-blank-circle-outline'}
+          size={24}
+          color={restaurant.lawAttestedAt ? colors.success : colors.textMuted}
+        />
+        <Text style={[styles.checkText, { flex: 1, fontSize: 15, lineHeight: 21 }]}>{LAW_ATTESTATION}</Text>
+      </Pressable>
 
       <SectionTitle>Make it shine</SectionTitle>
       {[
@@ -75,6 +93,11 @@ export default function Preview() {
         { done: !!restaurant.chefPhotoUri, label: 'Add a photo of yourself', route: '/chef/setup/information' as const },
         { done: restaurant.coverUris.length > 0, label: 'Add cover photos', route: '/chef/setup/information' as const },
         { done: restaurant.menu.some((m) => m.photoUri), label: 'Add dish photos', route: '/chef/setup/menu' as const },
+        {
+          done: restaurant.documents.some((d) => d.kind === 'home-kitchen-permit'),
+          label: 'Add a food permit or license',
+          route: '/chef/setup/documents' as const,
+        },
       ].map((tip) => (
         <Pressable
           key={tip.label}
@@ -100,13 +123,15 @@ export default function Preview() {
       )}
       <Body muted style={{ fontSize: 14 }}>
         Opening your kitchen lists it on Manna. Our team checks your documents, usually within a
-        day, and then adds the Verified badge.
+        day, and then adds the Verified badge. With an approved permit or license, your kitchen also
+        shows as Licensed and ranks higher.
       </Body>
     </FormScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  attest: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingVertical: spacing.sm },
   check: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 36 },
   checkText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
   optional: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textMuted },

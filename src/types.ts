@@ -116,6 +116,14 @@ export interface Restaurant {
   verified: boolean;
   /** One of the first kitchens on Manna. Set by the Manna team. */
   founding?: boolean;
+  /**
+   * The Manna team approved a food permit or license (commercial kitchen,
+   * food truck, catering, a home-kitchen permit). Optional: kitchens without
+   * one still sell, labeled "Home kitchen".
+   */
+  licensed?: boolean;
+  /** When the cook confirmed they follow their state's and county's food laws. Needed to open. */
+  lawAttestedAt?: string;
   /** Where people can also find the cook in person, e.g. a market table or a coffee shop pop-up. */
   inPerson?: InPersonSpot[];
   /** Kitchen page accent color, one of KITCHEN_ACCENTS. Manna's champagne when unset. */

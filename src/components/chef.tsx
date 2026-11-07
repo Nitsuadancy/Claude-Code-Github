@@ -30,6 +30,16 @@ export function VerifiedSeal({ size = 16 }: { size?: number }) {
   );
 }
 
+/** Marks a kitchen with an approved food permit or license. */
+export function LicensedMark({ size = 12 }: { size?: number }) {
+  return (
+    <View style={styles.founding} accessible accessibilityLabel="Licensed kitchen">
+      <Icon name="shield-lock-outline" size={size} color={colors.success} />
+      <Text style={[styles.foundingText, { fontSize: size, color: colors.success }]}>Licensed</Text>
+    </View>
+  );
+}
+
 /** Circular chef portrait, or their initials in gold when there's no photo. */
 export function ChefAvatar({
   name,

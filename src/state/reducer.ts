@@ -1,5 +1,6 @@
 import type { SharedStep } from '@/lib/launch';
 import { canCustomerCancel, isActive } from '@/lib/orders';
+import { isReadyToOpen } from '@/lib/setup';
 import { normalizePersisted } from '@/lib/migrate';
 import type {
   Cart,
@@ -192,7 +193,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         restaurants: state.restaurants.map((r) =>
-          r.id === action.restaurantId
+          r.id === action.restaurantId && isReadyToOpen(r)
             ? { ...r, status: 'live', createdAt: new Date().toISOString() }
             : r,
         ),

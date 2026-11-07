@@ -48,6 +48,7 @@ insert into public.restaurants (id, owner_id, name, chef_name, cuisine, working_
           array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'], '00:00', '23:59', 'UTC');
 select pg_temp.expect_error($$ update public.restaurants set verified = true $$, 'only the manna team');
 select pg_temp.expect_error($$ update public.restaurants set founding = true $$, 'only the manna team');
+select pg_temp.expect_error($$ update public.restaurants set licensed = true $$, 'only the manna team');
 update public.restaurants set in_person = '[{"place": "Lantern Coffee", "when": "Saturdays"}]';
 select pg_temp.expect_error($$ update public.restaurants set status = 'live' $$, 'after review');
 insert into public.menu_items (id, restaurant_id, name, price_cents, daily_limit) values
@@ -55,7 +56,8 @@ insert into public.menu_items (id, restaurant_id, name, price_cents, daily_limit
   ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 'Garlic Knots', 600, null);
 insert into public.restaurant_documents (restaurant_id, kind, storage_path, file_name) values
   ('10000000-0000-0000-0000-000000000001', 'government-id', 'docs/id.pdf', 'id.pdf'),
-  ('10000000-0000-0000-0000-000000000001', 'food-handler', 'docs/card.pdf', 'card.pdf');
+  ('10000000-0000-0000-0000-000000000001', 'food-handler', 'docs/card.pdf', 'card.pdf'),
+  ('10000000-0000-0000-0000-000000000001', 'home-kitchen-permit', 'docs/permit.pdf', 'permit.pdf');
 select pg_temp.expect_error(
   $$ update public.restaurant_documents set review_status = 'approved' $$, 'row-level security');
 insert into public.restaurant_addresses (restaurant_id, address)
@@ -75,9 +77,20 @@ select pg_temp.expect_error(
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect_error($$ select public.approve_restaurant('10000000-0000-0000-0000-000000000001') $$, 'only the manna team');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect_error($$ select public.approve_restaurant('10000000-0000-0000-0000-000000000001') $$, 'hasn''t confirmed');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+update public.restaurants set law_attested_at = now();
+select pg_temp.expect_error($$ select public.refresh_licensed('10000000-0000-0000-0000-000000000001') $$, 'only the manna team');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 select pg_temp.expect_error($$ select public.approve_restaurant('10000000-0000-0000-0000-000000000001') $$, 'approve the food handler');
-update public.restaurant_documents set review_status = 'approved', reviewed_by = auth.uid(), reviewed_at = now();
+update public.restaurant_documents set review_status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
+  where kind <> 'home-kitchen-permit';
 select public.approve_restaurant('10000000-0000-0000-0000-000000000001');
+select pg_temp.check((select verified and not licensed from public.restaurants), 'verified, not licensed without a permit');
+update public.restaurant_documents set review_status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
+  where kind = 'home-kitchen-permit';
+select public.refresh_licensed('10000000-0000-0000-0000-000000000001');
+select pg_temp.check((select licensed from public.restaurants), 'licensed once the permit is approved');
 
 -- Customer orders; prices and limits come from the server ---------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');

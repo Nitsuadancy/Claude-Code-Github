@@ -2,11 +2,14 @@ import type { MenuItem } from '@/types';
 
 /**
  * Sections cooks can file dishes under, in the order they appear on the menu.
- * All fit Florida’s cottage food law, Manna’s first state; meals and drinks
- * need a licensed kitchen there. Other states may allow more (see data/regions).
+ * Manna takes every kind of food; cooks follow their own state's rules on what
+ * they may sell (see lib/kitchen-kind).
  */
 export const MENU_SECTIONS = [
   'Specials',
+  'Mains',
+  'Sides',
+  'Soups',
   'Breads',
   'Pastries',
   'Cakes',
@@ -15,6 +18,7 @@ export const MENU_SECTIONS = [
   'Candy',
   'Desserts',
   'Pantry',
+  'Drinks',
 ] as const;
 
 /** The list with the item at `index` moved one place up (-1) or down (+1). */

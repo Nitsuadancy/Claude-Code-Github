@@ -53,7 +53,8 @@ FOR HOME COOKS
 
 SAFE AND HONEST
 • Every kitchen's documents are checked before it gets a Verified badge
-• Kitchens sell cottage foods under Florida law: breads, cakes, cookies, pastries, candy, jams and dry mixes
+• Every kitchen is labeled: "Licensed kitchen" when a permit or license is on file, or "Home kitchen · not inspected"
+• Cooks confirm they follow their local food laws before they open
 • Your pickup address stays private until you accept an order
 • Report any review that breaks the rules; our team checks every report within 24 hours
 
@@ -106,9 +107,12 @@ Dietary preferences such as halal or vegan are part of "Other user content". All
 Paste this into "Notes" and fill in the demo details once the backend is live.
 
 ```
-Manna is a marketplace for home kitchens in Orlando, Florida. Kitchens sell
-cottage foods (breads, cakes, cookies, jams), which Florida law allows without
-a state permit. All orders are for pickup; there is no delivery.
+Manna is a marketplace for independent home cooks, starting in Orlando,
+Florida. Each cook is the seller and confirms before opening that they follow
+their state's and county's food laws. Kitchens with a food permit or license
+reviewed by our team are labeled "Licensed kitchen"; others are labeled
+"Home kitchen · not inspected" so customers can decide. All orders are for
+pickup; there is no delivery.
 
 Food is a physical good picked up outside the app, so payments go through
 Stripe rather than in-app purchase (guideline 3.1.5(a)).

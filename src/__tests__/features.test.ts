@@ -23,7 +23,9 @@ import {
   upcomingBakeDays,
 } from '@/lib/bake-days';
 import { firstOrderSteps } from '@/lib/launch';
-import { isInformationComplete } from '@/lib/setup';
+import { isInformationComplete, isReadyToOpen } from '@/lib/setup';
+import { browseRestaurants, DEFAULT_FILTERS } from '@/lib/browse';
+import { kitchenKindLabel } from '@/lib/kitchen-kind';
 import { moveItem } from '@/lib/menu';
 import { orderingLine, takingOrders } from '@/lib/ordering';
 import { type AppState, INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
@@ -473,5 +475,39 @@ describe('states and markets', () => {
     const { state: _state, ...old } = kitchen;
     const s = reducer(INITIAL_STATE, { type: 'hydrate', state: { restaurants: [old] } });
     expect(s.restaurants[0].state).toBe('FL');
+  });
+});
+
+describe('open marketplace', () => {
+  it('needs the food-law confirmation to open, labels kitchens honestly and lifts licensed ones', () => {
+    const user = { id: 'u1', name: 'Rae Cook', email: '', phone: '+14075550100', role: 'chef' as const, neighborhood: '' };
+    const ready = {
+      ...SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_susies_sweets')!,
+      id: 'mine',
+      ownerId: 'u1',
+      status: 'draft' as const,
+      documents: [
+        { kind: 'food-handler' as const, fileName: 'card.pdf', uri: 'x' },
+        { kind: 'government-id' as const, fileName: 'id.jpg', uri: 'y' },
+      ],
+      lawAttestedAt: undefined,
+    };
+    expect(isReadyToOpen(ready)).toBe(false);
+    let s = reducer({ ...INITIAL_STATE, user, restaurants: [ready] }, { type: 'publishRestaurant', restaurantId: 'mine' });
+    expect(s.restaurants[0].status).toBe('draft');
+    const attested = { ...ready, lawAttestedAt: '2026-11-07T12:00:00Z' };
+    s = reducer({ ...INITIAL_STATE, user, restaurants: [attested] }, { type: 'publishRestaurant', restaurantId: 'mine' });
+    expect(s.restaurants[0].status).toBe('live');
+
+    expect(kitchenKindLabel({ licensed: false })).toBe('Home kitchen · not inspected');
+    expect(kitchenKindLabel({ licensed: true })).toBe('Licensed kitchen');
+
+    const twin = SAMPLE_RESTAURANTS[1];
+    const ranked = browseRestaurants(
+      [{ ...twin, id: 'home' }, { ...twin, id: 'licensed', licensed: true }],
+      DEFAULT_FILTERS,
+      new Date(2026, 10, 7, 10),
+    );
+    expect(ranked.map((r) => r.id)).toEqual(['licensed', 'home']);
   });
 });

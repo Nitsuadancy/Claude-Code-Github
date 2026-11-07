@@ -63,6 +63,11 @@ create table public.restaurants (
   verified boolean not null default false,
   -- One of the first kitchens on Manna; set by the Manna team.
   founding boolean not null default false,
+  -- The Manna team approved a food permit or license. Optional: kitchens
+  -- without one sell as "Home kitchen · not inspected".
+  licensed boolean not null default false,
+  -- When the cook confirmed they follow their state's and county's food laws.
+  law_attested_at timestamptz,
   -- Where the cook also sells in person: [{"place": "...", "when": "..."}]
   in_person jsonb not null default '[]'::jsonb
     check (jsonb_typeof(in_person) = 'array' and jsonb_array_length(in_person) <= 5),
@@ -325,6 +330,7 @@ begin
   end if;
   if new.verified is distinct from old.verified
      or new.founding is distinct from old.founding
+     or new.licensed is distinct from old.licensed
      or new.rating_sum is distinct from old.rating_sum
      or new.rating_count is distinct from old.rating_count
      or new.owner_id is distinct from old.owner_id then
@@ -367,7 +373,8 @@ create policy "admins read profiles" on public.profiles
 create policy "live kitchens are public" on public.restaurants
   for select using (status = 'live' or owner_id = auth.uid() or public.is_admin());
 create policy "chefs create their kitchen" on public.restaurants
-  for insert with check (owner_id = auth.uid() and status = 'draft' and verified = false and founding = false);
+  for insert with check (owner_id = auth.uid() and status = 'draft' and verified = false and founding = false
+                         and licensed = false);
 create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
 
@@ -661,9 +668,12 @@ begin
   if not public.is_admin() then
     raise exception 'Only the Manna team can approve kitchens' using errcode = '42501';
   end if;
+  if (select law_attested_at from public.restaurants where id = p_restaurant_id) is null then
+    raise exception 'The cook hasn''t confirmed they follow their food laws';
+  end if;
   if exists (
-    -- Florida cottage food operations need no state permit, so a permit is
-    -- optional. Every kitchen needs a food handler certificate and a verified ID.
+    -- A permit or license is optional (it earns the Licensed label). Every
+    -- kitchen needs a food handler certificate and a verified ID.
     select 1 from unnest(array['food-handler', 'government-id']::public.document_kind[]) k(kind)
     where not exists (
       select 1 from public.restaurant_documents d
@@ -673,6 +683,22 @@ begin
     raise exception 'Approve the food handler certificate and ID first';
   end if;
   update public.restaurants set verified = true, status = 'live' where id = p_restaurant_id;
+  perform public.refresh_licensed(p_restaurant_id);
+end;
+$$;
+
+-- Admin: after reviewing documents, mark a kitchen Licensed exactly when it
+-- has an approved permit or license on file. Call again if one is revoked.
+create function public.refresh_licensed(p_restaurant_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Only the Manna team can change that' using errcode = '42501';
+  end if;
+  update public.restaurants set licensed = exists (
+    select 1 from public.restaurant_documents d
+    where d.restaurant_id = p_restaurant_id and d.kind = 'home-kitchen-permit' and d.review_status = 'approved'
+  ) where id = p_restaurant_id;
 end;
 $$;
 
@@ -750,6 +776,8 @@ grant execute on function public.mark_arrived(uuid) to authenticated;
 grant execute on function public.cancel_order(uuid) to authenticated;
 revoke all on function public.add_review(uuid, integer, text[], text) from public;
 revoke all on function public.approve_restaurant(uuid) from public;
+revoke all on function public.refresh_licensed(uuid) from public;
+grant execute on function public.refresh_licensed(uuid) to authenticated;
 grant execute on function public.place_order(uuid, jsonb, text, timestamptz, integer) to authenticated;
 grant execute on function public.set_order_status(uuid, public.order_status) to authenticated;
 grant execute on function public.set_chef_note(uuid, text) to authenticated;

@@ -45,6 +45,8 @@ export interface RestaurantRow {
   prep_minutes: number;
   verified: boolean;
   founding: boolean;
+  licensed: boolean;
+  law_attested_at: string | null;
   in_person: { place: string; when: string }[];
   accent: string;
   tagline: string;

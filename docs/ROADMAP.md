@@ -8,7 +8,7 @@ then expand. Each phase ends with something real people can use.
 | Question | Decision | Why |
 |---|---|---|
 | Where | Orlando, starting with College Park and nearby neighborhoods | Density beats reach: 20 cooks in one area make a better first week than 60 spread out |
-| What can be sold | Florida cottage foods only: breads, pastries, cookies, cakes, candy, granola, jams and dry spice blends | Hot meals need a licensed kitchen. Licensed kitchens can join later as a second kitchen type |
+| What can be sold | Any food, hot meals included (changed November 2026). Cooks confirm they follow their state's and county's food laws; Manna doesn't enforce or inspect. A permit or license is optional and earns a "Licensed kitchen" label and a ranking lift; everyone else is labeled "Home kitchen · not inspected" | Open to every cook, honest with every customer. **Have the lawyer review this setup and the label wording before public launch** |
 | How food changes hands | Pickup only, at a time the customer picks. The street address is shared once the chef accepts | No courier costs, and home cooks keep their address private |
 | Fee | One movement fee paid by the customer: 8% of the food, at least $1 (raised from 5% in November 2026). Card processing comes out of it, and kitchens keep 100% of their prices | At 5%, card fees left about 20¢ an order; 8% leaves about $1.07 on a $30 order and is still far below delivery apps |
 | Manna Fest | Postponed. Recruit the first cooks at existing markets (Lake Eola, Winter Park, Audubon Park), on Instagram and through churches | Same people the Fest would reach, without the cost and risk of running an event |
@@ -49,6 +49,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Delete account, in-app privacy policy and terms (drafts), report a review
 - [x] Kitchen page tabs (Menu, About, Reviews), "Most ordered" labels, swipe to remove in the cart
 - [x] Chef's "Today's menu": turn dishes on and off and see what's left today
+- [x] Open marketplace: any food, a food-law confirmation before opening, optional permit for a Licensed label and ranking lift, honest Home kitchen labels, terms that make the cook the seller
 - [x] Kitchen personalization inside one shared layout: accent color (six curated), tagline, a pinned weekly update, Instagram link and dish order
 - [x] "Get your first order" checklist for new kitchens; customers can cancel before the kitchen accepts
 - [x] Bake days: weekly pickup windows with an 8 PM order cutoff, chosen at checkout; cooks skip a week from the dashboard. The default for new kitchens

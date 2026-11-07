@@ -7,7 +7,7 @@ import { orderingLine, takingOrders } from '@/lib/ordering';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
-import { FoundingMark, VerifiedSeal } from './chef';
+import { FoundingMark, LicensedMark, VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { Icon } from './icon';
 import { photoSource } from '@/lib/photo';
@@ -104,6 +104,7 @@ export function RestaurantCard({
             </Text>
             {restaurant.verified ? <VerifiedSeal /> : null}
             {restaurant.founding ? <FoundingMark /> : null}
+            {restaurant.licensed ? <LicensedMark /> : null}
             {restaurant.hasOffer ? <Text style={styles.offer}>Offer</Text> : null}
           </View>
           <Text style={styles.byline} numberOfLines={1}>

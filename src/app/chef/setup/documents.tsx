@@ -53,9 +53,9 @@ export default function RestaurantDocuments() {
     <FormScreen title="Documents" footer={<GoldButton title="Save" chevron onPress={next} />}>
       <SectionTitle style={{ marginTop: 0 }}>Keep it legit</SectionTitle>
       <Body muted>
-        Home kitchens must follow their state’s food laws. We review these before your kitchen goes live
-        so customers can order with confidence. Rules differ by state and county, so check with
-        your local health department if you aren’t sure what applies to you.
+        We check your ID and food handler certificate so customers know who’s cooking. A food permit or
+        license is optional: add one and your kitchen shows as Licensed. You’re responsible for following
+        your state’s and county’s food laws, so check with your local health department if you aren’t sure.
       </Body>
       {rulesFor(draft.state) ? <Body style={{ fontSize: 14 }}>{rulesFor(draft.state)!.permitNote}</Body> : null}
 

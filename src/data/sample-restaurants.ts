@@ -39,6 +39,8 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
   {
     ...base,
     id: 'sample_cafe_parmesan',
+    // Bakes in a rented commercial kitchen, so Manna has the license on file.
+    licensed: true,
     accent: 'terracotta',
     tagline: 'Italian bakes from my nonna’s recipes',
     founding: true,

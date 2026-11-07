@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Animated, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ChefCard, FoundingMark, VerifiedSeal } from '@/components/chef';
+import { ChefCard, FoundingMark, LicensedMark, VerifiedSeal } from '@/components/chef';
 import { DietNote } from '@/components/diet';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
 import { NATIVE_DRIVER } from '@/components/motion';
@@ -20,7 +20,6 @@ import {
   Screen,
 } from '@/components/ui';
 import { accentColor } from '@/data/accents';
-import { cottageStatement } from '@/data/regions';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import {
@@ -33,6 +32,7 @@ import {
   upcomingBakeDays,
 } from '@/lib/bake-days';
 import { formatDays, formatTime } from '@/lib/hours';
+import { kitchenDisclosure, kitchenKindLabel } from '@/lib/kitchen-kind';
 import { instagramUrl, visibleUpdate } from '@/lib/kitchen-style';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
@@ -158,6 +158,12 @@ export default function RestaurantDetail() {
                   <Text style={styles.foundingNote}>One of the first kitchens on Manna</Text>
                 </View>
               ) : null}
+              <View style={styles.foundingRow}>
+                {restaurant.licensed ? <LicensedMark size={13} /> : <Icon name="home-heart" size={14} color={colors.textMuted} />}
+                <Text style={styles.foundingNote}>
+                  {restaurant.licensed ? 'Food permit or license on file' : kitchenKindLabel(restaurant)}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -407,7 +413,7 @@ export default function RestaurantDetail() {
             )
           ) : null}
           <Text style={styles.finePrint}>
-            {cottageStatement(restaurant.state)} Tell {chefFirst} about allergies in your order note.
+            {kitchenDisclosure(restaurant)} Tell {chefFirst} about allergies in your order note.
           </Text>
         </View>
       </Animated.ScrollView>

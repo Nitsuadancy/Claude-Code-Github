@@ -178,9 +178,10 @@ describe('menu sections', () => {
       [dish('cake', 'Desserts'), dish('loaf'), dish('pie', 'Pies'), dish('jam', 'Pantry'), dish('sig', 'Pies'), dish('soup', 'Mains')],
       'sig',
     );
-    expect(groups.map((g) => g.title)).toEqual([null, 'Pies', 'Desserts', 'Pantry', 'Also on the menu']);
-    expect(groups[1].items.map((i) => i.id)).toEqual(['pie']);
-    expect(groups[4].items.map((i) => i.id)).toEqual(['loaf', 'soup']);
+    expect(groups.map((g) => g.title)).toEqual([null, 'Mains', 'Pies', 'Desserts', 'Pantry', 'Also on the menu']);
+    expect(groups[2].items.map((i) => i.id)).toEqual(['pie']);
+    expect(groups[1].items.map((i) => i.id)).toEqual(['soup']);
+    expect(groups[5].items.map((i) => i.id)).toEqual(['loaf']);
   });
 
   it('builds a share message with a link', () => {

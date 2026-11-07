@@ -34,8 +34,9 @@ export const DOCUMENT_TYPES: {
   },
   {
     kind: 'home-kitchen-permit',
-    title: 'Local permit (if required)',
-    description: 'Add a local permit or business tax receipt if your state, city or county asks for one.',
+    title: 'Food permit or license',
+    description:
+      'A commercial kitchen, food truck, catering or home-kitchen permit. Once approved, your kitchen shows as Licensed and ranks higher.',
     required: false,
   },
 ];
@@ -69,6 +70,11 @@ export function isDocumentsComplete(r: Restaurant | undefined): boolean {
 
 export function isMenuComplete(r: Restaurant | undefined): boolean {
   return !!r && r.menu.some((m) => m.available);
+}
+
+/** Everything needed to open: the three setup steps, plus the cook's food-law confirmation. */
+export function isReadyToOpen(r: Restaurant | undefined): boolean {
+  return isInformationComplete(r) && isDocumentsComplete(r) && isMenuComplete(r) && !!r?.lawAttestedAt;
 }
 
 export function completedSteps(r: Restaurant | undefined): Record<SetupStep, boolean> {
