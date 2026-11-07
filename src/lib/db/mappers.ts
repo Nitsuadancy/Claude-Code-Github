@@ -173,6 +173,11 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     workingDays: row.working_days.filter((d): d is Weekday => WEEKDAY_SET.has(d)),
     openTime: toAppTime(row.open_time),
     closeTime: toAppTime(row.close_time),
+    dayHours: Object.fromEntries(
+      Object.entries(row.day_hours ?? {})
+        .filter(([day]) => WEEKDAY_SET.has(day))
+        .map(([day, h]) => [day, { open: toAppTime(h.open), close: toAppTime(h.close) }]),
+    ),
     rating: averageRating(row.rating_sum, row.rating_count),
     ratingCount: row.rating_count,
     hasOffer: row.has_offer,
@@ -211,6 +216,9 @@ export function restaurantUpdate(
     working_days: r.workingDays,
     open_time: r.openTime || null,
     close_time: r.closeTime || null,
+    day_hours: Object.fromEntries(
+      Object.entries(r.dayHours ?? {}).filter(([day]) => r.workingDays.includes(day as Weekday)),
+    ) as RestaurantRow['day_hours'],
     prep_minutes: r.prepMinutes,
     in_person: (r.inPerson ?? []).slice(0, 5),
     law_attested_at: r.lawAttestedAt ?? null,

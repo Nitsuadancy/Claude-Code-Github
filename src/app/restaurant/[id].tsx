@@ -31,7 +31,7 @@ import {
   openBakeDays,
   upcomingBakeDays,
 } from '@/lib/bake-days';
-import { formatDays, formatTime } from '@/lib/hours';
+import { describeHours } from '@/lib/hours';
 import { kitchenDisclosure, kitchenKindLabel } from '@/lib/kitchen-kind';
 import { instagramUrl, visibleUpdate } from '@/lib/kitchen-style';
 import { remainingToday } from '@/lib/limits';
@@ -112,7 +112,6 @@ export default function RestaurantDetail() {
     doAdd();
   };
 
-  const days = formatDays(restaurant.workingDays);
   // The cook's own touches: an accent color, a tagline, a pinned update and their Instagram.
   const accent = accentColor(restaurant.accent);
   const update = visibleUpdate(restaurant.update, now);
@@ -179,7 +178,7 @@ export default function RestaurantDetail() {
           <Text style={styles.days}>
             {bakeDayKitchen
               ? `Bake days ${describeBakeDays(restaurant.bakeDays)}`
-              : `${days}, ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`}
+              : describeHours(restaurant)}
             {restaurant.neighborhood ? ` · Pickup in ${restaurant.neighborhood}` : ''}
           </Text>
 
@@ -375,7 +374,7 @@ export default function RestaurantDetail() {
                 <Text style={styles.aboutText}>
                   {bakeDayKitchen
                     ? `${describeBakeDaysLong(restaurant.bakeDays)}. Order by ${describeCutoff(restaurant.bakeDays?.[0]?.closeDaysBefore ?? 1)}.`
-                    : `${days}, ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`}
+                    : describeHours(restaurant).replace(/ · /g, '\n')}
                 </Text>
               </View>
               <View style={{ gap: 4 }}>

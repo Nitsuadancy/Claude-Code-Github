@@ -3,6 +3,7 @@ import type { DocumentKind, Restaurant, UserProfile } from '@/types';
 import { DEFAULT_STATE, isOpenState, marketFor } from '@/data/regions';
 
 import { isValidBakeDay } from './bake-days';
+import { hoursOn } from './hours';
 import { isValidZip } from './validation';
 
 export type SetupStep = 'information' | 'documents' | 'menu' | 'preview';
@@ -44,7 +45,7 @@ export const DOCUMENT_TYPES: {
 /** Bake-day kitchens need at least one bake day; the rest need days and hours. */
 export function hasOrderingSchedule(r: Restaurant): boolean {
   if (r.orderMode === 'bake-days') return (r.bakeDays ?? []).some(isValidBakeDay);
-  return r.workingDays.length > 0 && !!r.openTime && !!r.closeTime && r.openTime !== r.closeTime;
+  return r.workingDays.length > 0 && r.workingDays.every((d) => hoursOn(r, d) !== null);
 }
 
 export function isInformationComplete(r: Restaurant | undefined): boolean {

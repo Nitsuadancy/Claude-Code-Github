@@ -26,7 +26,7 @@ import { confirmAction, notify } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import { bakeDayDate, nextBakeDayStatus, upcomingBakeDays } from '@/lib/bake-days';
 import { firstOrderSteps, type FirstOrderStep } from '@/lib/launch';
-import { formatTime, isOpenAt } from '@/lib/hours';
+import { formatTime, hoursOn, isOpenAt, nextOpening, WEEKDAYS } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
@@ -61,6 +61,7 @@ export default function ChefDashboard() {
   const week = weeklyEarnings(state.orders, restaurant.id, new Date());
   const live = restaurant.acceptingOrders && inHours;
   const now = new Date();
+  const todaysHours = hoursOn(restaurant, WEEKDAYS.at((now.getDay() + 6) % 7)!);
   const bakeDayKitchen = isBakeDayKitchen(restaurant);
   const bakeStatus = bakeDayKitchen ? nextBakeDayStatus(restaurant, state.orders, now) : null;
   const skippedSet = new Set(restaurant.skippedBakeDays ?? []);
@@ -142,9 +143,9 @@ export default function ChefDashboard() {
                 {!restaurant.acceptingOrders ? 'Paused' : inHours ? 'Open for orders' : 'Closed for now'}
               </Text>
               <Body muted style={{ fontSize: 13 }}>
-                {inHours
-                  ? `Your hours: ${formatTime(restaurant.openTime)} – ${formatTime(restaurant.closeTime)}`
-                  : `Opens at ${formatTime(restaurant.openTime)}`}
+                {inHours && todaysHours
+                  ? `Today: ${formatTime(todaysHours.open)} – ${formatTime(todaysHours.close)}`
+                  : (nextOpening(restaurant, now) ?? 'Set your hours in Kitchen details')}
               </Body>
             </View>
             <Switch

@@ -41,6 +41,7 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     instagram: r.instagram ?? '',
     orderMode: r.orderMode ?? 'hours',
     state: r.state ?? DEFAULT_STATE,
+    dayHours: r.dayHours ?? {},
     bakeDays: r.bakeDays ?? [],
     skippedBakeDays: r.skippedBakeDays ?? [],
     pickupInstructions: r.pickupInstructions ?? '',

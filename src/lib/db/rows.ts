@@ -42,6 +42,8 @@ export interface RestaurantRow {
   /** "HH:MM:SS" */
   open_time: string | null;
   close_time: string | null;
+  /** Days with their own hours, "HH:MM:SS" or "HH:MM". */
+  day_hours: Record<string, { open: string; close: string }>;
   prep_minutes: number;
   verified: boolean;
   founding: boolean;

@@ -1,4 +1,5 @@
 import type { AccentId } from '@/data/accents';
+import type { DayHours } from '@/lib/hours';
 
 export type Role = 'foodie' | 'chef';
 
@@ -161,6 +162,8 @@ export interface Restaurant {
   openTime: string;
   /** 24h "HH:MM". May be earlier than openTime for overnight hours. */
   closeTime: string;
+  /** Days with different hours from openTime/closeTime, e.g. shorter weekends. */
+  dayHours?: Partial<Record<Weekday, DayHours>>;
   rating: number;
   ratingCount: number;
   hasOffer: boolean;

@@ -49,6 +49,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Delete account, in-app privacy policy and terms (drafts), report a review
 - [x] Kitchen page tabs (Menu, About, Reviews), "Most ordered" labels, swipe to remove in the cart
 - [x] Chef's "Today's menu": turn dishes on and off and see what's left today
+- [x] Different hours on some days (late Fridays, short Saturdays), including overnight shifts
 - [x] Open marketplace: any food, a food-law confirmation before opening, optional permit for a Licensed label and ranking lift, honest Home kitchen labels, terms that make the cook the seller
 - [x] Kitchen personalization inside one shared layout: accent color (six curated), tagline, a pinned weekly update, Instagram link and dish order
 - [x] "Get your first order" checklist for new kitchens; customers can cancel before the kitchen accepts

@@ -4,7 +4,7 @@ import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { allergenSentence } from '@/lib/dietary';
 import { remainingToday, soldToday, stockLabel } from '@/lib/limits';
 import { normalizeOrder, normalizePersisted, normalizeRestaurant } from '@/lib/migrate';
-import { formatDays } from '@/lib/hours';
+import { describeHours, formatDays, hoursOn, isOpenAt, nextOpening } from '@/lib/hours';
 import { pickForYou } from '@/lib/for-you';
 import { fitWithin } from '@/lib/images';
 import { canSayArrived, estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/orders';
@@ -30,7 +30,7 @@ import { moveItem } from '@/lib/menu';
 import { orderingLine, takingOrders } from '@/lib/ordering';
 import { type AppState, INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
 import { withReviews } from '@/lib/reviews';
-import type { Order, Restaurant } from '@/types';
+import type { Order, Restaurant, Weekday } from '@/types';
 
 function order(partial: Partial<Order>): Order {
   return {
@@ -509,5 +509,32 @@ describe('open marketplace', () => {
       new Date(2026, 10, 7, 10),
     );
     expect(ranked.map((r) => r.id)).toEqual(['licensed', 'home']);
+  });
+});
+
+describe('different hours on some days', () => {
+  const kitchen = {
+    workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as Weekday[],
+    openTime: '09:00',
+    closeTime: '17:00',
+    dayHours: { friday: { open: '09:00', close: '23:00' }, saturday: { open: '20:00', close: '02:00' } },
+  };
+
+  it('opens and closes on each day’s own hours, including a late Saturday past midnight', () => {
+    // Nov 6, 2026 is a Friday.
+    expect(isOpenAt(kitchen, new Date(2026, 10, 6, 21, 0))).toBe(true);
+    expect(isOpenAt(kitchen, new Date(2026, 10, 5, 21, 0))).toBe(false);
+    expect(isOpenAt(kitchen, new Date(2026, 10, 7, 12, 0))).toBe(false);
+    expect(isOpenAt(kitchen, new Date(2026, 10, 7, 22, 0))).toBe(true);
+    expect(isOpenAt(kitchen, new Date(2026, 10, 8, 1, 30))).toBe(true);
+    expect(isOpenAt(kitchen, new Date(2026, 10, 8, 2, 30))).toBe(false);
+  });
+
+  it('describes the week and the next opening in plain words', () => {
+    expect(describeHours(kitchen)).toBe('Mon–Thu, 9:00 AM – 5:00 PM · Fri, 9:00 AM – 11:00 PM · Sat, 8:00 PM – 2:00 AM');
+    expect(describeHours({ ...kitchen, dayHours: {} })).toBe('Mon–Sat, 9:00 AM – 5:00 PM');
+    expect(nextOpening(kitchen, new Date(2026, 10, 7, 12, 0))).toBe('Opens 8:00 PM');
+    expect(nextOpening(kitchen, new Date(2026, 10, 8, 12, 0))).toBe('Opens tomorrow 9:00 AM');
+    expect(hoursOn(kitchen, 'sunday')).toBeNull();
   });
 });

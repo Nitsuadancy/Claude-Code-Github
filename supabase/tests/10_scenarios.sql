@@ -262,6 +262,14 @@ select pg_temp.check((select public.kitchen_open_at(r, '2026-11-05 21:00+00') fr
 select pg_temp.check((select public.kitchen_open_at(r, '2026-11-06 01:00+00') from public.restaurants r), 'Fri 1am belongs to Thursday');
 select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-05 01:00+00') from public.restaurants r), 'Thu 1am belongs to Wednesday');
 select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-06 03:00+00') from public.restaurants r), 'Fri 3am closed');
+-- Saturdays have their own, shorter hours.
+update public.restaurants set working_days = array['friday','saturday'], open_time = '09:00', close_time = '17:00',
+  day_hours = '{"saturday": {"open": "10:00", "close": "14:00"}}';
+select pg_temp.check((select public.kitchen_open_at(r, '2026-11-06 16:00+00') from public.restaurants r), 'Fri 4pm open (usual hours)');
+select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-07 09:30+00') from public.restaurants r), 'Sat 9:30am closed');
+select pg_temp.check((select public.kitchen_open_at(r, '2026-11-07 13:00+00') from public.restaurants r), 'Sat 1pm open');
+select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-07 15:00+00') from public.restaurants r), 'Sat 3pm closed');
+update public.restaurants set day_hours = '{}';
 
 -- Deleting an account --------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');

@@ -8,6 +8,7 @@ import {
   ScrollView,
   type ScrollViewInstance,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -32,12 +33,12 @@ import {
 import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
 import { CATEGORIES, CUISINES } from '@/data/categories';
 import { DEFAULT_STATE, isOpenState, neighborhoodsFor, STATE_RULES, stateName, US_STATES } from '@/data/regions';
-import { capitalize, formatTime, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
+import { capitalize, formatTime, hoursOn, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
 import { pickImages } from '@/lib/images';
 import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
 import { digitsOnly, isValidZip } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
-import { colors, fonts, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
 import type { CategoryId, Weekday } from '@/types';
 import { Icon } from '@/components/icon';
 
@@ -58,6 +59,9 @@ export default function RestaurantInformation() {
   const { draft, update, save } = useRestaurantDraft();
   const [step, setStep] = useState<1 | 2>(1);
   const [sheet, setSheet] = useState<Sheet>(null);
+  // Which day's opening or closing time is being picked, for days with their own hours.
+  const [dayPick, setDayPick] = useState<{ day: Weekday; which: 'open' | 'close' } | null>(null);
+  const [splitHours, setSplitHours] = useState(() => Object.keys(draft.dayHours ?? {}).length > 0);
   const [errors, setErrors] = useState<Errors>({});
   const [spotPlace, setSpotPlace] = useState('');
   const [spotWhen, setSpotWhen] = useState('');
@@ -89,6 +93,9 @@ export default function RestaurantInformation() {
       if (draft.workingDays.length === 0) e.days = 'Pick at least one day.';
       if (!draft.openTime || !draft.closeTime) e.hours = 'Set your opening and closing times.';
       else if (draft.openTime === draft.closeTime) e.hours = 'Opening and closing times can’t match.';
+      else if (splitHours && draft.workingDays.some((d) => !hoursOn(draft, d))) {
+        e.hours = 'Each day needs an opening and a closing time that differ.';
+      }
     }
     setErrors(e);
     if (Object.keys(e).length) return;
@@ -447,7 +454,7 @@ export default function RestaurantInformation() {
                   </View>
                   {errors.days ? <Text style={styles.error}>{errors.days}</Text> : null}
 
-                  <SectionTitle>Hours</SectionTitle>
+                  <SectionTitle>{splitHours ? 'Usual hours' : 'Hours'}</SectionTitle>
                   <View style={styles.pair}>
                     <PickerField
                       containerStyle={{ flex: 1 }}
@@ -466,10 +473,54 @@ export default function RestaurantInformation() {
                       onPress={() => setSheet('close')}
                     />
                   </View>
-                  {errors.hours ? <Text style={styles.error}>{errors.hours}</Text> : null}
                   <Body muted style={styles.hint}>
                     Closing after midnight? Pick an earlier close time, like 6:00 PM to 2:00 AM.
                   </Body>
+
+                  <View style={styles.splitRow}>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text style={styles.splitTitle}>Different hours on some days</Text>
+                      <Text style={styles.splitBody}>For example, shorter Saturdays or a late Friday.</Text>
+                    </View>
+                    <Switch
+                      accessibilityLabel="Different hours on some days"
+                      value={splitHours}
+                      trackColor={{ true: colors.gold, false: colors.borderStrong }}
+                      thumbColor={colors.ivory}
+                      {...webSwitchThumb}
+                      onValueChange={(on) => {
+                        setSplitHours(on);
+                        if (!on) update({ dayHours: {} });
+                      }}
+                    />
+                  </View>
+                  {splitHours
+                    ? WEEKDAYS.filter((d) => draft.workingDays.includes(d)).map((day) => {
+                        const own = draft.dayHours?.[day];
+                        const h = own ?? { open: draft.openTime, close: draft.closeTime };
+                        return (
+                          <View key={day} style={styles.dayHoursRow}>
+                            <Text style={styles.dayHoursName}>{capitalize(day).slice(0, 3)}</Text>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`${capitalize(day)} opens ${h.open ? formatTime(h.open) : 'not set'}`}
+                              onPress={() => setDayPick({ day, which: 'open' })}
+                              style={[styles.dayHoursTime, own && styles.dayHoursOwn]}>
+                              <Text style={styles.dayHoursText}>{h.open ? formatTime(h.open) : 'Opens'}</Text>
+                            </Pressable>
+                            <Text style={styles.dayHoursDash}>to</Text>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`${capitalize(day)} closes ${h.close ? formatTime(h.close) : 'not set'}`}
+                              onPress={() => setDayPick({ day, which: 'close' })}
+                              style={[styles.dayHoursTime, own && styles.dayHoursOwn]}>
+                              <Text style={styles.dayHoursText}>{h.close ? formatTime(h.close) : 'Closes'}</Text>
+                            </Pressable>
+                          </View>
+                        );
+                      })
+                    : null}
+                  {errors.hours ? <Text style={styles.error}>{errors.hours}</Text> : null}
                 </>
               )}
 
@@ -578,6 +629,29 @@ export default function RestaurantInformation() {
         onClose={() => setSheet(null)}
       />
       <OptionSheet
+        visible={dayPick !== null}
+        title={dayPick ? `${capitalize(dayPick.day)} ${dayPick.which === 'open' ? 'opens' : 'closes'}` : ''}
+        options={TIME_OPTIONS}
+        selected={(() => {
+          if (!dayPick) return [];
+          const h = draft.dayHours?.[dayPick.day] ?? { open: draft.openTime, close: draft.closeTime };
+          const t = dayPick.which === 'open' ? h.open : h.close;
+          return t ? [t] : [];
+        })()}
+        onSelect={([t]) => {
+          if (!dayPick || !t) return;
+          const current = draft.dayHours?.[dayPick.day] ?? { open: draft.openTime, close: draft.closeTime };
+          const next = dayPick.which === 'open' ? { ...current, open: t } : { ...current, close: t };
+          const same = next.open === draft.openTime && next.close === draft.closeTime;
+          const dayHours = { ...(draft.dayHours ?? {}) };
+          // A day back on the usual hours needs no entry of its own.
+          if (same) delete dayHours[dayPick.day];
+          else dayHours[dayPick.day] = next;
+          update({ dayHours });
+        }}
+        onClose={() => setDayPick(null)}
+      />
+      <OptionSheet
         visible={sheet === 'open'}
         title="Start Time"
         options={TIME_OPTIONS}
@@ -607,6 +681,24 @@ function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  splitRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
+  splitTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  splitBody: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
+  dayHoursRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  dayHoursName: { width: 44, fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  dayHoursTime: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayHoursOwn: { borderColor: colors.gold },
+  dayHoursText: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  dayHoursDash: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm + 2 },
   swatch: { padding: 3, borderRadius: 24, borderWidth: 2, borderColor: 'transparent' },
   swatchFill: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },

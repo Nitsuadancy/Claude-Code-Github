@@ -2,7 +2,7 @@ import type { Restaurant } from '@/types';
 
 import { bakeDayDate, formatCutoff, openBakeDays, upcomingBakeDays } from './bake-days';
 import { dayLabel } from './schedule';
-import { formatTime, isOpenAt } from './hours';
+import { isOpenAt, nextOpening } from './hours';
 
 export function isBakeDayKitchen(r: Pick<Restaurant, 'orderMode'>): boolean {
   return r.orderMode === 'bake-days';
@@ -37,5 +37,5 @@ export function orderingLine(r: Restaurant, now: Date, { long = false } = {}): s
     return long ? `Orders closed · next bake day ${bakeDayDate(later, now)}` : 'Orders closed';
   }
   if (takingOrders(r, now)) return `Open · ready in ~${r.prepMinutes} min`;
-  return hasHours(r) ? `Opens ${formatTime(r.openTime)}` : 'Hours not set';
+  return (hasHours(r) && nextOpening(r, now)) || 'Hours not set';
 }

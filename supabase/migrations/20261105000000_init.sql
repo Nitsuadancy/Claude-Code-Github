@@ -59,6 +59,9 @@ create table public.restaurants (
   working_days text[] not null default '{}',
   open_time time,
   close_time time,
+  -- Days with their own hours: {"saturday": {"open": "10:00", "close": "14:00"}}.
+  -- Other working days use open_time and close_time.
+  day_hours jsonb not null default '{}'::jsonb check (jsonb_typeof(day_hours) = 'object'),
   prep_minutes integer not null default 30 check (prep_minutes between 5 and 240),
   verified boolean not null default false,
   -- One of the first kitchens on Manna; set by the Manna team.
@@ -276,18 +279,25 @@ declare
   t time := local_ts::time;
   today text := lower(trim(to_char(local_ts, 'Day')));
   yesterday text := lower(trim(to_char(local_ts - interval '1 day', 'Day')));
+  o time;
+  c time;
 begin
-  if r.open_time is null or r.close_time is null or r.open_time = r.close_time then
-    return false;
+  -- Today's shift: the day's own hours, or the usual ones.
+  if today = any (r.working_days) then
+    o := coalesce((r.day_hours -> today ->> 'open')::time, r.open_time);
+    c := coalesce((r.day_hours -> today ->> 'close')::time, r.close_time);
+    if o is not null and c is not null and o <> c
+       and (case when o < c then t >= o and t < c else t >= o end) then
+      return true;
+    end if;
   end if;
-  if r.open_time < r.close_time then
-    return today = any (r.working_days) and t >= r.open_time and t < r.close_time;
-  end if;
-  if t >= r.open_time then
-    return today = any (r.working_days);
-  end if;
-  if t < r.close_time then
-    return yesterday = any (r.working_days);
+  -- The tail of last night's shift, if it ran past midnight.
+  if yesterday = any (r.working_days) then
+    o := coalesce((r.day_hours -> yesterday ->> 'open')::time, r.open_time);
+    c := coalesce((r.day_hours -> yesterday ->> 'close')::time, r.close_time);
+    if o is not null and c is not null and o > c and t < c then
+      return true;
+    end if;
   end if;
   return false;
 end;
