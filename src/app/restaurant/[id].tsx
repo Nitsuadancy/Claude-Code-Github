@@ -20,6 +20,7 @@ import {
   Screen,
 } from '@/components/ui';
 import { accentColor } from '@/data/accents';
+import { cottageStatement } from '@/data/regions';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import {
@@ -406,8 +407,7 @@ export default function RestaurantDetail() {
             )
           ) : null}
           <Text style={styles.finePrint}>
-            Made in a cottage food operation that is not subject to Florida’s food safety regulations. Tell{' '}
-            {chefFirst} about allergies in your order note.
+            {cottageStatement(restaurant.state)} Tell {chefFirst} about allergies in your order note.
           </Text>
         </View>
       </Animated.ScrollView>

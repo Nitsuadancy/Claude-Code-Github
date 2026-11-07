@@ -52,6 +52,8 @@ create table public.restaurants (
   -- Public location. The street address lives in restaurant_addresses.
   neighborhood text not null default '',
   city text not null default '',
+  -- Two-letter state code: home-food law, labels and limits follow it.
+  state text not null default 'FL' check (state ~ '^[A-Z]{2}$'),
   zip text not null default '' check (zip = '' or zip ~ '^[0-9]{5}$'),
   timezone text not null default 'America/New_York',
   working_days text[] not null default '{}',

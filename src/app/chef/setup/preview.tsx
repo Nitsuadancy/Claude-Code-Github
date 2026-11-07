@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FormScreen } from '@/components/form-screen';
 import { RestaurantCard } from '@/components/restaurant-card';
 import { Body, GoldButton, SectionTitle, TextLink } from '@/components/ui';
+import { isOpenState, stateName } from '@/data/regions';
 import { resetTo } from '@/lib/navigation';
 import { completedSteps, SETUP_STEPS } from '@/lib/setup';
 import { useMyRestaurant, useStore } from '@/state/store';
@@ -91,6 +92,12 @@ export default function Preview() {
         </Pressable>
       ))}
 
+      {isOpenState(restaurant.state) ? null : (
+        <Body style={{ fontSize: 14 }}>
+          Manna isn’t open in {stateName(restaurant.state)} yet. Your kitchen is saved, and you can open it as soon as
+          Manna launches there.
+        </Body>
+      )}
       <Body muted style={{ fontSize: 14 }}>
         Opening your kitchen lists it on Manna. Our team checks your documents, usually within a
         day, and then adds the Verified badge.

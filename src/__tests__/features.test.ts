@@ -11,6 +11,7 @@ import { canSayArrived, estimateReadyAt, isActive, isAddressShared, orderNumber 
 import { isValidContact } from '@/lib/validation';
 import { accentColor } from '@/data/accents';
 import { hasFoundingProOffer } from '@/data/pro';
+import { cottageStatement, isOpenState, marketFor, neighborhoodsFor, stateName, US_STATES } from '@/data/regions';
 import { cleanInstagram, visibleUpdate } from '@/lib/kitchen-style';
 import {
   describeBakeDays,
@@ -22,6 +23,7 @@ import {
   upcomingBakeDays,
 } from '@/lib/bake-days';
 import { firstOrderSteps } from '@/lib/launch';
+import { isInformationComplete } from '@/lib/setup';
 import { moveItem } from '@/lib/menu';
 import { orderingLine, takingOrders } from '@/lib/ordering';
 import { type AppState, INITIAL_STATE, reducer, storedKitchen } from '@/state/reducer';
@@ -447,5 +449,29 @@ describe('Manna Pro interest', () => {
     expect(hasFoundingProOffer({ founding: true })).toBe(true);
     expect(hasFoundingProOffer({ founding: false })).toBe(false);
     expect(hasFoundingProOffer(undefined)).toBe(false);
+  });
+});
+
+describe('states and markets', () => {
+  it('opens only states with rules and a market, and keeps each state to its own neighborhoods', () => {
+    expect(US_STATES).toHaveLength(51);
+    expect(isOpenState('FL')).toBe(true);
+    expect(isOpenState('GA')).toBe(false);
+    expect(isOpenState(undefined)).toBe(false);
+    expect(neighborhoodsFor('FL')).toContain('College Park');
+    expect(neighborhoodsFor('TX')).toEqual([]);
+    expect(marketFor('College Park')?.city).toBe('Orlando');
+    expect(marketFor('College Park', 'GA')).toBeUndefined();
+    expect(cottageStatement('FL')).toContain('Florida');
+    expect(stateName('NC')).toBe('North Carolina');
+  });
+
+  it('blocks publishing a kitchen outside an open state and fills Florida for older saved kitchens', () => {
+    const kitchen = SAMPLE_RESTAURANTS.find((r) => r.id === 'sample_susies_sweets')!;
+    expect(isInformationComplete(kitchen)).toBe(true);
+    expect(isInformationComplete({ ...kitchen, state: 'GA' })).toBe(false);
+    const { state: _state, ...old } = kitchen;
+    const s = reducer(INITIAL_STATE, { type: 'hydrate', state: { restaurants: [old] } });
+    expect(s.restaurants[0].state).toBe('FL');
   });
 });

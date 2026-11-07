@@ -31,7 +31,7 @@ import {
 } from '@/components/ui';
 import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
 import { CATEGORIES, CUISINES } from '@/data/categories';
-import { NEIGHBORHOODS } from '@/data/neighborhoods';
+import { DEFAULT_STATE, isOpenState, neighborhoodsFor, STATE_RULES, stateName, US_STATES } from '@/data/regions';
 import { capitalize, formatTime, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
 import { pickImages } from '@/lib/images';
 import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
@@ -41,7 +41,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { CategoryId, Weekday } from '@/types';
 import { Icon } from '@/components/icon';
 
-type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null | 'neighborhood';
+type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null | 'neighborhood' | 'state';
 
 const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
   value: String(m),
@@ -49,6 +49,7 @@ const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
 }));
 
 const BIO_MAX = 280;
+const OPEN_STATE_NAMES = Object.keys(STATE_RULES).map(stateName).join(', ');
 type Errors = Partial<Record<'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
 
 const TIME_OPTIONS = TIME_SLOTS.map((t) => ({ value: t, label: formatTime(t) }));
@@ -77,7 +78,8 @@ export default function RestaurantInformation() {
       return;
     }
     const e: Errors = {};
-    if (!draft.neighborhood) e.neighborhood = 'Choose your neighborhood.';
+    // Cooks in states Manna hasn't opened yet can still save; they open their kitchen once it launches there.
+    if (stateOpen && !draft.neighborhood) e.neighborhood = 'Choose your neighborhood.';
     if (!draft.address.trim()) e.address = 'Enter the pickup address.';
     if (!draft.city.trim()) e.city = 'Enter a city.';
     if (!isValidZip(draft.areaCode)) e.areaCode = 'Enter a 5-digit ZIP code.';
@@ -103,6 +105,8 @@ export default function RestaurantInformation() {
 
   const allSelected = draft.workingDays.length === WEEKDAYS.length;
   const bakeDayMode = draft.orderMode === 'bake-days';
+  const kitchenState = draft.state ?? DEFAULT_STATE;
+  const stateOpen = isOpenState(kitchenState);
 
   return (
     <Screen>
@@ -302,8 +306,21 @@ export default function RestaurantInformation() {
             <>
               <SectionTitle style={{ marginTop: spacing.sm }}>Where and when you cook</SectionTitle>
               <PickerField
+                label="State"
+                placeholder="Choose your state"
+                icon="map-marker-radius"
+                value={stateName(kitchenState)}
+                onPress={() => setSheet('state')}
+              />
+              {stateOpen ? null : (
+                <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
+                  Manna isn’t open in {stateName(kitchenState)} yet; it’s in {OPEN_STATE_NAMES} for now. Save your
+                  kitchen, and you can open it as soon as Manna launches in {stateName(kitchenState)}.
+                </Body>
+              )}
+              <PickerField
                 label="Neighborhood"
-                placeholder="Choose your neighborhood"
+                placeholder={stateOpen ? 'Choose your neighborhood' : 'Not open in your state yet'}
                 icon="map-marker-radius"
                 value={draft.neighborhood || null}
                 onPress={() => setSheet('neighborhood')}
@@ -541,9 +558,23 @@ export default function RestaurantInformation() {
       <OptionSheet
         visible={sheet === 'neighborhood'}
         title="Neighborhood"
-        options={NEIGHBORHOODS.map((n) => ({ value: n, label: n }))}
+        options={neighborhoodsFor(kitchenState).map((n) => ({ value: n, label: n }))}
         selected={draft.neighborhood ? [draft.neighborhood] : []}
         onSelect={([neighborhood]) => update({ neighborhood: neighborhood ?? '' })}
+        onClose={() => setSheet(null)}
+      />
+      <OptionSheet
+        visible={sheet === 'state'}
+        title="State"
+        options={[...US_STATES.filter((st) => isOpenState(st.code)), ...US_STATES.filter((st) => !isOpenState(st.code))].map(
+          (st) => ({ value: st.code, label: isOpenState(st.code) ? st.name : `${st.name} · coming soon` }),
+        )}
+        selected={[kitchenState]}
+        onSelect={([code]) => {
+          if (!code) return;
+          // A neighborhood belongs to one state's markets; clear it when the state changes.
+          update({ state: code, neighborhood: neighborhoodsFor(code).includes(draft.neighborhood) ? draft.neighborhood : '' });
+        }}
         onClose={() => setSheet(null)}
       />
       <OptionSheet

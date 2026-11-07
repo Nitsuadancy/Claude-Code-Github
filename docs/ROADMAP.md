@@ -10,7 +10,7 @@ then expand. Each phase ends with something real people can use.
 | Where | Orlando, starting with College Park and nearby neighborhoods | Density beats reach: 20 cooks in one area make a better first week than 60 spread out |
 | What can be sold | Florida cottage foods only: breads, pastries, cookies, cakes, candy, granola, jams and dry spice blends | Hot meals need a licensed kitchen. Licensed kitchens can join later as a second kitchen type |
 | How food changes hands | Pickup only, at a time the customer picks. The street address is shared once the chef accepts | No courier costs, and home cooks keep their address private |
-| Fee | One 5% movement fee paid by the customer. Card processing comes out of it, and kitchens keep 100% of their prices | One honest number, far below delivery apps |
+| Fee | One movement fee paid by the customer: 8% of the food, at least $1 (raised from 5% in November 2026). Card processing comes out of it, and kitchens keep 100% of their prices | At 5%, card fees left about 20¢ an order; 8% leaves about $1.07 on a $30 order and is still far below delivery apps |
 | Manna Fest | Postponed. Recruit the first cooks at existing markets (Lake Eola, Winter Park, Audubon Park), on Instagram and through churches | Same people the Fest would reach, without the cost and risk of running an event |
 | Farmers and artisans | Waitlist in the app now; Manna Mart after the food side works | Growers need buyers first |
 | Rewards | Badges, placement and early access first. Physical gifts only once the fee covers them, or a sponsor pays | Early gift tiers cost more than the orders bring in |
@@ -39,7 +39,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Accessibility audit (no nested or unlabeled buttons), search suggestions with recent and popular searches, soft fade between tabs
 - [x] Tips for chefs at checkout (100% to the chef, counted in their earnings), full receipt on tracking, "Personalize your feed" nudge
 - [x] Custom drawn icons for the seven crafts (Vegan, Cottage, Global, Bakery, Breakfast, Late Night, Sweet)
-- [x] Pickup-only ordering with a single 5% movement fee, neighborhood-only kitchen locations and a private pickup address
+- [x] Pickup-only ordering with a single movement fee, neighborhood-only kitchen locations and a private pickup address
 - [x] Orlando demo kitchens with cottage-legal menus and real photography
 - [x] Farmer & Artisan waitlist for Manna Mart
 - [x] Immersive redesign: full-screen featured kitchens, kitchen pages that open on their food, one sleek typeface
@@ -72,7 +72,7 @@ Without this, a chef and a customer on different phones can't see each other.
 
 - [ ] Stripe Connect (Express accounts): chefs onboard to get paid, and Stripe handles identity checks and 1099-K tax forms
 - [ ] Card, Apple Pay and Google Pay checkout
-- [x] Fee model: one 5% movement fee paid by the customer; kitchens keep 100% of their prices
+- [x] Fee model: one movement fee paid by the customer (8%, at least $1); kitchens keep 100% of their prices
 - [ ] Refunds and order cancellation rules
 
 ## Phase 3: Trust and safety (required before public launch)
@@ -129,6 +129,21 @@ Instagram Story card. Paid features help cooks sell more or save time.
   through Apple's in-app purchase at 15–30%; check Apple's current rules on linking to web checkout
   before building
 - [ ] Database: a plan and renewal date on each kitchen, and a table of sponsored slots with dates
+
+## Opening a new state or city
+
+Home-food law is set by each state, so Manna opens state by state and city by city. The app is
+already state-aware: every kitchen has a state, and kitchens can only open in states Manna has launched.
+
+1. **New state:** check its cottage food law against official sources (what may be sold, label
+   statement, yearly sales cap, permits, online sales), then add it to `STATE_RULES` in
+   `src/data/regions.ts` with the source link. Have a food lawyer confirm. Register for its sales tax
+   as a marketplace provider if required.
+2. **New city:** add a market to `MARKETS` with its neighborhoods and time zone.
+3. **Launch:** recruit 10 founding cooks there first, then open to customers (the Orlando playbook).
+
+Not yet handled: a state that allows home-cooked meals (menu sections would differ by state) and
+automatic sales tax (Stripe Tax).
 
 ## Later ideas
 

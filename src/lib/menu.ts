@@ -2,7 +2,8 @@ import type { MenuItem } from '@/types';
 
 /**
  * Sections cooks can file dishes under, in the order they appear on the menu.
- * All fit Florida cottage food law; meals and drinks need a licensed kitchen.
+ * All fit Florida’s cottage food law, Manna’s first state; meals and drinks
+ * need a licensed kitchen there. Other states may allow more (see data/regions).
  */
 export const MENU_SECTIONS = [
   'Specials',

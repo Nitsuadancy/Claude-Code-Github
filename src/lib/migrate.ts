@@ -1,5 +1,6 @@
 import type { PersistedState } from '@/state/reducer';
 import { isAccentId } from '@/data/accents';
+import { DEFAULT_STATE } from '@/data/regions';
 import { isCategoryId } from '@/data/categories';
 import type { MenuItem, Order, Restaurant, UserProfile } from '@/types';
 
@@ -39,6 +40,7 @@ export function normalizeRestaurant(r: Restaurant): Restaurant {
     tagline: r.tagline ?? '',
     instagram: r.instagram ?? '',
     orderMode: r.orderMode ?? 'hours',
+    state: r.state ?? DEFAULT_STATE,
     bakeDays: r.bakeDays ?? [],
     skippedBakeDays: r.skippedBakeDays ?? [],
     pickupInstructions: r.pickupInstructions ?? '',

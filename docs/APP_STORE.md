@@ -39,7 +39,7 @@ FOR FOOD LOVERS
 • Order ahead for a cook's bake day, or pick up as soon as it's ready
 • Follow your order from oven to pickup, then tap "I'm here" when you arrive
 • Pay upfront in the app. No DMs, no Venmo requests, no guessing
-• One 5% fee at checkout. Cooks keep every dollar of their prices, and every tip
+• One small fee at checkout (8%, at least $1). Cooks keep every dollar of their prices, and every tip
 
 FOR HOME COOKS
 • Turn your kitchen into a storefront in minutes

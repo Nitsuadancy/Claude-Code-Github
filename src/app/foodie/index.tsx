@@ -33,6 +33,7 @@ import {
 import { CraftIcon } from '@/components/craft-icon';
 import { CATEGORIES } from '@/data/categories';
 import { DEFAULT_NEIGHBORHOOD, LAUNCH_CITY, NEIGHBORHOODS } from '@/data/neighborhoods';
+import { marketFor } from '@/data/regions';
 import { collectionKitchens, COLLECTIONS } from '@/data/collections';
 import { buildActivity, unseenCount } from '@/lib/activity';
 import { pickForYou } from '@/lib/for-you';
@@ -195,7 +196,7 @@ export default function FoodieHome() {
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Neighborhood: ${neighborhood}, ${LAUNCH_CITY}. Change`}
+          accessibilityLabel={`Neighborhood: ${neighborhood}, ${marketFor(neighborhood)?.city ?? LAUNCH_CITY}. Change`}
           onPress={() => setSheet('neighborhood')}
           style={styles.place}>
           <Text style={styles.placeText} numberOfLines={1}>

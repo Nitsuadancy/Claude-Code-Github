@@ -30,6 +30,7 @@ const restaurantRow: RestaurantRow = {
   cover_paths: ['r1/a.jpg', 'r1/b.jpg'],
   neighborhood: 'College Park',
   city: 'Orlando',
+  state: 'FL',
   zip: '32804',
   timezone: 'America/New_York',
   working_days: ['tuesday', 'saturday', 'funday'],
@@ -102,6 +103,7 @@ describe('database mappers', () => {
       ratingCount: 10,
       areaCode: '32804',
       address: '5 Willow Way',
+      state: 'FL',
       pickupInstructions: 'Cooler on the porch',
       orderMode: 'bake-days',
       bakeDays: [{ day: 'saturday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
@@ -138,6 +140,8 @@ describe('database mappers', () => {
       instagram: 'susiessweets',
       order_mode: 'bake-days',
       bake_days: [{ day: 'saturday', pickupStart: '09:00', pickupEnd: '12:00', closeDaysBefore: 1 }],
+      state: 'FL',
+      timezone: 'America/New_York',
     });
     expect(addressRow({ ...r, address: ' 5 Willow Way ', pickupInstructions: ' Ring once ' })).toEqual({
       restaurant_id: 'r1',

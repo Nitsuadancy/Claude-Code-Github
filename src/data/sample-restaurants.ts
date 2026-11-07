@@ -28,6 +28,7 @@ const base = {
   acceptingOrders: true,
   verified: true,
   city: 'Orlando',
+  state: 'FL',
 };
 
 function dish(item: Partial<MenuItem> & Pick<MenuItem, 'id' | 'name' | 'description' | 'priceCents'>): MenuItem {

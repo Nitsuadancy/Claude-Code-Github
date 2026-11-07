@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FormScreen } from '@/components/form-screen';
 import { Body, GoldButton, SectionTitle } from '@/components/ui';
+import { rulesFor } from '@/data/regions';
 import { notify } from '@/lib/alert';
 import { DOCUMENT_TYPES, isDocumentsComplete } from '@/lib/setup';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
@@ -52,10 +53,11 @@ export default function RestaurantDocuments() {
     <FormScreen title="Documents" footer={<GoldButton title="Save" chevron onPress={next} />}>
       <SectionTitle style={{ marginTop: 0 }}>Keep it legit</SectionTitle>
       <Body muted>
-        Home kitchens must follow local food laws. We review these before your restaurant goes live
+        Home kitchens must follow their state’s food laws. We review these before your kitchen goes live
         so customers can order with confidence. Rules differ by state and county, so check with
         your local health department if you aren’t sure what applies to you.
       </Body>
+      {rulesFor(draft.state) ? <Body style={{ fontSize: 14 }}>{rulesFor(draft.state)!.permitNote}</Body> : null}
 
       {DOCUMENT_TYPES.map((t) => {
         const doc = draft.documents.find((d) => d.kind === t.kind);

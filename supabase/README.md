@@ -14,6 +14,7 @@ connected to it yet. The app still stores everything on the device (see
 | `restaurant_documents` | Permits and certificates. Only the chef and the Manna team can see them. |
 | `orders`, `order_lines`, `order_status_events` | Orders, the dishes in them (with the price at the time), and the tracking timeline. |
 | `reviews`, `favorites` | One review per picked-up order. Each customer's favorite kitchens. |
+| States | `restaurants.state` (two letters, default `FL`) says whose home-food law applies. The app only lets kitchens open in launched states (`src/data/regions.ts`); `timezone` follows the kitchen's market. |
 | Bake days | `restaurants.order_mode` is `bake-days` or `hours`. Bake-day kitchens list weekly `bake_days` (pickup day, window, and how many days before at 8 PM orders close) and `skipped_bake_days`. `place_order()` only accepts a bake day that's still open. |
 | Pickup handoff | `restaurant_addresses.instructions` is private and copied to the order on accept, like the address. `mark_arrived()` lets the customer say "I'm here". |
 | `review_reports` | Reviews people flag. Only the reporter and admins can read them; `remove_review()` takes a review down and out of the rating. |

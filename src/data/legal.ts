@@ -29,7 +29,7 @@ export const PRIVACY_POLICY: LegalDocument = {
     {
       heading: 'Who we are',
       body: [
-        'Manna is a marketplace in Orlando, Florida, where neighbors order food from home kitchens for pickup. This policy explains what information Manna collects, why, and the choices you have.',
+        'Manna is a marketplace, starting in Orlando, Florida, where neighbors order food from home kitchens for pickup. This policy explains what information Manna collects, why, and the choices you have.',
       ],
     },
     {
@@ -130,14 +130,14 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'Food safety and allergies',
       body: [
-        'Home kitchens on Manna sell cottage foods under Florida law. Their products are made in a cottage food operation that is not subject to Florida’s food safety regulations.',
+        'Home kitchens on Manna sell under their state’s home-food (cottage food) law. Their products are not made in a licensed or inspected kitchen; each kitchen’s page shows the statement its state requires, such as Florida’s: “Made in a cottage food operation that is not subject to Florida’s food safety regulations.”',
         'Each kitchen lists its ingredients and allergens. Always check them, and tell the chef about allergies in your order note. Manna does not inspect kitchens; a Verified badge means our team reviewed the kitchen’s documents.',
       ],
     },
     {
       heading: 'For kitchens',
       body: [
-        '- You are responsible for following Florida’s cottage food law, including what you may sell, labeling, the annual sales limit, taxes, and any home-business rules.',
+        '- You are responsible for following your state’s cottage food law, including what you may sell, labeling, any annual sales limit, permits, taxes, and any home-business rules.',
         '- List accurate ingredients, allergens, prices and photos of your own food.',
         '- Honor the orders you accept, and keep customers’ information private.',
         '- Payouts and any fees are described in the app before you publish your kitchen.',
@@ -153,7 +153,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
     {
       heading: 'Things you can’t do',
       body: [
-        '- Break the law, or sell foods that Florida’s cottage food law doesn’t allow.',
+        '- Break the law, or sell foods that your state’s cottage food law doesn’t allow.',
         '- Mislead customers or kitchens, or post fake reviews.',
         '- Harass anyone, or misuse anyone’s personal information.',
         '- Interfere with how Manna works.',

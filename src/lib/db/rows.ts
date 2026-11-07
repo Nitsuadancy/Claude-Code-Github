@@ -34,6 +34,8 @@ export interface RestaurantRow {
   cover_paths: string[];
   neighborhood: string;
   city: string;
+  /** Two-letter state code. */
+  state: string;
   zip: string;
   timezone: string;
   working_days: string[];

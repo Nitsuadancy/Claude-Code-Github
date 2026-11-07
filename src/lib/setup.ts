@@ -1,5 +1,7 @@
 import type { DocumentKind, Restaurant, UserProfile } from '@/types';
 
+import { DEFAULT_STATE, isOpenState, marketFor } from '@/data/regions';
+
 import { isValidBakeDay } from './bake-days';
 import { isValidZip } from './validation';
 
@@ -33,8 +35,7 @@ export const DOCUMENT_TYPES: {
   {
     kind: 'home-kitchen-permit',
     title: 'Local permit (if required)',
-    description:
-      'Florida cottage food kitchens don’t need a state license. Add a local business tax receipt or permit if your city or county asks for one.',
+    description: 'Add a local permit or business tax receipt if your state, city or county asks for one.',
     required: false,
   },
 ];
@@ -53,6 +54,7 @@ export function isInformationComplete(r: Restaurant | undefined): boolean {
     r.neighborhood.length > 0 &&
     r.address.trim().length > 0 &&
     r.city.trim().length > 0 &&
+    isOpenState(r.state ?? DEFAULT_STATE) &&
     isValidZip(r.areaCode) &&
     hasOrderingSchedule(r)
   );
@@ -99,6 +101,7 @@ export function blankRestaurant(user: UserProfile, id: string): Restaurant {
     address: '',
     city: '',
     areaCode: '',
+    state: marketFor(user.neighborhood)?.state ?? DEFAULT_STATE,
     neighborhood: '',
     workingDays: [],
     openTime: '',

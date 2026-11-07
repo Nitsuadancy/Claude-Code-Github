@@ -4,6 +4,7 @@
  * the screens never see database shapes.
  */
 import { DEFAULT_ACCENT, isAccentId } from '@/data/accents';
+import { DEFAULT_STATE, marketFor } from '@/data/regions';
 import { isCategoryId } from '@/data/categories';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { WEEKDAYS } from '@/lib/hours';
@@ -164,6 +165,7 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     address: extras.address?.address ?? '',
     pickupInstructions: extras.address?.instructions ?? '',
     city: row.city,
+    state: row.state,
     areaCode: row.zip,
     neighborhood: row.neighborhood,
     workingDays: row.working_days.filter((d): d is Weekday => WEEKDAY_SET.has(d)),
@@ -200,6 +202,9 @@ export function restaurantUpdate(
     cover_paths: paths.coverPaths.slice(0, 3),
     neighborhood: r.neighborhood,
     city: r.city.trim(),
+    state: r.state ?? DEFAULT_STATE,
+    // Bake-day cutoffs run on the market's clock.
+    ...(marketFor(r.neighborhood, r.state) ? { timezone: marketFor(r.neighborhood, r.state)!.timezone } : {}),
     zip: r.areaCode.trim(),
     working_days: r.workingDays,
     open_time: r.openTime || null,

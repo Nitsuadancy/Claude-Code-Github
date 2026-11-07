@@ -143,6 +143,8 @@ export interface Restaurant {
   /** Pickup address. Shown to a customer only once the chef accepts their order. */
   address: string;
   city: string;
+  /** Two-letter state code, e.g. "FL". Home-food law, labels and limits follow it. */
+  state?: string;
   areaCode: string;
   /** Public location, e.g. "College Park". */
   neighborhood: string;
