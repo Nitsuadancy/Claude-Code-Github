@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -9,7 +9,15 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import Reanimated, { FadeInDown } from 'react-native-reanimated';
+import Reanimated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 /** Native driver isn't available on web; fall back to JS animation there. */
 export const NATIVE_DRIVER = Platform.OS !== 'web';
@@ -106,4 +114,84 @@ export function Pulse({ children, size, color }: { children: ReactNode; size: nu
       {children}
     </View>
   );
+}
+
+/**
+ * Gives its child a quick springy pop whenever `trigger` changes to a new
+ * truthy value: the heart when you favorite, the cart icon when something
+ * is added. A number that goes down (an item removed) doesn't pop.
+ * Skipped when the system "reduce motion" setting is on.
+ */
+export function Pop({
+  trigger,
+  children,
+  to = 1.25,
+  style,
+}: {
+  trigger: unknown;
+  children: ReactNode;
+  to?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const reduce = useReducedMotion();
+  const scale = useSharedValue(1);
+  const previous = useRef(trigger);
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = trigger;
+    if (before === trigger || !trigger || reduce) return;
+    if (typeof trigger === 'number' && typeof before === 'number' && trigger < before) return;
+    scale.set(withSequence(
+      withTiming(to, { duration: 110 }),
+      withSpring(1, { damping: 8, stiffness: 300 }),
+    ));
+  }, [trigger, reduce, scale, to]);
+  const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  return <Reanimated.View style={[style, animated]}>{children}</Reanimated.View>;
+}
+
+/**
+ * Springs its content in from slightly smaller when it first appears, so a
+ * control that replaces another (the "+" opening into a quantity stepper)
+ * grows into place instead of snapping.
+ */
+export function SpringIn({
+  children,
+  style,
+  from = 0.55,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  from?: number;
+}) {
+  const reduce = useReducedMotion();
+  const progress = useSharedValue(reduce ? 1 : 0);
+  useEffect(() => {
+    progress.set(withSpring(1, { damping: 14, stiffness: 320 }));
+  }, [progress]);
+  const animated = useAnimatedStyle(() => ({
+    opacity: Math.min(1, progress.get() * 1.8),
+    transform: [{ scale: from + (1 - from) * progress.get() }],
+  }));
+  return <Reanimated.View style={[style, animated]}>{children}</Reanimated.View>;
+}
+
+/**
+ * Press feedback for buttons: the button sinks a little while held and
+ * springs back on release. Returns handlers for a Pressable and a style for
+ * the Reanimated view that wraps the button's surface.
+ */
+export function usePressScale(to = 0.97) {
+  const reduce = useReducedMotion();
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  return {
+    style,
+    onPressIn: () => {
+      if (!reduce) scale.set(withTiming(to, { duration: 90 }));
+    },
+    onPressOut: () => {
+      scale.set(withSpring(1, { damping: 12, stiffness: 400 }));
+    },
+  };
 }

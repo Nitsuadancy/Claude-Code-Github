@@ -7,6 +7,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 
 import type { IconName } from './ui';
 import { Icon } from './icon';
+import { Pop } from './motion';
 
 const TAB_META: Record<string, { label: string; icon: IconName; activeIcon: IconName }> = {
   index: { label: 'Discover', icon: 'compass-outline', activeIcon: 'compass' },
@@ -55,7 +56,7 @@ export function MannaTabBar({
               accessibilityLabel={badge ? `${meta.label}, ${badge} items` : meta.label}
               onPress={onPress}
               style={styles.item}>
-              <View>
+              <Pop trigger={badge} to={1.2}>
                 <Icon
                   name={focused ? meta.activeIcon : meta.icon}
                   size={22}
@@ -66,7 +67,7 @@ export function MannaTabBar({
                     <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
                   </View>
                 ) : null}
-              </View>
+              </Pop>
               <Text
                 maxFontSizeMultiplier={1.2}
                 style={[styles.label, { color: focused ? colors.ivory : colors.textFaint }]}>

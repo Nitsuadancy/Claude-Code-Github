@@ -7,7 +7,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
 import { FoundingMark, LicensedMark, VerifiedSeal } from './chef';
-import { PressableScale } from './motion';
+import { Pop, PressableScale } from './motion';
 import { Icon } from './icon';
 import { Photo } from './photo';
 
@@ -125,7 +125,9 @@ export function RestaurantCard({
         hitSlop={10}
         onPress={onToggleFavorite}
         style={[styles.heart, styles.heartPosition]}>
-        <Icon name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.gold : colors.ivory} />
+        <Pop trigger={favorite}>
+          <Icon name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.gold : colors.ivory} />
+        </Pop>
       </Pressable>
     </View>
   );

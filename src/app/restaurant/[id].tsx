@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChefCard, FoundingMark, LicensedMark, VerifiedSeal } from '@/components/chef';
 import { DietNote } from '@/components/diet';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
-import { NATIVE_DRIVER } from '@/components/motion';
+import { NATIVE_DRIVER, Pop, SpringIn } from '@/components/motion';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
 import { CoverGallery, formatRating, isOpenNow } from '@/components/restaurant-card';
 import {
@@ -294,7 +294,7 @@ export default function RestaurantDetail() {
                           )}
                           {canOrder && !soldOut ? (
                             q > 0 ? (
-                              <View style={styles.stepper}>
+                              <SpringIn style={styles.stepper}>
                                 <Pressable
                                   accessibilityRole="button"
                                   accessibilityLabel={`Remove one ${item.name}`}
@@ -305,7 +305,9 @@ export default function RestaurantDetail() {
                                   hitSlop={10}>
                                   <Icon name="minus" size={15} color={colors.bg} />
                                 </Pressable>
-                                <Text style={styles.qty}>{q}</Text>
+                                <Pop trigger={q} to={1.3}>
+                                  <Text style={[styles.qty, styles.tabular]}>{q}</Text>
+                                </Pop>
                                 <Pressable
                                   accessibilityRole="button"
                                   accessibilityLabel={`Add one ${item.name}`}
@@ -314,7 +316,7 @@ export default function RestaurantDetail() {
                                   hitSlop={10}>
                                   <Icon name="plus" size={15} color={atLimit ? colors.textMuted : colors.bg} />
                                 </Pressable>
-                              </View>
+                              </SpringIn>
                             ) : (
                               <Pressable
                                 accessibilityRole="button"
@@ -448,11 +450,13 @@ export default function RestaurantDetail() {
               dispatch({ type: 'toggleFavorite', restaurantId: restaurant.id });
             }}
             style={styles.heroIcon}>
-            <Icon
-              name={favorite ? 'heart' : 'heart-outline'}
-              size={21}
-              color={favorite ? colors.gold : colors.ivory}
-            />
+            <Pop trigger={favorite}>
+              <Icon
+                name={favorite ? 'heart' : 'heart-outline'}
+                size={21}
+                color={favorite ? colors.gold : colors.ivory}
+              />
+            </Pop>
           </Pressable>
         ) : null}
       </View>
@@ -648,6 +652,7 @@ const styles = StyleSheet.create({
     minHeight: 34,
   },
   qty: { fontFamily: fonts.semibold, fontSize: 14, color: colors.bg, minWidth: 12, textAlign: 'center' },
+  tabular: { fontVariant: ['tabular-nums'] },
   footer: {
     position: 'absolute',
     left: 0,

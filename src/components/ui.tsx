@@ -17,9 +17,11 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Reanimated from 'react-native-reanimated';
 
 import { colors, fonts, radius, spacing } from '@/theme';
 import { Icon, type IconName } from './icon';
+import { usePressScale } from './motion';
 
 export type { IconName } from './icon';
 
@@ -201,6 +203,7 @@ export function GoldButton({
   style?: StyleProp<ViewStyle>;
   fullWidth?: boolean;
 }) {
+  const press = usePressScale();
   const primary = variant === 'primary';
   const textColor = primary ? colors.bg : variant === 'outline' ? colors.ivory : colors.gold;
   const surface =
@@ -230,14 +233,16 @@ export function GoldButton({
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={disabled || loading}
       style={({ pressed }) => [
         fullWidth ? { alignSelf: 'stretch' } : { alignSelf: 'center', minWidth: 220 },
         disabled && { opacity: 0.4 },
-        pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
+        pressed && { opacity: 0.9 },
         style,
       ]}>
-      <View style={[styles.button, surface]}>{content}</View>
+      <Reanimated.View style={[styles.button, surface, press.style]}>{content}</Reanimated.View>
     </Pressable>
   );
 }
