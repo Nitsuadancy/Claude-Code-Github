@@ -56,7 +56,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Bake days: weekly pickup windows with an 8 PM order cutoff, chosen at checkout; cooks skip a week from the dashboard. The default for new kitchens
 - [x] Pickup handoff: private pickup instructions, "I'm here", and a written no-show rule (paid to the cook after a 30-minute grace period)
 - [x] Design quality pass: sharper photos, Manna's own status glyphs and switches, one title-bar style
-- [x] Finishing details: blurred photo previews, springy touch feedback, drawn empty states, steady numbers, scroll to top, pull to refresh, a sharper icon and a seamless launch screen
+- [x] Finishing details: photos in three sizes that appear at once, springy touch feedback, drawn empty states, steady numbers, scroll to top, pull to refresh, a sharper icon and a seamless launch screen
 - [x] Order extras: directions, add to calendar, save the receipt as an image, and "Need help with this order?" for Manna's support team
 - [x] Order chat: customer and kitchen message each other from acceptance until a day after pickup, with quick replies, unread counts, report, block and a reminder to keep payments in Manna (`order_messages`, `user_blocks`, `message_reports` in the database)
 
@@ -70,7 +70,7 @@ Without this, a chef and a customer on different phones can't see each other.
 - [x] Database tables for profiles, restaurants, menu items, documents and orders, with row-level security (`supabase/`, tested in CI)
 - [x] Server functions: pricing, daily limits, opening hours, order status, reviews, kitchen approval
 - [x] App-side groundwork: Supabase client (off until configured) and tested row ↔ model mappers
-- [ ] Photo and document uploads to private storage
+- [ ] Photo and document uploads to private storage (photos saved in thumb, card and full sizes, like the demo photos)
 - [ ] Live order updates, so the chef's dashboard updates the moment an order is placed
 - [ ] Edge Function that removes the sign-in when someone deletes their account
 - [ ] Support inbox for "Need help with this order?" (the `order_issues` table is ready): email or text the team on each new request, and a simple admin view to reply and resolve

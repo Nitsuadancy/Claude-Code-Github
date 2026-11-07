@@ -141,10 +141,12 @@ relearn the app. Cooks make their page their own with a few controlled choices:
 
 ## Loading, empty and number details
 
-- **Photos** fade in over a blurred preview of themselves. Use `<Photo uri=… />`
-  (`src/components/photo.tsx`) for any food or kitchen photo. Demo photos have their previews in
-  `src/data/demo-photo-blurhash.ts` (rebuild with `scripts/demo-photo-blurhash.py`). Uploaded
-  photos will get theirs from the backend.
+- **Photos** appear in one go, with no blur and no fade, so the app never looks like it's
+  catching up. Use `<Photo uri=… size=… />` (`src/components/photo.tsx`) and pick the smallest
+  size that's still sharp: `thumb` (480 × 320) for thumbnails and avatars, `card` (1200 × 800)
+  for cards and sheets, `full` (2100 × 1400) only for full-screen heroes. All sizes are baseline
+  JPEGs, which draw in one pass. Rebuild them with `scripts/photo-sizes.py`. Uploaded photos
+  should be stored in the same three sizes.
 - **Empty screens** use `EmptyState` (`src/components/empty-state.tsx`): a small gold line
   drawing (bag, ticket, bell, plate, review, oven), a plain title, one sentence on what will
   appear, and at most one action. Draw new ones on the same 120 × 110 grid with a 2px stroke.

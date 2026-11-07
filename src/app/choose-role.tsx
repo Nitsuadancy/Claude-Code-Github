@@ -75,7 +75,7 @@ export default function ChooseRole() {
                 accessibilityLabel={`${o.title}. ${o.tagline}`}
                 onPress={() => setRole(o.role)}
                 style={[styles.card, selected && styles.cardSelected]}>
-                <Photo uri={o.photo} style={StyleSheet.absoluteFill} />
+                <Photo uri={o.photo} size="card" style={StyleSheet.absoluteFill} />
                 <LinearGradient
                   colors={['rgba(11,11,11,0.15)', 'rgba(11,11,11,0.88)']}
                   locations={[0, 0.85]}

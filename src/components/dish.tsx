@@ -89,7 +89,7 @@ export function DishSheet({
           <ScrollView bounces={false}>
             <View style={styles.photo}>
               {item.photoUri ? (
-                <Photo uri={item.photoUri} style={StyleSheet.absoluteFill} />
+                <Photo uri={item.photoUri} size="card" style={StyleSheet.absoluteFill} />
               ) : (
                 <LinearGradient colors={['#221D13', '#0E0C09']} style={[StyleSheet.absoluteFill, styles.center]}>
                   <Icon name="silverware-variant" size={40} color={colors.gold} />

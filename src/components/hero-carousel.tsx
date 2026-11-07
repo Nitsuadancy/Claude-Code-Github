@@ -10,7 +10,7 @@ import { RestaurantCover } from './restaurant-card';
 import { Photo } from './photo';
 
 /** A photo that drifts in very slowly, like the opening shot of a film. Still when "reduce motion" is on. */
-function DriftingPhoto({ uri, active }: { uri: string; active: boolean }) {
+function DriftingPhoto({ uri, active, first }: { uri: string; active: boolean; first: boolean }) {
   const [scale] = useState(() => new Animated.Value(1));
   useEffect(() => {
     if (!active) {
@@ -38,7 +38,7 @@ function DriftingPhoto({ uri, active }: { uri: string; active: boolean }) {
   }, [active, scale]);
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale }] }]}>
-      <Photo uri={uri} style={StyleSheet.absoluteFill} transition={400} />
+      <Photo uri={uri} size="full" priority={first ? 'high' : 'normal'} style={StyleSheet.absoluteFill} />
     </Animated.View>
   );
 }
@@ -80,7 +80,7 @@ export function HeroCarousel({
             onPress={() => onOpen(r)}
             style={{ width, height, overflow: 'hidden', backgroundColor: colors.surface }}>
             {r.coverUris[0] ? (
-              <DriftingPhoto uri={r.coverUris[0]} active={i === index} />
+              <DriftingPhoto uri={r.coverUris[0]} active={i === index} first={i === 0} />
             ) : (
               <RestaurantCover restaurant={r} style={StyleSheet.absoluteFill} monogramSize={96} />
             )}

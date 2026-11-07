@@ -38,7 +38,7 @@ export function StoryCard({
     <View ref={ref} collapsable={false} style={[styles.card, { width, height, borderRadius: 14 * u }]}>
       <View style={{ height: height * 0.66 }}>
         {photo ? (
-          <Photo uri={photo} style={StyleSheet.absoluteFill} transition={0} />
+          <Photo uri={photo} size="card" style={StyleSheet.absoluteFill} />
         ) : (
           <RestaurantCover restaurant={restaurant} style={StyleSheet.absoluteFill} monogramSize={70 * u} />
         )}

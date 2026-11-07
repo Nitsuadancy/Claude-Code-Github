@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { orderingLine, takingOrders } from '@/lib/ordering';
+import type { PhotoSize } from '@/lib/photo';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
@@ -32,16 +33,18 @@ export function RestaurantCover({
   restaurant,
   style,
   monogramSize = 64,
+  size = 'card',
 }: {
   restaurant: Restaurant;
   style?: StyleProp<ViewStyle>;
   monogramSize?: number;
+  size?: PhotoSize;
 }) {
   const cover = restaurant.coverUris[0];
   if (cover) {
     return (
       <View style={[style, { overflow: 'hidden' }]}>
-        <Photo uri={cover} style={StyleSheet.absoluteFill} />
+        <Photo uri={cover} size={size} style={StyleSheet.absoluteFill} />
       </View>
     );
   }
@@ -222,7 +225,7 @@ export function CoverGallery({
   if (covers.length <= 1) {
     return (
       <View style={{ width, height }}>
-        <RestaurantCover restaurant={restaurant} style={{ width, height }} monogramSize={120} />
+        <RestaurantCover restaurant={restaurant} style={{ width, height }} monogramSize={120} size="full" />
         {fade}
       </View>
     );
@@ -237,8 +240,8 @@ export function CoverGallery({
         onScroll={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
         scrollEventThrottle={64}
         accessibilityLabel={`Photo ${index + 1} of ${covers.length}`}>
-        {covers.map((uri) => (
-          <Photo key={uri} uri={uri} style={{ width, height }} />
+        {covers.map((uri, i) => (
+          <Photo key={uri} uri={uri} size="full" priority={i === 0 ? 'high' : 'low'} style={{ width, height }} />
         ))}
       </ScrollView>
       {fade}

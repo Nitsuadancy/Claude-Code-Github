@@ -1,34 +1,35 @@
 import { Image, type ImageContentFit } from 'expo-image';
 import type { StyleProp, ImageStyle } from 'react-native';
 
-import { DEMO_PHOTO_BLURHASH } from '@/data/demo-photo-blurhash';
-import { photoSource } from '@/lib/photo';
+import { photoSource, type PhotoSize } from '@/lib/photo';
 import { colors } from '@/theme';
 
 /**
- * A food photo that loads gracefully: a soft blurred preview of the photo
- * (or a quiet surface color for uploads) fades into the sharp image.
+ * A food or kitchen photo. It appears in one go as soon as it's ready, with
+ * no blur or fade, over the surface color. Pick the smallest `size` that's
+ * still sharp where it's shown: `thumb` for thumbnails and avatars, `card`
+ * for cards and sheets, `full` for full-screen heroes.
  */
 export function Photo({
   uri,
+  size,
   style,
   contentFit = 'cover',
-  transition = 260,
+  priority,
 }: {
   uri: string;
+  size: PhotoSize;
   style?: StyleProp<ImageStyle>;
   contentFit?: ImageContentFit;
-  transition?: number;
+  priority?: 'low' | 'normal' | 'high';
 }) {
-  const hash = uri.startsWith('demo:') ? DEMO_PHOTO_BLURHASH[uri.slice(5)] : undefined;
   return (
     <Image
-      source={photoSource(uri)}
+      source={photoSource(uri, size)}
       style={[{ backgroundColor: colors.surfaceRaised }, style]}
       contentFit={contentFit}
-      placeholder={hash ? { blurhash: hash } : undefined}
-      placeholderContentFit="cover"
-      transition={transition}
+      transition={0}
+      priority={priority}
       recyclingKey={uri}
     />
   );

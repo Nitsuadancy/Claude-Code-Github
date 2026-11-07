@@ -116,7 +116,7 @@ export default function MenuSetup() {
         }}
         style={styles.photo}>
         {photoUri ? (
-          <Image source={photoSource(photoUri)} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <Image source={photoSource(photoUri, 'card')} style={StyleSheet.absoluteFill} contentFit="cover" />
         ) : (
           <View style={styles.photoEmpty}>
             <Icon name="camera-plus-outline" size={28} color={colors.gold} />
@@ -258,7 +258,7 @@ export default function MenuSetup() {
               </View>
             ) : null}
             {item.photoUri ? (
-              <Photo uri={item.photoUri} style={styles.thumb} />
+              <Photo uri={item.photoUri} size="thumb" style={styles.thumb} />
             ) : (
               <View style={[styles.thumb, styles.thumbEmpty]}>
                 <Icon name="camera-plus-outline" size={16} color={colors.textFaint} />

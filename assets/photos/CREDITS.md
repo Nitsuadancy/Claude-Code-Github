@@ -18,3 +18,6 @@ These photos illustrate the fictional demo kitchens. They come from Wikimedia Co
 | `pound-cake.jpg` | [Black tea pound cake (1).jpg](https://commons.wikimedia.org/wiki/File:Black_tea_pound_cake_(1).jpg) | Roozitaa | CC BY-SA 4.0 |
 | `conchas.jpg` | [Concha (pan dulce mexicano) 01.JPG](https://commons.wikimedia.org/wiki/File:Concha_(pan_dulce_mexicano)_01.JPG) | ProtoplasmaKid | CC BY-SA 4.0 |
 | `country-loaf.jpg` | [6312 sourdough bread.jpg](https://commons.wikimedia.org/wiki/File:6312_sourdough_bread.jpg) | Virtual-Pano | CC BY-SA 4.0 |
+
+`card/` (1200 × 800) and `thumb/` (480 × 320) hold smaller copies of each photo for cards and
+thumbnails, made with `python3 scripts/photo-sizes.py`.

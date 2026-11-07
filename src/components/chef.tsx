@@ -59,7 +59,7 @@ export function ChefAvatar({
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
       {photoUri ? (
-        <Photo uri={photoUri} style={StyleSheet.absoluteFill} />
+        <Photo uri={photoUri} size="thumb" style={StyleSheet.absoluteFill} />
       ) : (
         <Text style={[styles.initials, { fontSize: size * 0.38 }]}>{initials || 'M'}</Text>
       )}

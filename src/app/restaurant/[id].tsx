@@ -140,7 +140,7 @@ export default function RestaurantDetail() {
 
         <View style={styles.body}>
           <View style={styles.titleRow}>
-            {restaurant.logoUri ? <Image source={photoSource(restaurant.logoUri)} style={styles.logo} /> : null}
+            {restaurant.logoUri ? <Image source={photoSource(restaurant.logoUri, 'thumb')} style={styles.logo} /> : null}
             <View style={{ flex: 1, gap: 6 }}>
               <View style={styles.nameRow}>
                 <Heading size={38} style={{ flexShrink: 1 }}>
@@ -288,7 +288,7 @@ export default function RestaurantDetail() {
                               accessibilityRole="imagebutton"
                               accessibilityLabel={`Photo of ${item.name}. Show details`}
                               onPress={() => setOpenItemId(item.id)}>
-                              <Photo uri={item.photoUri} style={styles.thumb} />
+                              <Photo uri={item.photoUri} size="thumb" style={styles.thumb} />
                             </Pressable>
                           ) : (
                             <View style={styles.thumbEmpty} />

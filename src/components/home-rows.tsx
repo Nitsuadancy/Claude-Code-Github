@@ -32,7 +32,7 @@ export function OrderAgainCard({
       accessibilityLabel={`${restaurant.name}. Last time: ${summary}`}
       onPress={onOpen}
       style={styles.againMain}>
-      <RestaurantCover restaurant={restaurant} style={styles.againCover} monogramSize={34} />
+      <RestaurantCover restaurant={restaurant} style={styles.againCover} monogramSize={34} size="thumb" />
       <View style={{ flex: 1, gap: 3 }}>
         <Text style={styles.againName} numberOfLines={1}>
           {restaurant.name}
@@ -121,7 +121,7 @@ export function DishResult({
       onPress={onPress}
       style={styles.dish}>
       {item.photoUri ? (
-        <Photo uri={item.photoUri} style={styles.dishThumb} />
+        <Photo uri={item.photoUri} size="thumb" style={styles.dishThumb} />
       ) : (
         <View style={[styles.dishThumb, styles.dishIcon]}>
           <Icon name="silverware-variant" size={20} color={colors.gold} />
