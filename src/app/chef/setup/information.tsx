@@ -8,7 +8,6 @@ import {
   ScrollView,
   type ScrollViewInstance,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -29,6 +28,7 @@ import {
   SectionTitle,
   TextField,
   TextLink,
+  Toggle,
 } from '@/components/ui';
 import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
 import { CATEGORIES, CUISINES } from '@/data/categories';
@@ -38,7 +38,7 @@ import { pickImages } from '@/lib/images';
 import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
 import { digitsOnly, isValidZip } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
-import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 import type { CategoryId, Weekday } from '@/types';
 import { Icon } from '@/components/icon';
 
@@ -257,7 +257,6 @@ export default function RestaurantInformation() {
               <PickerField
                 label="Typical prep time"
                 placeholder="How long does an order take?"
-                icon="timer-sand"
                 value={`About ${draft.prepMinutes} minutes`}
                 onPress={() => setSheet('prep')}
               />
@@ -315,7 +314,6 @@ export default function RestaurantInformation() {
               <PickerField
                 label="State"
                 placeholder="Choose your state"
-                icon="map-marker-radius"
                 value={stateName(kitchenState)}
                 onPress={() => setSheet('state')}
               />
@@ -328,7 +326,6 @@ export default function RestaurantInformation() {
               <PickerField
                 label="Neighborhood"
                 placeholder={stateOpen ? 'Choose your neighborhood' : 'Not open in your state yet'}
-                icon="map-marker-radius"
                 value={draft.neighborhood || null}
                 onPress={() => setSheet('neighborhood')}
                 error={errors.neighborhood}
@@ -482,12 +479,9 @@ export default function RestaurantInformation() {
                       <Text style={styles.splitTitle}>Different hours on some days</Text>
                       <Text style={styles.splitBody}>For example, shorter Saturdays or a late Friday.</Text>
                     </View>
-                    <Switch
+                    <Toggle
                       accessibilityLabel="Different hours on some days"
                       value={splitHours}
-                      trackColor={{ true: colors.gold, false: colors.borderStrong }}
-                      thumbColor={colors.ivory}
-                      {...webSwitchThumb}
                       onValueChange={(on) => {
                         setSplitHours(on);
                         if (!on) update({ dayHours: {} });
@@ -732,13 +726,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
   },
   topTitle: {
     flex: 1,
     textAlign: 'center',
     fontFamily: fonts.semibold,
-    fontSize: 12,
-    color: colors.text,
+    fontSize: 16,
+    letterSpacing: -0.2,
+    color: colors.ivory,
   },
   content: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.md, paddingBottom: spacing.xl },
   hint: { fontSize: 14, marginTop: -spacing.sm },

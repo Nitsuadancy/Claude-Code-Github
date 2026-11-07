@@ -239,7 +239,7 @@ describe('for you', () => {
       favoriteIds: ['sample_abuela_rosa'],
       orders: [order({ customerId: 'me', restaurantId: 'sample_green_bowl', status: 'completed' })],
     });
-    expect(picks[0]).toMatchObject({ restaurant: { id: 'sample_abuela_rosa' }, reason: 'One of your favorites, taking orders' });
+    expect(picks[0]).toMatchObject({ restaurant: { id: 'sample_abuela_rosa' }, reason: 'Favorite · taking orders' });
     expect(picks[1]).toMatchObject({ restaurant: { id: 'sample_green_bowl' }, reason: 'You ordered here before' });
   });
 

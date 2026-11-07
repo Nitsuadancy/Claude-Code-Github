@@ -82,8 +82,12 @@ export default function ChooseRole() {
                   locations={[0, 0.85]}
                   style={StyleSheet.absoluteFill}
                 />
-                <View style={[styles.radio, selected && styles.radioOn]}>
-                  {selected ? <Icon name="check" size={14} color={colors.bg} /> : null}
+                <View style={styles.radio}>
+                  <Icon
+                    name={selected ? 'check-circle' : 'checkbox-blank-circle-outline'}
+                    size={26}
+                    color={selected ? colors.ivory : 'rgba(247,244,238,0.75)'}
+                  />
                 </View>
                 <View style={styles.cardText}>
                   <Text style={styles.cardTitle}>{o.title}</Text>
@@ -123,14 +127,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.md,
     right: spacing.md,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: 'rgba(247,244,238,0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  radioOn: { backgroundColor: colors.ivory, borderColor: colors.ivory },
   footer: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, paddingTop: spacing.sm },
 });

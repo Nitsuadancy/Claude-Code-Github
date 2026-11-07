@@ -36,9 +36,11 @@ export function FirstOrders({ steps, onStep }: { steps: FirstOrderStep[]; onStep
           accessibilityLabel={`${step.title}${step.done ? ', done' : ''}`}
           onPress={() => onStep(step)}
           style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}>
-          <View style={[styles.check, step.done && styles.checkDone]}>
-            {step.done ? <Icon name="check" size={14} color={colors.bg} /> : null}
-          </View>
+          <Icon
+            name={step.done ? 'check-circle' : 'checkbox-blank-circle-outline'}
+            size={24}
+            color={step.done ? colors.gold : colors.borderStrong}
+          />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.stepTitle, step.done && styles.stepTitleDone]}>{step.title}</Text>
             {!step.done ? <Text style={styles.stepBody}>{step.body}</Text> : null}
@@ -59,16 +61,6 @@ const styles = StyleSheet.create({
   barFill: { height: 4, backgroundColor: colors.gold },
   allDone: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
-  check: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkDone: { backgroundColor: colors.gold, borderColor: colors.gold },
   stepTitle: { fontFamily: fonts.medium, fontSize: 15, color: colors.ivory },
   stepTitleDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
   stepBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textMuted },

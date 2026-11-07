@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   type BakeDay,
@@ -7,7 +7,8 @@ import {
   formatBakeDay,
   formatCutoff,
 } from '@/lib/bake-days';
-import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
+import { Toggle } from './ui';
 
 /**
  * The cook's next bake day: how many orders are in, whether ordering is still
@@ -30,7 +31,7 @@ export function BakeDayCard({
   onSkip: (day: BakeDay, orderCount: number) => void;
   onUnskip: (day: BakeDay) => void;
 }) {
-  const live = accepting && status?.phase === 'open';
+  const live = accepting && (status?.phase === 'open' || status?.phase === 'pickup');
   const title = !accepting
     ? 'Paused'
     : !status
@@ -54,12 +55,9 @@ export function BakeDayCard({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.detail}>{detail}</Text>
         </View>
-        <Switch
+        <Toggle
           accessibilityLabel="Accepting orders"
           value={accepting}
-          trackColor={{ true: colors.gold, false: colors.borderStrong }}
-          thumbColor={colors.ivory}
-          {...webSwitchThumb}
           onValueChange={onToggleAccepting}
         />
       </View>

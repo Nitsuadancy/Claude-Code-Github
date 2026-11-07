@@ -1,6 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
 import { VerifiedSeal } from '@/components/chef';
@@ -20,6 +20,7 @@ import {
   Screen,
   SectionHeader,
   TextField,
+  Toggle,
 } from '@/components/ui';
 import { accentColor } from '@/data/accents';
 import { confirmAction, notify } from '@/lib/alert';
@@ -34,7 +35,7 @@ import { isBakeDayKitchen } from '@/lib/ordering';
 import { shareKitchen } from '@/lib/share';
 import { NEXT_STATUSES, storedKitchen } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
-import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
 
@@ -148,12 +149,9 @@ export default function ChefDashboard() {
                   : (nextOpening(restaurant, now) ?? 'Set your hours in Kitchen details')}
               </Body>
             </View>
-            <Switch
+            <Toggle
               accessibilityLabel="Accepting orders"
               value={restaurant.acceptingOrders}
-              trackColor={{ true: colors.gold, false: colors.borderStrong }}
-              thumbColor={colors.ivory}
-              {...webSwitchThumb}
               onValueChange={(accepting) =>
                 dispatch({ type: 'setAcceptingOrders', restaurantId: restaurant.id, accepting })
               }

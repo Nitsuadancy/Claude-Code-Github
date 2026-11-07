@@ -104,12 +104,14 @@ export default function OrderTracking() {
                   <View style={styles.rail}>
                     {now ? (
                       <Pulse size={22} color={colors.gold}>
-                        <View style={[styles.dot, styles.dotNow]} />
+                        <View style={styles.dotNow}>
+                          <View style={styles.dotCore} />
+                        </View>
                       </Pulse>
+                    ) : done ? (
+                      <Icon name="check-circle" size={22} color={colors.gold} />
                     ) : (
-                      <View style={[styles.dot, done && styles.dotDone]}>
-                        {done ? <Icon name="check" size={12} color={colors.onGold} /> : null}
-                      </View>
+                      <Icon name="checkbox-blank-circle-outline" size={22} color={colors.borderStrong} />
                     )}
                     {!last ? <View style={[styles.line, i < current && { backgroundColor: colors.gold }]} /> : null}
                   </View>
@@ -281,18 +283,17 @@ const styles = StyleSheet.create({
   etaText: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
   step: { flexDirection: 'row', gap: spacing.md, minHeight: 48 },
   rail: { alignItems: 'center', width: 22 },
-  dot: {
+  dotNow: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
+    backgroundColor: colors.goldTint,
+    borderWidth: 1.5,
+    borderColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
   },
-  dotDone: { backgroundColor: colors.gold, borderColor: colors.gold },
-  dotNow: { backgroundColor: colors.surface, borderWidth: 6, borderColor: colors.gold },
+  dotCore: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold },
   line: { flex: 1, width: 1, backgroundColor: colors.borderStrong, marginVertical: 2 },
   stepText: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 1 },
   stepLabel: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },

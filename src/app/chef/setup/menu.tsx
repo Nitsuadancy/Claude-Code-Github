@@ -1,11 +1,10 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { DietaryIcons } from '@/components/dish';
 import { FormScreen } from '@/components/form-screen';
-import { Body, Chip, Eyebrow, FieldLabel, GoldButton, SectionTitle, TextField } from '@/components/ui';
+import { Body, Chip, FieldLabel, GoldButton, SectionTitle, TextField, Toggle } from '@/components/ui';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { pickImages } from '@/lib/images';
 import { MENU_SECTIONS, moveItem } from '@/lib/menu';
@@ -14,7 +13,7 @@ import { formatCents, parsePriceToCents } from '@/lib/money';
 import { isMenuComplete } from '@/lib/setup';
 import { digitsOnly, newId } from '@/lib/validation';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
-import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 import type { Allergen, DietaryTag, MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
 
@@ -207,12 +206,25 @@ export default function MenuSetup() {
           style={{ flex: 1 }}
         />
       </View>
+      {editingId ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            const id = editingId;
+            resetForm();
+            setMenu(draft.menu.filter((m) => m.id !== id));
+          }}
+          style={styles.deleteDish}>
+          <Icon name="trash-can-outline" size={18} color={colors.danger} />
+          <Text style={styles.deleteDishText}>Delete this dish</Text>
+        </Pressable>
+      ) : null}
 
       <SectionTitle>Your menu ({draft.menu.length})</SectionTitle>
       {draft.menu.length > 1 ? (
         <Body muted style={styles.hint}>
-          Tap the star to choose your signature dish; it’s shown first. Use the arrows to set the order
-          customers see the rest.
+          Tap a dish to edit it. The star marks your signature dish, shown first; the arrows set the order of
+          the rest.
         </Body>
       ) : null}
       {draft.menu.length === 0 ? <Body muted>No dishes yet. Add your first one above.</Body> : null}
@@ -244,50 +256,41 @@ export default function MenuSetup() {
                 </Pressable>
               </View>
             ) : null}
+            {item.photoUri ? (
+              <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
+            ) : (
+              <View style={[styles.thumb, styles.thumbEmpty]}>
+                <Icon name="camera-plus-outline" size={16} color={colors.textFaint} />
+              </View>
+            )}
+            <Pressable
+              style={({ pressed }) => [{ flex: 1, gap: 3 }, pressed && { opacity: 0.7 }]}
+              onPress={() => edit(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${item.name}`}>
+              <Text style={styles.itemName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.itemMeta} numberOfLines={1}>
+                <Text style={styles.itemPrice}>{formatCents(item.priceCents)}</Text>
+                {item.section ? `  ·  ${item.section}` : ''}
+                {item.dailyLimit !== null ? `  ·  ${item.dailyLimit} a day` : ''}
+              </Text>
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={signature ? `${item.name} is your signature dish` : `Make ${item.name} your signature dish`}
-              hitSlop={8}
+              hitSlop={10}
               onPress={() => setMenu(draft.menu, item.id)}>
-              <Icon
-                name={signature ? 'star' : 'star-outline'}
-                size={22}
-                color={signature ? colors.gold : colors.textFaint}
-              />
+              <Icon name={signature ? 'star' : 'star-outline'} size={18} color={signature ? colors.gold : colors.textFaint} />
             </Pressable>
-            {item.photoUri ? <Image source={photoSource(item.photoUri)} style={styles.thumb} /> : null}
-            <Pressable style={{ flex: 1, gap: 3 }} onPress={() => edit(item)} accessibilityLabel={`Edit ${item.name}`}>
-              {signature ? <Eyebrow style={{ fontSize: 9 }}>Signature</Eyebrow> : null}
-              <Text style={styles.itemName}>{item.name}</Text>
-              <View style={styles.metaRow}>
-                <Text style={styles.itemPrice}>{formatCents(item.priceCents)}</Text>
-                <DietaryIcons tags={item.dietary} />
-              </View>
-              <Text style={styles.itemMeta}>
-                {item.section ? `${item.section} · ` : ''}
-                {item.available ? 'Available' : 'Sold out'}
-                {item.dailyLimit !== null ? ` · ${item.dailyLimit} per day` : ''}
-              </Text>
-            </Pressable>
-            <Switch
+            <Toggle
               accessibilityLabel={`${item.name} available`}
               value={item.available}
-              trackColor={{ true: colors.gold, false: colors.border }}
-              thumbColor={colors.ivory}
-              {...webSwitchThumb}
               onValueChange={(available) =>
                 setMenu(draft.menu.map((m) => (m.id === item.id ? { ...m, available } : m)))
               }
             />
-            <Pressable
-              accessibilityLabel={`Delete ${item.name}`}
-              hitSlop={8}
-              onPress={() => {
-                if (editingId === item.id) resetForm();
-                setMenu(draft.menu.filter((m) => m.id !== item.id));
-              }}>
-              <Icon name="trash-can-outline" size={22} color={colors.danger} />
-            </Pressable>
           </View>
         );
       })}
@@ -326,10 +329,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.surface,
   },
-  thumb: { width: 44, height: 44, borderRadius: radius.sm },
-  itemName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
+  thumb: { width: 48, height: 48, borderRadius: radius.sm },
+  thumbEmpty: { backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
+  deleteDish: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
+  deleteDishText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.danger },
+  itemName: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   itemPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
-  itemMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
+  itemMeta: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14 },
 });

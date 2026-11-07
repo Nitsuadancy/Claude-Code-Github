@@ -1,6 +1,6 @@
 # Demo photo credits
 
-These photos illustrate the fictional demo kitchens. They come from Wikimedia Commons under the licenses below and were cropped close on the food, resized to 3:2 and given one shared color grade (warmer, softer highlights, a light vignette and grain) so they read as one series. Replace them with chefs' own photos before launch.
+These photos illustrate the fictional demo kitchens. They come from Wikimedia Commons under the licenses below and were cropped close on the food at 3:2, saved at 2100 × 1400 so they stay sharp full screen on a phone, and given one light, shared grade (gentle contrast, soft highlights, slight warmth) so they read as one series. Replace them with chefs' own photos before launch.
 
 | File | Original | Author | License |
 |---|---|---|---|

@@ -38,8 +38,9 @@ export function pickForYou(
       const open = takingOrders(r, context.now);
       const bakeDay = isBakeDayKitchen(r);
       if (context.favoriteIds.includes(r.id)) {
-        const suffix = bakeDay ? ', taking orders' : ', open now';
-        return { r, score: 6, reason: `One of your favorites${open ? suffix : ''}` };
+        // Short enough for a two-column card.
+        const suffix = bakeDay ? ' · taking orders' : ' · open now';
+        return { r, score: 6, reason: `Favorite${open ? suffix : ''}` };
       }
       if (ordered.has(r.id)) return { r, score: 5, reason: 'You ordered here before' };
       if (hasDietProfile(context.diet) && kitchenFits(r, context.diet)) return { r, score: 4, reason: 'Fits your diet' };

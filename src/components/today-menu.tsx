@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import * as haptics from '@/lib/haptics';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
-import { colors, fonts, radius, spacing, webSwitchThumb } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
+import { Toggle } from './ui';
 
 /**
  * The chef's daily controls: what's left of each dish today, and a switch to
@@ -26,7 +27,8 @@ export function TodayMenu({
   onEdit: () => void;
 }) {
   const cookDay = day?.date ?? new Date();
-  const when = day?.label ?? 'today';
+  // "Today" / "Tomorrow" read as plain words mid-sentence: "6 left for today".
+  const when = /^(Today|Tomorrow)$/.test(day?.label ?? '') ? day!.label.toLowerCase() : (day?.label ?? 'today');
   const setAvailable = (id: string, available: boolean) => {
     haptics.tap();
     onMenuChange(restaurant.menu.map((m) => (m.id === id ? { ...m, available } : m)));
@@ -34,7 +36,7 @@ export function TodayMenu({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>{day ? `Menu for ${day.label}` : 'Today’s menu'}</Text>
+        <Text style={styles.title}>{day ? `Menu for ${when}` : 'Today’s menu'}</Text>
         <Pressable accessibilityRole="button" onPress={onEdit} hitSlop={10}>
           <Text style={styles.edit}>Edit menu</Text>
         </Pressable>
@@ -58,13 +60,10 @@ export function TodayMenu({
                 {formatCents(item.priceCents)} · {status}
               </Text>
             </View>
-            <Switch
+            <Toggle
               accessibilityLabel={`${item.name}: ${item.available ? 'on the menu today' : 'off today'}`}
               value={item.available}
               onValueChange={(on) => setAvailable(item.id, on)}
-              trackColor={{ true: colors.gold, false: colors.borderStrong }}
-              thumbColor={colors.ivory}
-              {...webSwitchThumb}
             />
           </View>
         );

@@ -113,3 +113,15 @@ relearn the app. Cooks make their page their own with a few controlled choices:
 - **Pinned update**, up to 140 characters at the top of the menu, hidden after 7 days.
 - **Instagram** username, linked from the About tab.
 - **Dish order**, set with the arrows in the menu editor.
+
+## Icons, status glyphs and controls
+
+- **Icons** are Lucide line icons at a 1.6 stroke (`src/components/icon.tsx`).
+- **Status glyphs** are Manna's own vectors (`src/components/glyphs.tsx`), never recolored stock
+  icons: the solid check disc (`check-circle`), the cross disc (`close-circle`), the empty ring
+  (`checkbox-blank-circle-outline`) and the scalloped Verified seal (`check-decagram`). Ask for them
+  through `<Icon name=…>` as usual.
+- **Switches** use `Toggle` from `ui.tsx`, drawn the same on every platform: a gold track when on.
+- **Pickers** always end in a chevron; only time pickers show a clock.
+- **Photos** ship at 2100 × 1400 with a light grade (`assets/photos/CREDITS.md`), so full-screen
+  heroes stay sharp on a 3× phone.

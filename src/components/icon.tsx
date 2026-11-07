@@ -80,6 +80,8 @@ import type { StyleProp, ViewStyle } from 'react-native';
 
 import { colors } from '@/theme';
 
+import { CheckDisc, CrossDisc, Ring, Seal } from './glyphs';
+
 /**
  * Manna's icon set: Lucide's thin-line icons at a 1.6 stroke, so every icon
  * shares one weight and corner style. Names are semantic (the keys below).
@@ -186,8 +188,13 @@ export type IconName = keyof typeof LUCIDE | (typeof BRANDS)[number];
 
 /** Drawn as a solid shape in the icon color. */
 const SOLID = new Set<IconName>(['heart', 'star', 'star-half-full', 'star-four-points']);
-/** Drawn as a solid disc or badge with the mark cut out in the background color. */
-const BADGE = new Set<IconName>(['check-circle', 'check-decagram', 'close-circle']);
+/** Status glyphs drawn by Manna itself (./glyphs), not recolored stock icons. */
+const CUSTOM = {
+  'check-circle': CheckDisc,
+  'close-circle': CrossDisc,
+  'checkbox-blank-circle-outline': Ring,
+  'check-decagram': Seal,
+} as const;
 /** Active tab icons: same shape, heavier stroke. */
 const BOLD = new Set<IconName>(['account', 'compass', 'shopping', 'receipt-text']);
 
@@ -217,14 +224,17 @@ export function Icon({
       />
     );
   }
+  if (name in CUSTOM) {
+    const Custom = CUSTOM[name as keyof typeof CUSTOM];
+    return <Custom size={size} color={color} markColor={colors.bg} style={style} accessibilityLabel={accessibilityLabel} />;
+  }
   const Glyph = LUCIDE[name as keyof typeof LUCIDE];
-  const badge = BADGE.has(name);
   return (
     <Glyph
       size={size}
-      color={badge ? colors.bg : color}
-      fill={SOLID.has(name) || badge ? color : 'none'}
-      strokeWidth={strokeWidth ?? (BOLD.has(name) ? 2.1 : badge ? 2 : 1.6)}
+      color={color}
+      fill={SOLID.has(name) ? color : 'none'}
+      strokeWidth={strokeWidth ?? (BOLD.has(name) ? 2.1 : 1.6)}
       style={style}
       accessibilityLabel={accessibilityLabel}
       accessible={!!accessibilityLabel}

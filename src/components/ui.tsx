@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Platform,
   Pressable,
   type StyleProp,
@@ -528,4 +529,59 @@ export const styles = StyleSheet.create({
   badgeDot: { width: 6, height: 6, borderRadius: 3 },
   badgeOnPhoto: { backgroundColor: 'rgba(10, 9, 7, 0.7)', borderRadius: radius.sm, paddingVertical: 5, paddingHorizontal: 9 },
   badgeText: { fontFamily: fonts.medium, fontSize: 12 },
+});
+
+/**
+ * On/off switch drawn the same on every platform: a gold track when on, a
+ * soft ivory thumb that slides across.
+ */
+export function Toggle({
+  value,
+  onValueChange,
+  accessibilityLabel,
+  disabled,
+}: {
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  accessibilityLabel: string;
+  disabled?: boolean;
+}) {
+  const [progress] = useState(() => new Animated.Value(value ? 1 : 0));
+  useEffect(() => {
+    Animated.timing(progress, { toValue: value ? 1 : 0, duration: 180, useNativeDriver: false }).start();
+  }, [progress, value]);
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ checked: value, disabled }}
+      disabled={disabled}
+      hitSlop={8}
+      onPress={() => onValueChange(!value)}
+      style={{ opacity: disabled ? 0.4 : 1 }}>
+      <Animated.View
+        style={[
+          toggleStyles.track,
+          {
+            backgroundColor: progress.interpolate({ inputRange: [0, 1], outputRange: [colors.surfaceRaised, colors.gold] }),
+            borderColor: progress.interpolate({ inputRange: [0, 1], outputRange: [colors.borderStrong, colors.gold] }),
+          },
+        ]}>
+        <Animated.View
+          style={[
+            toggleStyles.thumb,
+            {
+              backgroundColor: progress.interpolate({ inputRange: [0, 1], outputRange: [colors.textMuted, colors.ivory] }),
+              transform: [{ translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 18] }) }],
+            },
+          ]}
+        />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const toggleStyles = StyleSheet.create({
+  track: { width: 46, height: 28, borderRadius: 14, borderWidth: 1, padding: 2, justifyContent: 'center' },
+  thumb: { width: 22, height: 22, borderRadius: 11 },
 });

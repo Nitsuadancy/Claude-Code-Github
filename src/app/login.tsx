@@ -83,7 +83,7 @@ export default function Login() {
             <>
               <View style={styles.phoneRow}>
                 <View style={styles.country}>
-                  <Text style={styles.flag}>🇺🇸</Text>
+                  <Text style={styles.flag}>US</Text>
                   <Text style={styles.countryCode}>+1</Text>
                 </View>
                 <TextField
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 54,
   },
-  flag: { fontSize: 20 },
+  flag: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 0.6, color: colors.textMuted },
   countryCode: { fontFamily: fonts.medium, color: colors.text, fontSize: 16 },
   error: { fontFamily: fonts.body, color: colors.danger, fontSize: 13, marginTop: -spacing.sm },
   legal: { fontSize: 12, textAlign: 'center', lineHeight: 18 },

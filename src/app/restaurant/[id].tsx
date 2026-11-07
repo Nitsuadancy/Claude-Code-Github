@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(10,9,7,0.96)',
+    backgroundColor: colors.bg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.hairline,
     alignItems: 'center',
