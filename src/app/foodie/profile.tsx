@@ -1,3 +1,5 @@
+import { useScrollToTop } from 'expo-router';
+import { type ComponentRef, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
@@ -10,6 +12,8 @@ import { colors, fonts, radius, spacing } from '@/theme';
 
 export default function Profile() {
   const { state } = useStore();
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  useScrollToTop(scroll);
   const userId = state.user?.id;
   const orders = state.orders.filter((o) => o.customerId === userId && !endedWithoutSale(o.status)).length;
   const kitchens = new Set(state.orders.filter((o) => o.customerId === userId).map((o) => o.restaurantId)).size;
@@ -25,6 +29,7 @@ export default function Profile() {
     <Screen edges={['top']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
+          ref={scroll}
           contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl, paddingBottom: TAB_BAR_SPACE + spacing.lg }}
           keyboardShouldPersistTaps="handled">
           <View style={styles.identity}>

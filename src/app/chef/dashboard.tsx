@@ -9,6 +9,7 @@ import { OrderCard } from '@/components/order-card';
 import { BakeDayCard } from '@/components/bake-day-card';
 import { FirstOrders } from '@/components/first-orders';
 import { PinnedUpdate } from '@/components/pinned-update';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { TodayMenu } from '@/components/today-menu';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
 import {
@@ -45,6 +46,7 @@ export default function ChefDashboard() {
   const restaurant = useMyRestaurant();
   const [showAccount, setShowAccount] = useState(false);
   const reviews = useReviews(restaurant?.id);
+  const refreshControl = usePullToRefresh();
 
   if (!restaurant || restaurant.status !== 'live') return <Redirect href="/chef/setup" />;
 
@@ -89,7 +91,7 @@ export default function ChefDashboard() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} refreshControl={refreshControl}>
         <View style={{ gap: spacing.xs }}>
           <Eyebrow>Welcome back, {state.user?.name.split(' ')[0]}</Eyebrow>
           <Heading size={34}>{restaurant.name}</Heading>

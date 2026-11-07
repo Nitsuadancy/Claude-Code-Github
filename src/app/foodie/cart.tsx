@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useScrollToTop } from 'expo-router';
+import { type ComponentRef, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CartAllergyWarning } from '@/components/diet';
@@ -35,6 +35,8 @@ import { Icon } from '@/components/icon';
 
 export default function Cart() {
   const { state, dispatch } = useStore();
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  useScrollToTop(scroll);
   const restaurant = useRestaurant(state.cart.restaurantId ?? undefined);
   const [when, setWhen] = useState<'asap' | 'later'>('asap');
   const [slot, setSlot] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export default function Cart() {
 
   return (
     <Screen edges={['top']}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}>
+      <ScrollView ref={scroll} contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}>
         <View style={{ gap: spacing.xs }}>
           <Heading>Your order</Heading>
           <Pressable

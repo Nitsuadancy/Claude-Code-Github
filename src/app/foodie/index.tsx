@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
+import { router, useScrollToTop } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -91,6 +91,8 @@ function dateline(now: Date): string {
 
 export default function FoodieHome() {
   const { state, dispatch } = useStore();
+  const list = useRef<FlatList<Restaurant>>(null);
+  useScrollToTop(list);
   const restaurants = useAllRestaurants();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -482,6 +484,7 @@ export default function FoodieHome() {
   return (
     <Screen edges={[]}>
       <FlatList
+        ref={list}
         data={results}
         keyExtractor={(r) => r.id}
         ListHeaderComponent={header}

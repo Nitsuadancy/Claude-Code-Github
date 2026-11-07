@@ -1,22 +1,30 @@
-import { router } from 'expo-router';
+import { router, useScrollToTop } from 'expo-router';
+import { useRef } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
 import { OrderCard } from '@/components/order-card';
+import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { Stars } from '@/components/reviews';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Heading, Screen } from '@/components/ui';
 import { useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
+import type { Order } from '@/types';
 
 export default function Orders() {
   const { state } = useStore();
+  const list = useRef<FlatList<Order>>(null);
+  useScrollToTop(list);
+  const refreshControl = usePullToRefresh();
   const orders = state.orders.filter((o) => o.customerId === state.user?.id);
   const reviewed = new Set(state.reviews.map((r) => r.orderId));
 
   return (
     <Screen edges={['top']}>
       <FlatList
+        ref={list}
+        refreshControl={refreshControl}
         data={orders}
         keyExtractor={(o) => o.id}
         contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}
