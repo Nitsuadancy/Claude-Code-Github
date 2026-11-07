@@ -10,6 +10,7 @@ import { fitWithin } from '@/lib/images';
 import { canSayArrived, estimateReadyAt, isActive, isAddressShared, orderNumber } from '@/lib/orders';
 import { isValidContact } from '@/lib/validation';
 import { accentColor } from '@/data/accents';
+import { hasFoundingProOffer } from '@/data/pro';
 import { cleanInstagram, visibleUpdate } from '@/lib/kitchen-style';
 import {
   describeBakeDays,
@@ -433,5 +434,18 @@ describe('pickup handoff', () => {
     expect(s.orders[0].arrivedAt).toBeUndefined();
     s = reducer(s, { type: 'markArrived', orderId: 'r', customerId: 'c1', at: '2026-11-07T15:31:00Z' });
     expect(s.orders[0].arrivedAt).toBe('2026-11-07T15:31:00Z');
+  });
+});
+
+describe('Manna Pro interest', () => {
+  it('records interest once and offers founding kitchens a free year', () => {
+    let s = reducer(INITIAL_STATE, { type: 'hydrate', state: {} });
+    expect(s.proInterestAt).toBeNull();
+    s = reducer(s, { type: 'joinProWaitlist', at: '2026-11-07T12:00:00Z' });
+    s = reducer(s, { type: 'joinProWaitlist', at: '2026-11-08T12:00:00Z' });
+    expect(s.proInterestAt).toBe('2026-11-07T12:00:00Z');
+    expect(hasFoundingProOffer({ founding: true })).toBe(true);
+    expect(hasFoundingProOffer({ founding: false })).toBe(false);
+    expect(hasFoundingProOffer(undefined)).toBe(false);
   });
 });

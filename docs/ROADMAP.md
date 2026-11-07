@@ -107,6 +107,8 @@ Instagram Story card. Paid features help cooks sell more or save time.
 
 **Manna Pro** (about $15–25 a month; free for a year for founding kitchens)
 
+- [x] In-app Manna Pro page: what Pro adds, what stays free, the founding free year and a Notify me button (no billing yet)
+
 - [ ] Drops and pre-order windows ("Thanksgiving pies, orders close Tuesday")
 - [ ] Followers: customers follow a kitchen and get a notification when it posts a drop
 - [ ] Discount codes and gift cards

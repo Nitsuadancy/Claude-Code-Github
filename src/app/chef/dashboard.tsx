@@ -316,6 +316,11 @@ export default function ChefDashboard() {
           <LinkRow icon="file-document-outline" label="Documents" onPress={() => router.push('/chef/setup/documents')} />
           <LinkRow icon="export-variant" label="Share your kitchen on Instagram" onPress={() => router.push('/chef/share')} />
           <LinkRow
+            icon="star-four-points-outline"
+            label={restaurant.founding ? 'Manna Pro · free for your first year' : 'Manna Pro · coming soon'}
+            onPress={() => router.push('/chef/pro')}
+          />
+          <LinkRow
             icon="eye-outline"
             label="View my kitchen page"
             onPress={() =>

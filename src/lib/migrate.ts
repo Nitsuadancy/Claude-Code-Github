@@ -77,6 +77,7 @@ export function normalizePersisted(saved: Partial<PersistedState> | null): Parti
     recentSearches: saved.recentSearches ?? [],
     reportedReviewIds: saved.reportedReviewIds ?? [],
     sharedSteps: saved.sharedSteps ?? [],
+    proInterestAt: saved.proInterestAt ?? null,
   };
   // Only touch sections that were saved, so a missing one keeps the app's default instead of becoming undefined.
   if (saved.user) out.user = normalizeUser(saved.user);

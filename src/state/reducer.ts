@@ -39,6 +39,8 @@ export interface AppState {
   reportedReviewIds: string[];
   /** Sharing a new cook has done, for the "Get your first order" checklist. */
   sharedSteps: SharedStep[];
+  /** When this cook asked to hear about Manna Pro. Kept on the device until billing exists. */
+  proInterestAt: string | null;
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -62,6 +64,7 @@ export const INITIAL_STATE: AppState = {
   growerApplication: null,
   reportedReviewIds: [],
   sharedSteps: [],
+  proInterestAt: null,
 };
 
 export type Action =
@@ -96,6 +99,7 @@ export type Action =
   | { type: 'addReview'; review: Review }
   | { type: 'reportReview'; reviewId: string }
   | { type: 'markShared'; step: SharedStep }
+  | { type: 'joinProWaitlist'; at: string }
   | { type: 'markActivitySeen'; at: string }
   | { type: 'rememberSearch'; query: string }
   | { type: 'clearSearches' }
@@ -321,6 +325,9 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'reportReview':
       if (state.reportedReviewIds.includes(action.reviewId)) return state;
       return { ...state, reportedReviewIds: [...state.reportedReviewIds, action.reviewId] };
+
+    case 'joinProWaitlist':
+      return state.proInterestAt ? state : { ...state, proInterestAt: action.at };
 
     case 'markShared':
       if (state.sharedSteps.includes(action.step)) return state;
