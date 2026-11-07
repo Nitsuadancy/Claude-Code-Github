@@ -16,6 +16,7 @@ import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Allergen, DietaryTag, MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
+import { Photo } from '@/components/photo';
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -257,7 +258,7 @@ export default function MenuSetup() {
               </View>
             ) : null}
             {item.photoUri ? (
-              <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
+              <Photo uri={item.photoUri} style={styles.thumb} />
             ) : (
               <View style={[styles.thumb, styles.thumbEmpty]}>
                 <Icon name="camera-plus-outline" size={16} color={colors.textFaint} />

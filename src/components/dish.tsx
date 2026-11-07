@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +12,7 @@ import type { DietaryTag, MenuItem } from '@/types';
 import { DietNote } from './diet';
 import { Body, Eyebrow, GoldButton, Heading } from './ui';
 import { Icon } from './icon';
-import { photoSource } from '@/lib/photo';
+import { Photo } from './photo';
 
 
 /**
@@ -90,7 +89,7 @@ export function DishSheet({
           <ScrollView bounces={false}>
             <View style={styles.photo}>
               {item.photoUri ? (
-                <Image source={photoSource(item.photoUri)} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <Photo uri={item.photoUri} style={StyleSheet.absoluteFill} />
               ) : (
                 <LinearGradient colors={['#221D13', '#0E0C09']} style={[StyleSheet.absoluteFill, styles.center]}>
                   <Icon name="silverware-variant" size={40} color={colors.gold} />

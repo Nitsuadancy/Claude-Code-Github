@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -6,7 +5,7 @@ import { colors, fonts, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
 import { Icon } from './icon';
-import { photoSource } from '@/lib/photo';
+import { Photo } from './photo';
 
 /** Marks one of the first kitchens on Manna. */
 export function FoundingMark({ size = 12 }: { size?: number }) {
@@ -60,7 +59,7 @@ export function ChefAvatar({
   return (
     <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
       {photoUri ? (
-        <Image source={photoSource(photoUri)} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Photo uri={photoUri} style={StyleSheet.absoluteFill} />
       ) : (
         <Text style={[styles.initials, { fontSize: size * 0.38 }]}>{initials || 'M'}</Text>
       )}

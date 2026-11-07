@@ -1,14 +1,13 @@
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { photoSource } from '@/lib/photo';
 import { colors, fonts, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
 
 import { NATIVE_DRIVER } from './motion';
 import { RestaurantCover } from './restaurant-card';
+import { Photo } from './photo';
 
 /** A photo that drifts in very slowly, like the opening shot of a film. Still when "reduce motion" is on. */
 function DriftingPhoto({ uri, active }: { uri: string; active: boolean }) {
@@ -39,7 +38,7 @@ function DriftingPhoto({ uri, active }: { uri: string; active: boolean }) {
   }, [active, scale]);
   return (
     <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale }] }]}>
-      <Image source={photoSource(uri)} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} />
+      <Photo uri={uri} style={StyleSheet.absoluteFill} transition={400} />
     </Animated.View>
   );
 }

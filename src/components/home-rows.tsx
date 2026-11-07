@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatMonthDay } from '@/lib/orders';
@@ -10,7 +9,7 @@ import { VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { RestaurantCover } from './restaurant-card';
 import { Icon } from './icon';
-import { photoSource } from '@/lib/photo';
+import { Photo } from './photo';
 
 /** "Order again" card: the kitchen, what you had, and a one-tap reorder. */
 export function OrderAgainCard({
@@ -122,7 +121,7 @@ export function DishResult({
       onPress={onPress}
       style={styles.dish}>
       {item.photoUri ? (
-        <Image source={photoSource(item.photoUri)} style={styles.dishThumb} contentFit="cover" />
+        <Photo uri={item.photoUri} style={styles.dishThumb} />
       ) : (
         <View style={[styles.dishThumb, styles.dishIcon]}>
           <Icon name="silverware-variant" size={20} color={colors.gold} />

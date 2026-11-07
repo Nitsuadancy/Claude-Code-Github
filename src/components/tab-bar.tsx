@@ -18,7 +18,7 @@ const TAB_META: Record<string, { label: string; icon: IconName; activeIcon: Icon
 /** Height the bar occupies, so screens can pad their scroll content. */
 export const TAB_BAR_SPACE = 96;
 
-/** Edge-to-edge frosted bar under a hairline; the current tab is bright, the rest recede. */
+/** Edge-to-edge bar under a hairline (frosted on iOS, solid elsewhere so text never shows through); the current tab is bright, the rest recede. */
 export function MannaTabBar({
   state,
   emitter,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     overflow: 'hidden',
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(11,11,11,0.72)' : 'rgba(11,11,11,0.96)',
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(11,11,11,0.72)' : colors.bg,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.hairline,
   },

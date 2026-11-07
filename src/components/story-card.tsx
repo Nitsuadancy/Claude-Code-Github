@@ -1,16 +1,15 @@
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentRef, Ref } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { accentColor } from '@/data/accents';
-import { photoSource } from '@/lib/photo';
 import { colors, fonts } from '@/theme';
 import type { Restaurant } from '@/types';
 
 import { RestaurantCover } from './restaurant-card';
 import { Wordmark } from './ui';
+import { Photo } from './photo';
 
 /** Instagram Story proportions. The card is drawn at `width` and exported at 1080 × 1920. */
 export const STORY_ASPECT = 16 / 9;
@@ -39,7 +38,7 @@ export function StoryCard({
     <View ref={ref} collapsable={false} style={[styles.card, { width, height, borderRadius: 14 * u }]}>
       <View style={{ height: height * 0.66 }}>
         {photo ? (
-          <Image source={photoSource(photo)} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <Photo uri={photo} style={StyleSheet.absoluteFill} transition={0} />
         ) : (
           <RestaurantCover restaurant={restaurant} style={StyleSheet.absoluteFill} monogramSize={70 * u} />
         )}

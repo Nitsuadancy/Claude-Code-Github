@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
@@ -10,7 +9,7 @@ import type { Restaurant } from '@/types';
 import { FoundingMark, LicensedMark, VerifiedSeal } from './chef';
 import { PressableScale } from './motion';
 import { Icon } from './icon';
-import { photoSource } from '@/lib/photo';
+import { Photo } from './photo';
 
 
 /** "4.6 (128)", or "New" before the first rating. */
@@ -42,12 +41,7 @@ export function RestaurantCover({
   if (cover) {
     return (
       <View style={[style, { overflow: 'hidden' }]}>
-        <Image
-          source={photoSource(cover)}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={300}
-        />
+        <Photo uri={cover} style={StyleSheet.absoluteFill} />
       </View>
     );
   }
@@ -242,13 +236,7 @@ export function CoverGallery({
         scrollEventThrottle={64}
         accessibilityLabel={`Photo ${index + 1} of ${covers.length}`}>
         {covers.map((uri) => (
-          <Image
-            key={uri}
-            source={photoSource(uri)}
-            style={{ width, height }}
-            contentFit="cover"
-            transition={300}
-          />
+          <Photo key={uri} uri={uri} style={{ width, height }} />
         ))}
       </ScrollView>
       {fade}

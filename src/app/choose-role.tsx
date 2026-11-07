@@ -2,16 +2,15 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Eyebrow, GoldButton, Heading, type IconName, Rays, Screen } from '@/components/ui';
-import { photoSource } from '@/lib/photo';
 import { resetTo } from '@/lib/navigation';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Role } from '@/types';
 import { Icon } from '@/components/icon';
+import { Photo } from '@/components/photo';
 
 type Choice = Role | 'grower';
 
@@ -76,7 +75,7 @@ export default function ChooseRole() {
                 accessibilityLabel={`${o.title}. ${o.tagline}`}
                 onPress={() => setRole(o.role)}
                 style={[styles.card, selected && styles.cardSelected]}>
-                <Image source={photoSource(o.photo)} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <Photo uri={o.photo} style={StyleSheet.absoluteFill} />
                 <LinearGradient
                   colors={['rgba(11,11,11,0.15)', 'rgba(11,11,11,0.88)']}
                   locations={[0, 0.85]}

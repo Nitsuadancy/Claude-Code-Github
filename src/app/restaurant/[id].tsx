@@ -47,6 +47,7 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
 import { photoSource } from '@/lib/photo';
+import { Photo } from '@/components/photo';
 
 /** The hero fills most of the first screen, so a kitchen opens on its food. */
 const HERO_HEIGHT = 520;
@@ -286,7 +287,7 @@ export default function RestaurantDetail() {
                               accessibilityRole="imagebutton"
                               accessibilityLabel={`Photo of ${item.name}. Show details`}
                               onPress={() => setOpenItemId(item.id)}>
-                              <Image source={photoSource(item.photoUri)} style={styles.thumb} contentFit="cover" />
+                              <Photo uri={item.photoUri} style={styles.thumb} />
                             </Pressable>
                           ) : (
                             <View style={styles.thumbEmpty} />
