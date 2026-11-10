@@ -4,6 +4,11 @@ import { bakeDayDate, formatCutoff, openBakeDays, upcomingBakeDays } from './bak
 import { dayLabel } from './schedule';
 import { isOpenAt, nextOpening } from './hours';
 
+/** "Today" and "Tomorrow" are lowercase mid-sentence ("Bake day tomorrow"); weekday names keep their capital. */
+function midSentence(label: string): string {
+  return label === 'Today' || label === 'Tomorrow' ? label.toLowerCase() : label;
+}
+
 export function isBakeDayKitchen(r: Pick<Restaurant, 'orderMode'>): boolean {
   return r.orderMode === 'bake-days';
 }
@@ -31,7 +36,7 @@ export function takingOrders(r: Restaurant, now: Date): boolean {
 export function orderingLine(r: Restaurant, now: Date, { long = false } = {}): string {
   if (isBakeDayKitchen(r)) {
     const next = r.acceptingOrders ? openBakeDays(r, now)[0] : undefined;
-    if (next) return long ? `Bake day ${bakeDayDate(next, now)} · ${formatCutoff(next, now)}` : `Bake day ${dayLabel(next.pickupStart, now)}`;
+    if (next) return long ? `Bake day ${bakeDayDate(next, now)} · ${formatCutoff(next, now)}` : `Bake day ${midSentence(dayLabel(next.pickupStart, now))}`;
     const later = upcomingBakeDays(r, now)[0];
     if (!later) return 'No bake days coming up';
     return long ? `Orders closed · next bake day ${bakeDayDate(later, now)}` : 'Orders closed';

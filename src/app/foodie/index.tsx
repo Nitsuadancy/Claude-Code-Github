@@ -488,7 +488,6 @@ export default function FoodieHome() {
             selected={filters.minRating !== null}
             onPress={() => update({ minRating: filters.minRating === null ? 4.5 : null })}
           />
-          <Chip label="Offers" selected={filters.offersOnly} onPress={() => update({ offersOnly: !filters.offersOnly })} />
           <Chip label="New" selected={filters.newOnly} onPress={() => update({ newOnly: !filters.newOnly })} />
         </ScrollView>
       </View>

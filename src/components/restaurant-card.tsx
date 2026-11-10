@@ -102,7 +102,6 @@ export function RestaurantCard({
             {restaurant.verified ? <VerifiedSeal /> : null}
             {restaurant.founding ? <FoundingMark /> : null}
             {restaurant.licensed ? <LicensedMark /> : null}
-            {restaurant.hasOffer ? <Text style={styles.offer}>Offer</Text> : null}
           </View>
           <Text style={styles.byline} numberOfLines={1}>
             {restaurant.chefName}
@@ -189,7 +188,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.display, fontSize: 20, letterSpacing: -0.5, color: colors.ivory },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   byline: { fontFamily: fonts.medium, fontSize: 14, color: colors.textMuted },
-  offer: { marginLeft: 'auto', fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   meta: { fontFamily: fonts.body, fontSize: 13, color: colors.textFaint, flexShrink: 1 },
   metaDot: { color: colors.textFaint, fontSize: 13 },

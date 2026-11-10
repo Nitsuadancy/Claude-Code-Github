@@ -121,7 +121,7 @@ Instagram Story card. Paid features help cooks sell more or save time.
 
 - [ ] Drops and pre-order windows ("Thanksgiving pies, orders close Tuesday")
 - [ ] Followers: customers follow a kitchen and get a notification when it posts a drop
-- [ ] Discount codes and gift cards
+- [ ] Discount codes and gift cards. The "Offer" tag on kitchen cards and the Offers filter are hidden until a kitchen can say what its offer is; bring them back with this.
 - [ ] Deeper insights: repeat customers, best sellers by day, busiest pickup times
 - [ ] Custom storefront link (`manna.app/susies`), flyer and branded label templates. A basic
   Florida-compliant product label stays free.
