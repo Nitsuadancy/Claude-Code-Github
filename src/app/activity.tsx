@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
 import { FadeIn, PressableScale } from '@/components/motion';
+import { Photo } from '@/components/photo';
 import { BackButton, Heading, type IconName, Screen } from '@/components/ui';
 import { type ActivityItem, buildActivity } from '@/lib/activity';
 import { formatClock } from '@/lib/orders';
@@ -63,13 +64,17 @@ export default function Activity() {
                     : router.push({ pathname: '/order/[id]', params: { id: item.orderId } })
                 }
                 style={[styles.item, fresh && styles.fresh]}>
-                <View style={[styles.icon, item.kind === 'note' && { borderColor: colors.gold }]}>
-                  <Icon
-                    name={ICONS[item.kind]}
-                    size={20}
-                    color={item.kind === 'declined' || item.kind === 'cancelled' ? colors.danger : colors.gold}
-                  />
-                </View>
+                {item.photoUri ? (
+                  <Photo uri={item.photoUri} size="thumb" style={styles.thumb} />
+                ) : (
+                  <View style={[styles.icon, item.kind === 'note' && { borderColor: colors.gold }]}>
+                    <Icon
+                      name={ICONS[item.kind]}
+                      size={20}
+                      color={item.kind === 'declined' || item.kind === 'cancelled' ? colors.danger : colors.gold}
+                    />
+                  </View>
+                )}
                 <View style={{ flex: 1, gap: 3 }}>
                   <Text style={styles.title}>{item.title}</Text>
                   <Text
@@ -121,6 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  thumb: { width: 44, height: 44, borderRadius: radius.md },
   title: { fontFamily: fonts.display, fontSize: 15, color: colors.ivory },
   body: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, lineHeight: 18 },
   note: { fontFamily: fonts.displayItalic, fontSize: 14, color: colors.text },

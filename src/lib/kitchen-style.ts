@@ -20,11 +20,11 @@ export function instagramUrl(handle: string): string {
 }
 
 /** The update to show, or null once it's older than UPDATE_DAYS (or empty). */
-export function visibleUpdate(
-  update: { text: string; postedAt: string } | undefined,
+export function visibleUpdate<U extends { text: string; postedAt: string; photoUri?: string }>(
+  update: U | undefined,
   now: Date,
-): { text: string; postedAt: string } | null {
-  if (!update || !update.text.trim()) return null;
+): U | null {
+  if (!update || (!update.text.trim() && !update.photoUri)) return null;
   const age = now.getTime() - new Date(update.postedAt).getTime();
   return age >= 0 && age <= UPDATE_DAYS * 86_400_000 ? update : null;
 }

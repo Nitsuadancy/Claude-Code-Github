@@ -1,5 +1,7 @@
 import type { Order, OrderMessage, OrderStatus } from '@/types';
 
+import { orderUpdates } from './order-updates';
+
 export interface ActivityItem {
   id: string;
   orderId: string;
@@ -7,6 +9,8 @@ export interface ActivityItem {
   kind: OrderStatus | 'note' | 'message';
   title: string;
   body: string;
+  /** A photo from the kitchen, shown as a thumbnail. */
+  photoUri?: string;
 }
 
 const TITLES: Record<OrderStatus, (kitchen: string) => string> = {
@@ -35,16 +39,15 @@ export function buildActivity(orders: Order[], customerId: string, messages: Ord
         body: change.status === 'completed' ? 'Tap to rate your meal.' : dishes,
       });
     }
-    if (order.chefNote) {
-      const last = order.statusHistory[order.statusHistory.length - 1];
+    for (const update of orderUpdates(order)) {
       items.push({
-        id: `${order.id}:note`,
+        id: `${order.id}:update:${update.id}`,
         orderId: order.id,
-        // Notes come with or after the latest status change.
-        at: new Date(new Date(last?.at ?? order.createdAt).getTime() + 1).toISOString(),
+        at: update.at,
         kind: 'note',
-        title: `A note from ${order.restaurantName}`,
-        body: `“${order.chefNote}”`,
+        title: update.photoUri ? `A photo from ${order.restaurantName}` : `A note from ${order.restaurantName}`,
+        body: update.text ? `“${update.text}”` : 'Fresh from the kitchen.',
+        photoUri: update.photoUri,
       });
     }
   }

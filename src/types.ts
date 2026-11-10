@@ -93,6 +93,16 @@ export interface BakeDaySchedule {
 export interface KitchenUpdate {
   text: string;
   postedAt: string;
+  /** A photo from the kitchen right now: a fresh batch, the week's special. */
+  photoUri?: string;
+}
+
+/** A short update from the kitchen on one order, often with a photo of it mid-bake. */
+export interface OrderUpdate {
+  id: string;
+  text: string;
+  photoUri?: string;
+  at: string;
 }
 
 export interface InPersonSpot {
@@ -143,6 +153,8 @@ export interface Restaurant {
   skippedBakeDays?: string[];
   /** e.g. "Cooler on the porch, ring once". Shared with a customer once the kitchen accepts. */
   pickupInstructions?: string;
+  /** A photo of the door, gate or cooler where customers pick up. Private, like the address. */
+  pickupPhotoUri?: string;
   /** Typical minutes from order to ready. */
   prepMinutes: number;
   cuisine: string;
@@ -226,8 +238,10 @@ export interface Order {
   status: OrderStatus;
   /** Every status the order has been in, oldest first, with timestamps. */
   statusHistory: OrderStatusChange[];
-  /** Optional message from the kitchen to the customer. */
+  /** The kitchen's first text note, from before updates could carry photos. Shown as the first update. */
   chefNote: string;
+  /** Updates from the kitchen on this order, oldest first, often with a photo. */
+  updates?: OrderUpdate[];
   /** Optional request from the customer, e.g. allergies or "no onions". */
   customerNote: string;
   createdAt: string;
@@ -238,6 +252,8 @@ export interface Order {
   pickupBy?: string;
   /** The kitchen's pickup instructions, shared once it accepts. */
   pickupInstructions?: string;
+  /** The kitchen's photo of its pickup spot, shown once it accepts. */
+  pickupPhotoUri?: string;
   /** When the customer tapped "I'm here" at pickup. */
   arrivedAt?: string;
   /** The customer's request for help with this order, if they sent one. */

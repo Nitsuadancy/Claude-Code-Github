@@ -117,7 +117,8 @@ export default function RestaurantDetail() {
   // The cook's own touches: an accent color, a tagline, a pinned update and their Instagram.
   const accent = accentColor(restaurant.accent);
   const update = visibleUpdate(restaurant.update, now);
-  const chefFirst = restaurant.chefName.replace(/\.$/, '');
+  // Used mid-sentence, so initials keep their period ("Denise R. bakes…").
+  const chefFirst = restaurant.chefName;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -239,11 +240,23 @@ export default function RestaurantDetail() {
           {tab === 'menu' ? (
             <View>
               {update ? (
-                <View style={[styles.update, { borderLeftColor: accent }]} accessibilityRole="summary">
-                  <Text style={[styles.updateFrom, { color: accent }]}>
-                    From {chefFirst} · {relativeDay(update.postedAt, now)}
-                  </Text>
-                  <Text style={styles.updateText}>{update.text}</Text>
+                <View
+                  style={[styles.update, update.photoUri ? styles.updateWithPhoto : { borderLeftColor: accent }]}
+                  accessibilityRole="summary">
+                  {update.photoUri ? (
+                    <Photo
+                      uri={update.photoUri}
+                      size="card"
+                      style={styles.updatePhoto}
+                      accessibilityLabel={update.text ? `Photo: ${update.text}` : `Photo from ${chefFirst}’s kitchen`}
+                    />
+                  ) : null}
+                  <View style={update.photoUri ? styles.updateCaption : undefined}>
+                    <Text style={[styles.updateFrom, { color: accent }]}>
+                      {update.photoUri ? 'In the kitchen' : `From ${chefFirst}`} · {relativeDay(update.postedAt, now)}
+                    </Text>
+                    {update.text ? <Text style={styles.updateText}>{update.text}</Text> : null}
+                  </View>
                 </View>
               ) : null}
               {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
@@ -597,6 +610,10 @@ const styles = StyleSheet.create({
     gap: 4,
     marginBottom: spacing.md,
   },
+  // A photo update reads as a small card from the kitchen, without the side rule.
+  updateWithPhoto: { borderLeftWidth: 0, paddingVertical: 0, paddingHorizontal: 0, overflow: 'hidden', borderRadius: radius.lg },
+  updatePhoto: { width: '100%', aspectRatio: 16 / 10 },
+  updateCaption: { paddingHorizontal: spacing.md, paddingTop: spacing.sm + 2, paddingBottom: spacing.md, gap: 4 },
   updateFrom: { fontFamily: fonts.semibold, fontSize: 12 },
   updateText: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 21, color: colors.ivory },
   instagram: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, alignSelf: 'flex-start' },

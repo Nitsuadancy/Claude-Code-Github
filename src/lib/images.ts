@@ -39,7 +39,11 @@ async function prepare(asset: ImagePicker.ImagePickerAsset): Promise<string> {
 }
 
 /** Lets the user choose photos from their library. Any size is accepted; large photos are resized. */
-export async function pickImages(limit: number): Promise<string[]> {
+export async function pickImages(
+  limit: number,
+  /** Crop shape when picking one photo. Square by default; 4:3 suits scene photos like updates and the pickup spot. */
+  aspect: [number, number] = [1, 1],
+): Promise<string[]> {
   if (limit <= 0) return [];
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
@@ -51,7 +55,7 @@ export async function pickImages(limit: number): Promise<string[]> {
     allowsMultipleSelection: limit > 1,
     selectionLimit: limit,
     allowsEditing: limit === 1,
-    aspect: limit === 1 ? [1, 1] : undefined,
+    aspect: limit === 1 ? aspect : undefined,
     quality: 1,
   });
   if (result.canceled) return [];

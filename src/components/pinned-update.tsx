@@ -7,7 +7,8 @@ import { colors, fonts, radius, spacing } from '@/theme';
 import type { KitchenUpdate } from '@/types';
 
 import { Icon } from './icon';
-import { GoldButton, TextField } from './ui';
+import { Photo } from './photo';
+import { UpdateComposer } from './update-composer';
 
 /**
  * The cook's pinned update on their dashboard: post a short note to the top
@@ -22,40 +23,29 @@ export function PinnedUpdate({
 }: {
   update: KitchenUpdate | undefined;
   accent: string;
-  onPost: (text: string) => void;
+  onPost: (update: { text: string; photoUri?: string }) => void;
   onRemove: () => void;
 }) {
   const now = new Date();
   const live = visibleUpdate(update, now);
   const [editing, setEditing] = useState(false);
-  const [text, setText] = useState('');
 
   if (editing) {
     return (
       <View style={styles.card}>
-        <TextField
-          label={`Pinned update (${text.length}/${UPDATE_MAX})`}
+        <UpdateComposer
+          label="Pinned update"
           placeholder="Pumpkin bread is back this week."
-          multiline
+          hint={`Shows at the top of your menu for ${UPDATE_DAYS} days. A photo of today’s bake makes it stand out.`}
           maxLength={UPDATE_MAX}
-          value={text}
-          onChangeText={setText}
-          autoFocus
+          initialText={live?.text}
+          initialPhotoUri={live?.photoUri}
+          onPost={(next) => {
+            onPost(next);
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
         />
-        <Text style={styles.hint}>Shows at the top of your menu for {UPDATE_DAYS} days.</Text>
-        <View style={styles.actions}>
-          <GoldButton title="Cancel" variant="ghost" fullWidth={false} onPress={() => setEditing(false)} style={{ minWidth: 0, flex: 1 }} />
-          <GoldButton
-            title="Post"
-            fullWidth={false}
-            disabled={!text.trim()}
-            onPress={() => {
-              onPost(text.trim());
-              setEditing(false);
-            }}
-            style={{ minWidth: 0, flex: 1 }}
-          />
-        </View>
       </View>
     );
   }
@@ -66,13 +56,7 @@ export function PinnedUpdate({
         <View style={styles.header}>
           <Text style={[styles.label, { color: accent }]}>Pinned · {relativeDay(live.postedAt, now)}</Text>
           <View style={styles.links}>
-            <Pressable
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => {
-                setText(live.text);
-                setEditing(true);
-              }}>
+            <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setEditing(true)}>
               <Text style={styles.link}>Edit</Text>
             </Pressable>
             <Pressable accessibilityRole="button" hitSlop={8} onPress={onRemove}>
@@ -80,7 +64,8 @@ export function PinnedUpdate({
             </Pressable>
           </View>
         </View>
-        <Text style={styles.text}>{live.text}</Text>
+        {live.photoUri ? <Photo uri={live.photoUri} size="card" style={styles.photo} /> : null}
+        {live.text ? <Text style={styles.text}>{live.text}</Text> : null}
       </View>
     );
   }
@@ -90,7 +75,6 @@ export function PinnedUpdate({
       accessibilityRole="button"
       accessibilityLabel="Post an update to the top of your menu"
       onPress={() => {
-        setText('');
         setEditing(true);
       }}
       style={({ pressed }) => [styles.card, styles.empty, pressed && { opacity: 0.8 }]}>
@@ -107,6 +91,7 @@ export function PinnedUpdate({
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
   live: { borderLeftWidth: 3 },
+  photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: radius.md },
   empty: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { fontFamily: fonts.semibold, fontSize: 12 },

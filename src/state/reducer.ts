@@ -1,6 +1,7 @@
 import type { SharedStep } from '@/lib/launch';
 import { canCustomerCancel, isActive } from '@/lib/orders';
 import { canSendHelp, helpTopicsFor, HELP_NOTE_MAX } from '@/lib/order-extras';
+import { canPostOrderUpdate, ORDER_UPDATE_MAX } from '@/lib/order-updates';
 import { chatState, cleanMessage, isBlockedBetween, kitchenParticipantId, readKey, sideFor } from '@/lib/order-chat';
 import { isReadyToOpen } from '@/lib/setup';
 import { normalizePersisted } from '@/lib/migrate';
@@ -11,6 +12,7 @@ import type {
   Order,
   OrderIssueKind,
   OrderMessage,
+  OrderUpdate,
   OrderStatus,
   Restaurant,
   Review,
@@ -111,6 +113,7 @@ export type Action =
   | { type: 'placeOrder'; order: Order }
   | { type: 'setOrderStatus'; orderId: string; status: OrderStatus; at?: string }
   | { type: 'setOrderNote'; orderId: string; note: string }
+  | { type: 'postOrderUpdate'; orderId: string; update: OrderUpdate }
   | { type: 'cancelOrder'; orderId: string; customerId: string; at?: string }
   | { type: 'markArrived'; orderId: string; customerId: string; at?: string }
   | {
@@ -401,6 +404,21 @@ export function reducer(state: AppState, action: Action): AppState {
             : o,
         ),
       };
+
+    case 'postOrderUpdate': {
+      const update = {
+        ...action.update,
+        text: action.update.text.trim().slice(0, ORDER_UPDATE_MAX),
+      };
+      return {
+        ...state,
+        orders: state.orders.map((o) =>
+          o.id === action.orderId && canPostOrderUpdate(o, update)
+            ? { ...o, updates: [...(o.updates ?? []), update] }
+            : o,
+        ),
+      };
+    }
 
     case 'setOrderNote':
       return {

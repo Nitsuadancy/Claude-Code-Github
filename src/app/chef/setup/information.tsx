@@ -400,8 +400,29 @@ export default function RestaurantInformation() {
                 value={draft.pickupInstructions ?? ''}
                 onChangeText={(pickupInstructions) => update({ pickupInstructions })}
               />
+              {draft.pickupPhotoUri ? (
+                <View>
+                  <Photo uri={draft.pickupPhotoUri} size="card" style={styles.pickupPhoto} />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove pickup spot photo"
+                    style={[styles.remove, { top: spacing.sm, right: spacing.sm }]}
+                    onPress={() => update({ pickupPhotoUri: undefined })}>
+                    <Icon name="close" size={18} color={colors.text} />
+                  </Pressable>
+                </View>
+              ) : (
+                <UploadBox
+                  label="Add a photo of your pickup spot"
+                  onPress={async () => {
+                    const [uri] = await pickImages(1, [4, 3]);
+                    if (uri) update({ pickupPhotoUri: uri });
+                  }}
+                />
+              )}
               <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
-                Shared with the address once you accept an order.
+                Your door, gate or cooler, so customers know they’re in the right place. Shared with the address once
+                you accept an order.
               </Body>
 
               <SectionTitle>How you take orders</SectionTitle>
@@ -797,6 +818,7 @@ const styles = StyleSheet.create({
   uploadText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
   covers: { flexDirection: 'row', gap: spacing.lg, paddingTop: spacing.sm },
   cover: { width: 88, height: 88, borderRadius: radius.sm },
+  pickupPhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: radius.md },
   remove: {
     position: 'absolute',
     top: -12,

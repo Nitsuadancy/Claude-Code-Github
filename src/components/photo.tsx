@@ -16,12 +16,15 @@ export function Photo({
   style,
   contentFit = 'cover',
   priority,
+  accessibilityLabel,
 }: {
   uri: string;
   size: PhotoSize;
   style?: StyleProp<ImageStyle>;
   contentFit?: ImageContentFit;
   priority?: 'low' | 'normal' | 'high';
+  /** Describe photos that carry meaning (an oven update, the pickup spot); decorative ones stay silent. */
+  accessibilityLabel?: string;
 }) {
   return (
     <Image
@@ -31,6 +34,8 @@ export function Photo({
       transition={0}
       priority={priority}
       recyclingKey={uri}
+      accessible={!!accessibilityLabel}
+      accessibilityLabel={accessibilityLabel}
     />
   );
 }

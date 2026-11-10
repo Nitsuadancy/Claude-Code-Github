@@ -9,19 +9,19 @@ import { MessageButton } from '@/components/message-button';
 import { OrderCard } from '@/components/order-card';
 import { BakeDayCard } from '@/components/bake-day-card';
 import { FirstOrders } from '@/components/first-orders';
+import { Photo } from '@/components/photo';
 import { PinnedUpdate } from '@/components/pinned-update';
 import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { TodayMenu } from '@/components/today-menu';
+import { UpdateComposer } from '@/components/update-composer';
 import { RatingSummary, ReviewCard } from '@/components/reviews';
 import {
   Body,
   Eyebrow,
-  GoldButton,
   Heading,
   type IconName,
   Screen,
   SectionHeader,
-  TextField,
   Toggle,
 } from '@/components/ui';
 import { accentColor } from '@/data/accents';
@@ -33,13 +33,15 @@ import { formatTime, hoursOn, isOpenAt, nextOpening, WEEKDAYS } from '@/lib/hour
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { chatState } from '@/lib/order-chat';
+import { canPostOrderUpdate, ORDER_UPDATE_MAX, orderUpdates } from '@/lib/order-updates';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { shareKitchen } from '@/lib/share';
+import { newId } from '@/lib/validation';
 import { NEXT_STATUSES, storedKitchen } from '@/state/reducer';
 import { useMyRestaurant, useReviews, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
-import type { Restaurant } from '@/types';
+import type { Order, Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
 import { EmptyArtwork } from '@/components/empty-state';
 
@@ -192,7 +194,7 @@ export default function ChefDashboard() {
         <PinnedUpdate
           update={restaurant.update}
           accent={accentColor(restaurant.accent)}
-          onPost={(text) => saveKitchen({ update: { text, postedAt: new Date().toISOString() } })}
+          onPost={({ text, photoUri }) => saveKitchen({ update: { text, photoUri, postedAt: new Date().toISOString() } })}
           onRemove={() => saveKitchen({ update: undefined })}
         />
 
@@ -270,10 +272,18 @@ export default function ChefDashboard() {
                 onPress={() => router.push({ pathname: '/chat/[orderId]', params: { orderId: order.id } })}
               />
             ) : null}
-            <NoteEditor
-              note={order.chefNote}
-              onSave={(note) => dispatch({ type: 'setOrderNote', orderId: order.id, note })}
-            />
+            {order.status === 'placed' ? null : (
+              <OrderUpdates
+                order={order}
+                onPost={(update) =>
+                  dispatch({
+                    type: 'postOrderUpdate',
+                    orderId: order.id,
+                    update: { id: newId('upd'), at: new Date().toISOString(), ...update },
+                  })
+                }
+              />
+            )}
           </OrderCard>
         ))}
 
@@ -362,48 +372,51 @@ export default function ChefDashboard() {
   );
 }
 
-/** Lets the chef send a short personal note that shows on the customer's tracking screen. */
-function NoteEditor({ note, onSave }: { note: string; onSave: (note: string) => void }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(note);
-  if (!editing) {
+/**
+ * Oven updates for one order: a line and a photo that show on the customer's
+ * order screen ("Rolls are proofing", a tray fresh out of the oven).
+ */
+function OrderUpdates({ order, onPost }: { order: Order; onPost: (update: { text: string; photoUri?: string }) => void }) {
+  const [composing, setComposing] = useState(false);
+  const sent = orderUpdates(order);
+  const latest = sent[sent.length - 1];
+  const canPost = canPostOrderUpdate(order, { text: 'x' });
+
+  if (composing) {
     return (
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => {
-          setDraft(note);
-          setEditing(true);
+      <UpdateComposer
+        label="Update for the customer"
+        placeholder="Pulling it out of the oven now!"
+        hint="They see it on their order, with the photo."
+        maxLength={ORDER_UPDATE_MAX}
+        postTitle="Send update"
+        onPost={(update) => {
+          onPost(update);
+          setComposing(false);
         }}
-        style={styles.noteRow}>
-        <Icon name="message-text-outline" size={16} color={colors.gold} />
-        <Text style={[styles.noteText, !note && { color: colors.gold }]} numberOfLines={2}>
-          {note ? `“${note}”` : 'Add a note for the customer'}
-        </Text>
-      </Pressable>
+        onCancel={() => setComposing(false)}
+      />
     );
   }
   return (
     <View style={{ gap: spacing.sm }}>
-      <TextField
-        placeholder="Pulling it out of the oven now!"
-        value={draft}
-        onChangeText={setDraft}
-        maxLength={280}
-        autoFocus
-        accessibilityLabel="Note for the customer"
-      />
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <GoldButton title="Cancel" variant="ghost" fullWidth={false} onPress={() => setEditing(false)} style={{ minWidth: 0, flex: 1 }} />
-        <GoldButton
-          title="Send note"
-          fullWidth={false}
-          onPress={() => {
-            onSave(draft);
-            setEditing(false);
-          }}
-          style={{ minWidth: 0, flex: 1 }}
-        />
-      </View>
+      {latest ? (
+        <View style={styles.sentUpdate}>
+          {latest.photoUri ? <Photo uri={latest.photoUri} size="thumb" style={styles.sentThumb} /> : null}
+          <Text style={styles.noteText} numberOfLines={2}>
+            {latest.text ? `“${latest.text}”` : 'Photo sent'}
+            {sent.length > 1 ? <Text style={styles.sentCount}>{`  ·  ${sent.length} updates sent`}</Text> : null}
+          </Text>
+        </View>
+      ) : null}
+      {canPost ? (
+        <Pressable accessibilityRole="button" onPress={() => setComposing(true)} style={styles.noteRow}>
+          <Icon name="camera-plus-outline" size={16} color={colors.gold} />
+          <Text style={[styles.noteText, { color: colors.gold }]}>
+            {sent.length ? 'Send another update' : 'Send an oven update'}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -546,5 +559,8 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   noteText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.text },
+  sentUpdate: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  sentThumb: { width: 40, height: 40, borderRadius: radius.sm },
+  sentCount: { fontFamily: fonts.body, color: colors.textMuted },
   linkText: { flex: 1, fontFamily: fonts.medium, fontSize: 15, color: colors.text },
 });

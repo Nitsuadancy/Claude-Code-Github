@@ -4,11 +4,12 @@ import { type ComponentRef, useCallback, useEffect, useRef, useState } from 'rea
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
-import { ChefAvatar } from '@/components/chef';
 import { Pulse } from '@/components/motion';
 import { OrderCelebration } from '@/components/order-celebration';
+import { KitchenUpdates } from '@/components/kitchen-updates';
 import { MessageButton } from '@/components/message-button';
 import { OrderHelpSheet } from '@/components/order-help-sheet';
+import { PickupSpot } from '@/components/pickup-spot';
 import { RateOrderSheet, Stars } from '@/components/reviews';
 import { Ticket } from '@/components/ticket';
 import {
@@ -40,6 +41,7 @@ import {
   pickupStatusLine,
 } from '@/lib/orders';
 import { chatState } from '@/lib/order-chat';
+import { orderUpdates } from '@/lib/order-updates';
 import { directionsUrl, helpTopicsFor, pickupEvent } from '@/lib/order-extras';
 import { publicName } from '@/lib/reviews';
 import { formatPickup } from '@/lib/schedule';
@@ -204,15 +206,11 @@ export default function OrderTracking() {
           </View>
         ) : null}
 
-        {order.chefNote ? (
-          <View style={styles.note}>
-            <ChefAvatar name={chefName} photoUri={restaurant?.chefPhotoUri} size={44} />
-            <View style={{ flex: 1, gap: 4 }}>
-              <Eyebrow>A note from {chefName}</Eyebrow>
-              <Text style={styles.noteText}>“{order.chefNote}”</Text>
-            </View>
-          </View>
+        {isActive(order.status) && addressShared && order.pickupPhotoUri ? (
+          <PickupSpot photoUri={order.pickupPhotoUri} address={order.pickupAddress} instructions={order.pickupInstructions} />
         ) : null}
+
+        <KitchenUpdates updates={orderUpdates(order)} chefName={chefName} chefPhotoUri={restaurant?.chefPhotoUri} />
 
         <View ref={receipt} collapsable={false} style={styles.receipt}>
           <Ticket
@@ -444,15 +442,6 @@ const styles = StyleSheet.create({
   stepText: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 1 },
   stepLabel: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
   stepTime: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
-  note: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    backgroundColor: colors.goldTint,
-  },
   rateCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -466,7 +455,6 @@ const styles = StyleSheet.create({
   rateTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ivory },
   thanks: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   thanksText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
-  noteText: { fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 26, color: colors.ivory },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   line1: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
   fee: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },

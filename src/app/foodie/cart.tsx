@@ -124,6 +124,7 @@ export default function Cart() {
         totalCents: grandTotal,
         pickupAddress: [restaurant.address, restaurant.city].filter(Boolean).join(', '),
         ...(restaurant.pickupInstructions?.trim() ? { pickupInstructions: restaurant.pickupInstructions.trim() } : {}),
+        ...(restaurant.pickupPhotoUri ? { pickupPhotoUri: restaurant.pickupPhotoUri } : {}),
         status: 'placed',
         statusHistory: [{ status: 'placed', at: createdAt }],
         chefNote: '',
