@@ -1,7 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { visibleUpdate } from '@/lib/kitchen-style';
 import { canPostOrderUpdate, ORDER_UPDATE_MAX, ORDER_UPDATES_MAX, orderUpdates } from '@/lib/order-updates';
+import { canOrderFrom, tasteFeed } from '@/lib/taste';
 import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
 import type { Order } from '@/types';
 
@@ -65,5 +67,35 @@ describe('oven updates', () => {
     const now = new Date(at(16));
     expect(visibleUpdate({ text: '', postedAt: at(12), photoUri: 'demo:brownies' }, now)).not.toBeNull();
     expect(visibleUpdate({ text: ' ', postedAt: at(12) }, now)).toBeNull();
+  });
+});
+
+describe('taste feed', () => {
+  // A Saturday morning in Orlando, when the demo kitchens are open or taking bake-day orders.
+  const now = new Date('2026-11-07T10:40:00-05:00');
+
+  it('only shows dishes with photos from kitchens you can order from, signature first', () => {
+    const feed = tasteFeed(SAMPLE_RESTAURANTS, now);
+    expect(feed.length).toBeGreaterThan(5);
+    expect(feed.every((d) => d.item.photoUri && d.item.available && canOrderFrom(d.restaurant, now))).toBe(true);
+    const firstPerKitchen = new Map<string, string>();
+    for (const d of feed) if (!firstPerKitchen.has(d.restaurant.id)) firstPerKitchen.set(d.restaurant.id, d.item.id);
+    for (const [id, itemId] of firstPerKitchen) {
+      const r = SAMPLE_RESTAURANTS.find((k) => k.id === id)!;
+      const signature = r.menu.find((m) => m.id === r.signatureItemId);
+      if (signature?.photoUri && signature.available) expect(itemId).toBe(signature.id);
+    }
+  });
+
+  it('takes turns between kitchens instead of grouping one cook', () => {
+    const feed = tasteFeed(SAMPLE_RESTAURANTS, now);
+    const kitchens = new Set(feed.map((d) => d.restaurant.id)).size;
+    const opening = feed.slice(0, kitchens).map((d) => d.restaurant.id);
+    expect(new Set(opening).size).toBe(kitchens);
+  });
+
+  it('skips kitchens that paused orders', () => {
+    const paused = SAMPLE_RESTAURANTS.map((r) => ({ ...r, acceptingOrders: false }));
+    expect(tasteFeed(paused, now)).toEqual([]);
   });
 });

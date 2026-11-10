@@ -193,4 +193,60 @@ const styles = StyleSheet.create({
   dishName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   dishKitchen: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted },
   dishPrice: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
+  taste: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingRight: spacing.md,
+    paddingLeft: spacing.md + 4,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  tasteStack: { width: 44 + 26 * 2, height: 58 },
+  tasteThumb: {
+    position: 'absolute',
+    top: 2,
+    width: 44,
+    height: 54,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.surface,
+  },
+  tasteTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
+  tasteBody: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
 });
+
+/**
+ * The way into Taste from home: a few of today's dishes fanned out, and how
+ * many are ready to order.
+ */
+export function TasteEntry({ photos, count, onPress }: { photos: string[]; count: number; onPress: () => void }) {
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`Swipe through ${count} dishes you can order`}
+      onPress={onPress}
+      style={styles.taste}>
+      <View style={styles.tasteStack}>
+        {photos.slice(0, 3).map((uri, i) => (
+          <Photo
+            key={uri + i}
+            uri={uri}
+            size="thumb"
+            style={[styles.tasteThumb, { left: i * 26, zIndex: 3 - i, transform: [{ rotate: `${(i - 1) * 6}deg` }] }]}
+          />
+        ))}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.tasteTitle}>Swipe through today’s food</Text>
+        <Text style={styles.tasteBody}>
+          {count} {count === 1 ? 'dish' : 'dishes'} you can order, one at a time
+        </Text>
+      </View>
+      <Icon name="chevron-right" size={20} color={colors.gold} />
+    </PressableScale>
+  );
+}

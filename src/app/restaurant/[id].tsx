@@ -43,6 +43,7 @@ import { relativeDay } from '@/lib/reviews';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { shareKitchen } from '@/lib/share';
 import { useDietProfile, useRestaurant, useReviews, useStore } from '@/state/store';
+import { useAddToCart } from '@/state/use-add-to-cart';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem } from '@/types';
 import { Icon } from '@/components/icon';
@@ -64,6 +65,7 @@ export default function RestaurantDetail() {
   const [scrollY] = useState(() => new Animated.Value(0));
   const reviews = useReviews(id);
   const diet = useDietProfile();
+  const cart = useAddToCart();
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -91,28 +93,7 @@ export default function RestaurantDetail() {
 
   const openItem = restaurant.menu.find((m) => m.id === openItemId) ?? null;
 
-  const add = (item: MenuItem) => {
-    const left = remaining(item);
-    if (left !== null && qty(item.id) >= left) {
-      haptics.warning();
-      return;
-    }
-    const doAdd = () => {
-      haptics.tap();
-      dispatch({ type: 'addToCart', restaurantId: restaurant.id, itemId: item.id, max: left });
-    };
-    if (state.cart.restaurantId && !inThisCart && state.cart.lines.length) {
-      confirmAction(
-        'Start a new cart?',
-        'Your cart has food from another kitchen. Orders come from one kitchen at a time.',
-        'Start new cart',
-        doAdd,
-        'Keep cart',
-      );
-      return;
-    }
-    doAdd();
-  };
+  const add = (item: MenuItem) => cart.add(restaurant, item, now);
 
   // The cook's own touches: an accent color, a tagline, a pinned update and their Instagram.
   const accent = accentColor(restaurant.accent);

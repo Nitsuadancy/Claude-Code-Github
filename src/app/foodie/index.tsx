@@ -14,7 +14,7 @@ import {
 
 import { CoachMarks } from '@/components/coach-marks';
 import { CollectionCard } from '@/components/collection-card';
-import { DishResult, ForYouCard, MiniKitchenCard, OrderAgainCard } from '@/components/home-rows';
+import { DishResult, ForYouCard, MiniKitchenCard, OrderAgainCard, TasteEntry } from '@/components/home-rows';
 import { FadeIn } from '@/components/motion';
 import { OptionSheet } from '@/components/option-sheet';
 import { HeroCarousel } from '@/components/hero-carousel';
@@ -48,6 +48,7 @@ import {
 import * as haptics from '@/lib/haptics';
 import { orderingLine } from '@/lib/ordering';
 import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
+import { tasteFeed } from '@/lib/taste';
 import { useAllRestaurants, useDietProfile, useStore, useVisibleMessages } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
@@ -167,6 +168,8 @@ export default function FoodieHome() {
     [restaurants],
   );
   const dishMatches = useMemo(() => searchDishes(restaurants, filters.query), [restaurants, filters.query]);
+  // Recomputed each render with the current time, like the rest of home; it's a short list.
+  const tasteDishes = tasteFeed(restaurants, now);
   const byId = (id: string) => restaurants.find((r) => r.id === id);
   // Past orders whose kitchen is still on Manna.
   const againCards = againOrders.flatMap((order) => {
@@ -350,6 +353,16 @@ export default function FoodieHome() {
             );
           })}
         </ScrollView>
+      ) : null}
+
+      {!searching && tasteDishes.length ? (
+        <FadeIn delay={60}>
+          <TasteEntry
+            photos={tasteDishes.map((d) => d.item.photoUri!)}
+            count={tasteDishes.length}
+            onPress={() => router.push('/taste')}
+          />
+        </FadeIn>
       ) : null}
 
       {searching && dishMatches.length ? (
