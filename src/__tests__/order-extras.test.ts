@@ -8,7 +8,7 @@ import {
   HELP_NOTE_MAX,
   pickupEvent,
 } from '@/lib/order-extras';
-import { orderNumber } from '@/lib/orders';
+import { orderNumber, pickupStatusLine } from '@/lib/orders';
 import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
 import type { Order } from '@/types';
 
@@ -115,5 +115,15 @@ describe('help with an order', () => {
     const before = s.orders[0].issue;
     s = reducer(s, { type: 'reportOrderIssue', orderId: 'o1', customerId: 'c1', kind: 'quality', note: 'again' });
     expect(s.orders[0].issue).toBe(before);
+  });
+});
+
+describe('the line under an active order', () => {
+  it('estimates until the order is ready, then says when to pick up by', () => {
+    const cooking = order({ status: 'preparing', estimatedReadyAt: '2026-11-06T15:30:00.000Z' });
+    expect(pickupStatusLine(cooking)).toMatch(/^Estimated ready by /);
+    const ready = order({ status: 'ready', statusHistory: [{ status: 'ready', at: '2026-11-06T15:20:00.000Z' }] });
+    expect(pickupStatusLine(ready)).toMatch(/^Ready now · pick up by /);
+    expect(pickupStatusLine(order({ status: 'ready', statusHistory: [] }))).toBe('Ready now');
   });
 });

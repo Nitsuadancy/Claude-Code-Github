@@ -8,6 +8,7 @@ import { BackButton, Body, GoldButton, GoldRule, Heading, Screen, TextField } fr
 import { LAUNCH_CITY } from '@/data/neighborhoods';
 import * as haptics from '@/lib/haptics';
 import { isValidContact, newId } from '@/lib/validation';
+import { useFieldErrors } from '@/lib/use-field-errors';
 import { useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
 
@@ -27,11 +28,11 @@ export default function GrowWaitlist() {
   const [offering, setOffering] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [contact, setContact] = useState('');
-  const [errors, setErrors] = useState<Partial<Record<'businessName' | 'offering' | 'contact', string>>>({});
+  const { errors, setErrors, clear } = useFieldErrors<'businessName' | 'offering' | 'contact'>();
   const joined = state.growerApplication;
 
   const submit = () => {
-    const next: typeof errors = {};
+    const next: Partial<Record<'businessName' | 'offering' | 'contact', string>> = {};
     if (!businessName.trim()) next.businessName = 'Add your farm or business name.';
     if (!offering.trim()) next.offering = 'Tell us what you grow or make.';
     if (!isValidContact(contact)) next.contact = 'Enter a mobile number or email.';
@@ -103,7 +104,10 @@ export default function GrowWaitlist() {
               placeholder="Lake Ivanhoe Honey"
               icon="storefront-outline"
               value={businessName}
-              onChangeText={setBusinessName}
+              onChangeText={(t) => {
+                setBusinessName(t);
+                clear('businessName');
+              }}
               error={errors.businessName}
             />
             <TextField
@@ -112,7 +116,10 @@ export default function GrowWaitlist() {
               multiline
               maxLength={280}
               value={offering}
-              onChangeText={setOffering}
+              onChangeText={(t) => {
+                setOffering(t);
+                clear('offering');
+              }}
               error={errors.offering}
             />
             <TextField
@@ -129,7 +136,10 @@ export default function GrowWaitlist() {
               autoCapitalize="none"
               keyboardType="email-address"
               value={contact}
-              onChangeText={setContact}
+              onChangeText={(t) => {
+                setContact(t);
+                clear('contact');
+              }}
               error={errors.contact}
             />
           </View>

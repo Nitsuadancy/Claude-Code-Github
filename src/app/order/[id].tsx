@@ -37,6 +37,7 @@ import {
   ORDER_PROGRESS,
   ORDER_STATUS_LABEL,
   PICKUP_WITHIN_HOURS,
+  pickupStatusLine,
 } from '@/lib/orders';
 import { chatState } from '@/lib/order-chat';
 import { directionsUrl, helpTopicsFor, pickupEvent } from '@/lib/order-extras';
@@ -119,7 +120,7 @@ export default function OrderTracking() {
               <Text style={styles.etaText}>
                 {order.scheduledFor
                   ? formatPickup(order.scheduledFor, order.pickupBy, new Date())
-                  : `Estimated ready by ${formatClock(order.estimatedReadyAt)}`}
+                  : pickupStatusLine(order)}
               </Text>
             </View>
           ) : null}
@@ -167,6 +168,22 @@ export default function OrderTracking() {
             </Body>
           </Card>
         )}
+
+        {order.customerId === state.user?.id && canSayArrived(order, new Date()) ? (
+          <GoldButton
+            title="I’m here"
+            icon="map-marker-outline"
+            onPress={() => {
+              haptics.success();
+              dispatch({ type: 'markArrived', orderId: order.id, customerId: order.customerId });
+            }}
+          />
+        ) : null}
+        {order.arrivedAt && isActive(order.status) ? (
+          <Body muted style={{ textAlign: 'center' }}>
+            {chefName} knows you’re here. Hang tight.
+          </Body>
+        ) : null}
 
         {order.status === 'completed' && !myReview && order.customerId === state.user?.id ? (
           <Pressable
@@ -265,22 +282,6 @@ export default function OrderTracking() {
             label={chat === 'open' ? `Message ${chefName}` : 'View messages'}
             onPress={openChat}
           />
-        ) : null}
-
-        {order.customerId === state.user?.id && canSayArrived(order, new Date()) ? (
-          <GoldButton
-            title="I’m here"
-            icon="map-marker-outline"
-            onPress={() => {
-              haptics.success();
-              dispatch({ type: 'markArrived', orderId: order.id, customerId: order.customerId });
-            }}
-          />
-        ) : null}
-        {order.arrivedAt && isActive(order.status) ? (
-          <Body muted style={{ textAlign: 'center' }}>
-            {chefName} knows you’re here. Hang tight.
-          </Body>
         ) : null}
 
         {canCustomerCancel(order.status) && order.customerId === state.user?.id ? (

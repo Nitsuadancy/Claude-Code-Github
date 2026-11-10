@@ -43,6 +43,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl, gap: spacing.md },
   eyebrow: { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
-  title: { fontSize: 30, color: colors.ivory, textAlign: 'center', fontWeight: '600', fontFamily: 'serif' },
+  title: { fontSize: 30, lineHeight: 36, letterSpacing: -0.5, color: colors.ivory, textAlign: 'center', fontWeight: '600' },
   body: { fontSize: 15, lineHeight: 22, color: colors.textMuted, textAlign: 'center' },
 });

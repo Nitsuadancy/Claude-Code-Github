@@ -109,7 +109,8 @@ export function RestaurantCard({
             {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
           </Text>
           <View style={styles.metaRow}>
-            <Text style={[styles.meta, open && { color: colors.success }]} numberOfLines={1}>
+            {/* When to order is the useful part, so it never truncates; the cuisine gives way on narrow phones. */}
+            <Text style={[styles.meta, styles.noShrink, open && { color: colors.success }]} numberOfLines={1}>
               {orderingLine(restaurant, now)}
             </Text>
             <Text style={styles.metaDot}>·</Text>

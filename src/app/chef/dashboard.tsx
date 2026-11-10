@@ -255,7 +255,7 @@ export default function ChefDashboard() {
                       decline ? styles.decline : styles.primaryAction,
                       pressed && { opacity: 0.8 },
                     ]}>
-                    <Text style={[styles.actionText, { color: decline ? colors.danger : colors.onGold }]}>
+                    <Text style={[styles.actionText, { color: decline ? colors.danger : colors.bg }]}>
                       {KITCHEN_ACTION_LABEL[status]}
                     </Text>
                   </Pressable>
@@ -353,7 +353,7 @@ export default function ChefDashboard() {
           <>
             <SectionHeader title="Past orders" />
             {past.map((order) => (
-              <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'} />
+              <OrderCard compact key={order.id} order={order} title={order.customerName || 'Customer'} />
             ))}
           </>
         ) : null}
@@ -513,16 +513,18 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   pickup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap' },
+  // Same shapes as the app's main buttons: an ivory pill to move the order on, an outline to decline.
+  actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
   action: {
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
-    minHeight: 44,
+    minHeight: 46,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryAction: { backgroundColor: colors.gold },
-  decline: { borderWidth: 1, borderColor: colors.danger },
-  actionText: { fontFamily: fonts.semibold, fontSize: 14, letterSpacing: 0.3 },
+  primaryAction: { flex: 2, backgroundColor: colors.ivory },
+  decline: { flex: 1, borderWidth: 1, borderColor: colors.borderStrong },
+  actionText: { fontFamily: fonts.semibold, fontSize: 15 },
   list: {
     borderWidth: 1,
     borderColor: colors.border,

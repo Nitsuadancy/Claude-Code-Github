@@ -12,6 +12,14 @@ import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
 
+const STEPS_TO_CHECK = SETUP_STEPS.filter((s) => s.key !== 'preview');
+const STEP_ROUTE = {
+  information: '/chef/setup/information',
+  documents: '/chef/setup/documents',
+  menu: '/chef/setup/menu',
+  preview: '/chef/setup/preview',
+} as const;
+
 export default function Preview() {
   const { dispatch } = useStore();
   const restaurant = useMyRestaurant();
@@ -26,6 +34,12 @@ export default function Preview() {
     );
   }
 
+  // What still stands between this cook and opening, in plain words.
+  const unfinished = STEPS_TO_CHECK.filter((s) => !done[s.key]).map((s) => s.title);
+  const remaining = unfinished.length
+    ? `Finish ${unfinished.join(' and ')} to open your kitchen.`
+    : 'Tick the box about food laws to open your kitchen.';
+
   const publish = () => {
     dispatch({ type: 'publishRestaurant', restaurantId: restaurant.id });
     resetTo('/chef/dashboard');
@@ -38,7 +52,10 @@ export default function Preview() {
         restaurant.status === 'live' ? (
           <GoldButton title="Go to dashboard" chevron onPress={() => resetTo('/chef/dashboard')} />
         ) : (
-          <GoldButton title="Open my kitchen" chevron disabled={!ready} onPress={publish} />
+          <View style={{ gap: spacing.sm }}>
+            {ready ? null : <Text style={styles.remaining}>{remaining}</Text>}
+            <GoldButton title="Open my kitchen" chevron disabled={!ready} onPress={publish} />
+          </View>
         )
       }>
       <SectionTitle style={{ marginTop: 0 }}>How customers will see you</SectionTitle>
@@ -59,15 +76,27 @@ export default function Preview() {
       />
 
       <SectionTitle>Checklist</SectionTitle>
-      {SETUP_STEPS.filter((s) => s.key !== 'preview').map((s) => (
-        <View key={s.key} style={styles.check}>
+      {STEPS_TO_CHECK.map((s) => (
+        <Pressable
+          key={s.key}
+          accessibilityRole="button"
+          accessibilityLabel={done[s.key] ? `${s.title}, done` : `${s.title}, not finished. Tap to finish`}
+          disabled={done[s.key]}
+          onPress={() => router.push(STEP_ROUTE[s.key])}
+          style={({ pressed }) => [styles.check, pressed && { opacity: 0.7 }]}>
           <Icon
             name={done[s.key] ? 'check-circle' : 'alert-circle-outline'}
             size={24}
-            color={done[s.key] ? colors.success : colors.danger}
+            color={done[s.key] ? colors.gold : colors.danger}
           />
-          <Text style={styles.checkText}>{s.title}</Text>
-        </View>
+          <Text style={[styles.checkText, { flex: 1 }]}>{s.title}</Text>
+          {done[s.key] ? null : (
+            <>
+              <Text style={styles.finish}>Finish</Text>
+              <Icon name="chevron-right" size={18} color={colors.gold} />
+            </>
+          )}
+        </Pressable>
       ))}
       <Pressable
         accessibilityRole="checkbox"
@@ -82,7 +111,7 @@ export default function Preview() {
         <Icon
           name={restaurant.lawAttestedAt ? 'check-circle' : 'checkbox-blank-circle-outline'}
           size={24}
-          color={restaurant.lawAttestedAt ? colors.success : colors.textMuted}
+          color={restaurant.lawAttestedAt ? colors.gold : colors.textMuted}
         />
         <Text style={[styles.checkText, { flex: 1, fontSize: 15, lineHeight: 21 }]}>{LAW_ATTESTATION}</Text>
       </Pressable>
@@ -108,7 +137,7 @@ export default function Preview() {
           <Icon
             name={tip.done ? 'check-circle' : 'star-four-points-outline'}
             size={22}
-            color={tip.done ? colors.success : colors.gold}
+            color={tip.done ? colors.gold : colors.textMuted}
           />
           <Text style={[styles.checkText, { flex: 1 }]}>{tip.label}</Text>
           {!tip.done ? <Text style={styles.optional}>Recommended</Text> : null}
@@ -134,5 +163,7 @@ const styles = StyleSheet.create({
   attest: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingVertical: spacing.sm },
   check: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 36 },
   checkText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
+  finish: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold },
+  remaining: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textMuted, textAlign: 'center' },
   optional: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textMuted },
 });

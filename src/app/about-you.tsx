@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { BackButton, Body, GoldButton, Heading, Screen, TextField } from '@/components/ui';
 import { resetTo } from '@/lib/navigation';
 import { formatE164UsPhone, isValidEmail } from '@/lib/validation';
+import { useFieldErrors } from '@/lib/use-field-errors';
 import { useStore } from '@/state/store';
 import { spacing } from '@/theme';
 
@@ -13,10 +14,10 @@ export default function AboutYou() {
   const cook = (user?.role ?? state.pendingRole) === 'chef';
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const { errors, setErrors, clear } = useFieldErrors<'name' | 'email'>();
 
   const save = () => {
-    const next: typeof errors = {};
+    const next: { name?: string; email?: string } = {};
     if (!name.trim()) next.name = 'Please enter your name.';
     if (!isValidEmail(email)) next.email = 'Please enter a valid email.';
     setErrors(next);
@@ -50,8 +51,13 @@ export default function AboutYou() {
               icon="account-outline"
               textContentType="name"
               autoComplete="name"
+              autoCapitalize="words"
+              returnKeyType="next"
               value={name}
-              onChangeText={setName}
+              onChangeText={(t) => {
+                setName(t);
+                clear('name');
+              }}
               error={errors.name}
             />
             <TextField
@@ -62,8 +68,14 @@ export default function AboutYou() {
               autoCapitalize="none"
               textContentType="emailAddress"
               autoComplete="email"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={save}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(t) => {
+                setEmail(t);
+                clear('email');
+              }}
               error={errors.email}
             />
             <TextField

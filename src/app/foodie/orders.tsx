@@ -41,7 +41,7 @@ export default function Orders() {
             accessibilityHint="Opens live tracking"
             onPress={() => router.push({ pathname: '/order/[id]', params: { id: item.id } })}
             style={({ pressed }) => pressed && { opacity: 0.85 }}>
-            <OrderCard order={item} title={item.restaurantName}>
+            <OrderCard compact order={item} title={item.restaurantName}>
               <UnreadMessagesLine orderId={item.id} />
               {item.status === 'completed' && !reviewed.has(item.id) ? (
                 <View style={styles.rate}>

@@ -1,4 +1,4 @@
-import type { OrderStatus } from '@/types';
+import type { Order, OrderStatus } from '@/types';
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   placed: 'Waiting for the kitchen',
@@ -43,6 +43,21 @@ export function canSayArrived(
 export const NO_SHOW_GRACE_MINUTES = 30;
 /** On-demand orders should be picked up within this long of being ready. */
 export const PICKUP_WITHIN_HOURS = 2;
+
+/**
+ * The line under an active order's headline. A ready order says when to
+ * pick it up by, instead of still estimating when it will be ready.
+ */
+export function pickupStatusLine(
+  order: Pick<Order, 'status' | 'statusHistory' | 'estimatedReadyAt' | 'pickupBy'>,
+): string {
+  if (order.status !== 'ready') return `Estimated ready by ${formatClock(order.estimatedReadyAt)}`;
+  const readyAt = [...order.statusHistory].reverse().find((h) => h.status === 'ready')?.at;
+  const by =
+    order.pickupBy ??
+    (readyAt ? new Date(new Date(readyAt).getTime() + PICKUP_WITHIN_HOURS * 3_600_000).toISOString() : null);
+  return by ? `Ready now · pick up by ${formatClock(by)}` : 'Ready now';
+}
 
 /** Customers can cancel only while the kitchen hasn't said yes yet. */
 export function canCustomerCancel(status: OrderStatus): boolean {

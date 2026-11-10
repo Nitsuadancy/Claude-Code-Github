@@ -15,6 +15,7 @@ import {
 import { BakeDaysEditor } from '@/components/bake-days-editor';
 import { ChefAvatar } from '@/components/chef';
 import { OptionSheet } from '@/components/option-sheet';
+import { Photo } from '@/components/photo';
 import { RestaurantCard } from '@/components/restaurant-card';
 import { TwoStepHeader } from '@/components/two-step-header';
 import {
@@ -35,11 +36,13 @@ import { CATEGORIES, CUISINES } from '@/data/categories';
 import { DEFAULT_STATE, isOpenState, neighborhoodsFor, STATE_RULES, stateName, US_STATES } from '@/data/regions';
 import { capitalize, formatTime, hoursOn, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
 import { pickImages } from '@/lib/images';
+import { photoSource } from '@/lib/photo';
 import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
 import { digitsOnly, isValidZip } from '@/lib/validation';
+import { useFieldErrors } from '@/lib/use-field-errors';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
-import type { CategoryId, Weekday } from '@/types';
+import type { CategoryId, Restaurant, Weekday } from '@/types';
 import { Icon } from '@/components/icon';
 
 type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null | 'neighborhood' | 'state';
@@ -51,18 +54,43 @@ const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
 
 const BIO_MAX = 280;
 const OPEN_STATE_NAMES = Object.keys(STATE_RULES).map(stateName).join(', ');
-type Errors = Partial<Record<'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours', string>>;
+type ErrorKey = 'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours';
+type Errors = Partial<Record<ErrorKey, string>>;
+
+/** Which error message each kitchen field can clear when it's edited. */
+const ERROR_FOR_FIELD: Partial<Record<keyof Restaurant, ErrorKey>> = {
+  name: 'name',
+  instagram: 'instagram',
+  cuisine: 'cuisine',
+  neighborhood: 'neighborhood',
+  state: 'neighborhood',
+  address: 'address',
+  city: 'city',
+  areaCode: 'areaCode',
+  workingDays: 'days',
+  bakeDays: 'days',
+  orderMode: 'days',
+  openTime: 'hours',
+  closeTime: 'hours',
+  dayHours: 'hours',
+};
 
 const TIME_OPTIONS = TIME_SLOTS.map((t) => ({ value: t, label: formatTime(t) }));
 
 export default function RestaurantInformation() {
-  const { draft, update, save } = useRestaurantDraft();
+  const { draft, update: updateDraft, save } = useRestaurantDraft();
   const [step, setStep] = useState<1 | 2>(1);
   const [sheet, setSheet] = useState<Sheet>(null);
   // Which day's opening or closing time is being picked, for days with their own hours.
   const [dayPick, setDayPick] = useState<{ day: Weekday; which: 'open' | 'close' } | null>(null);
   const [splitHours, setSplitHours] = useState(() => Object.keys(draft.dayHours ?? {}).length > 0);
-  const [errors, setErrors] = useState<Errors>({});
+  const { errors, setErrors, clear } = useFieldErrors<ErrorKey>();
+  // Editing a field hides its error straight away, instead of waiting for the next tap on Next.
+  const update = (changes: Partial<Restaurant>) => {
+    updateDraft(changes);
+    const fixed = (Object.keys(changes) as (keyof Restaurant)[]).flatMap((k) => ERROR_FOR_FIELD[k] ?? []);
+    if (fixed.length) clear(...fixed);
+  };
   const [spotPlace, setSpotPlace] = useState('');
   const [spotWhen, setSpotWhen] = useState('');
   const scroller = useRef<ScrollViewInstance>(null);
@@ -88,7 +116,7 @@ export default function RestaurantInformation() {
     if (!draft.city.trim()) e.city = 'Enter a city.';
     if (!isValidZip(draft.areaCode)) e.areaCode = 'Enter a 5-digit ZIP code.';
     if (bakeDayMode) {
-      if (!(draft.bakeDays ?? []).length) e.days = 'Add at least one bake day.';
+      if (!(draft.bakeDays ?? []).length) e.days = 'Pick a day and pickup times below, then tap “Add bake day”.';
     } else {
       if (draft.workingDays.length === 0) e.days = 'Pick at least one day.';
       if (!draft.openTime || !draft.closeTime) e.hours = 'Set your opening and closing times.';
@@ -177,7 +205,7 @@ export default function RestaurantInformation() {
               </Body>
               {draft.logoUri ? (
                 <View style={styles.logoWrap}>
-                  <Image source={{ uri: draft.logoUri }} style={styles.logo} contentFit="cover" />
+                  <Image source={photoSource(draft.logoUri, 'thumb')} style={styles.logo} contentFit="cover" />
                   <Pressable
                     accessibilityLabel="Change logo"
                     style={styles.editBadge}
@@ -214,7 +242,7 @@ export default function RestaurantInformation() {
               <View style={styles.covers}>
                 {draft.coverUris.map((uri) => (
                   <View key={uri}>
-                    <Image source={{ uri }} style={styles.cover} contentFit="cover" />
+                    <Photo uri={uri} size="thumb" style={styles.cover} />
                     <Pressable
                       accessibilityLabel="Remove picture"
                       style={styles.remove}

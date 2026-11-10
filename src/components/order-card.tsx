@@ -27,10 +27,16 @@ export function OrderCard({
   order,
   title,
   children,
+  compact = false,
 }: {
   order: Order;
   title: string;
   children?: ReactNode;
+  /**
+   * The customer's own list: dishes on one line and no order note (they wrote
+   * it). Kitchens get the full card, since the note and each line matter to them.
+   */
+  compact?: boolean;
 }) {
   const active = isActive(order.status);
   const statusColor =
@@ -54,19 +60,25 @@ export function OrderCard({
           <Text style={styles.scheduledText}>{formatPickup(order.scheduledFor, order.pickupBy, new Date())}</Text>
         </View>
       ) : null}
-      {order.customerNote ? (
+      {order.customerNote && !compact ? (
         <View style={styles.request} accessibilityLabel={`Customer note: ${order.customerNote}`}>
           <Icon name="message-alert-outline" size={16} color={colors.gold} />
           <Text style={styles.requestText}>“{order.customerNote}”</Text>
         </View>
       ) : null}
-      <View style={{ gap: 2 }}>
-        {order.lines.map((l) => (
-          <Text key={l.itemId} style={styles.line}>
-            {l.quantity} × {l.name}
-          </Text>
-        ))}
-      </View>
+      {compact ? (
+        <Text style={styles.line} numberOfLines={2}>
+          {order.lines.map((l) => `${l.quantity} × ${l.name}`).join(', ')}
+        </Text>
+      ) : (
+        <View style={{ gap: 2 }}>
+          {order.lines.map((l) => (
+            <Text key={l.itemId} style={styles.line}>
+              {l.quantity} × {l.name}
+            </Text>
+          ))}
+        </View>
+      )}
       <Text style={styles.meta}>{formatOrderTime(order.createdAt)}</Text>
       {children}
     </View>

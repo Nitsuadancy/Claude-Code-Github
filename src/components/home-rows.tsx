@@ -17,32 +17,38 @@ export function OrderAgainCard({
   restaurant,
   onReorder,
   onOpen,
+  wide,
 }: {
   order: Order;
   restaurant: Restaurant;
   onReorder: () => void;
   onOpen: () => void;
+  /** Fill the row instead of the fixed card width, for when there's only one. */
+  wide?: boolean;
 }) {
   const summary = order.lines.map((l) => `${l.quantity} × ${l.name}`).join(', ');
   // Opening the kitchen and reordering are sibling buttons, never nested.
   return (
-    <View style={styles.again}>
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={`${restaurant.name}. Last time: ${summary}`}
-      onPress={onOpen}
-      style={styles.againMain}>
-      <RestaurantCover restaurant={restaurant} style={styles.againCover} monogramSize={34} size="thumb" />
-      <View style={{ flex: 1, gap: 3 }}>
-        <Text style={styles.againName} numberOfLines={1}>
-          {restaurant.name}
-        </Text>
-        <Text style={styles.againSummary} numberOfLines={2}>
-          {summary}
-        </Text>
-        <Text style={styles.againDate}>{formatMonthDay(order.createdAt)}</Text>
+    <View style={[styles.again, wide && { width: '100%' }]}>
+      {/* The wrapper gives the pressable a width to shrink into, so "Reorder" stays inside the card. */}
+      <View style={styles.againMainWrap}>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={`${restaurant.name}. Last time: ${summary}`}
+          onPress={onOpen}
+          style={styles.againMain}>
+          <RestaurantCover restaurant={restaurant} style={styles.againCover} monogramSize={34} size="thumb" />
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={styles.againName} numberOfLines={1}>
+              {restaurant.name}
+            </Text>
+            <Text style={styles.againSummary} numberOfLines={2}>
+              {summary}
+            </Text>
+            <Text style={styles.againDate}>{formatMonthDay(order.createdAt)}</Text>
+          </View>
+        </PressableScale>
       </View>
-    </PressableScale>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Reorder from ${restaurant.name}`}
@@ -155,12 +161,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
   },
-  againMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  againMainWrap: { flex: 1, minWidth: 0 },
+  againMain: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   againCover: { width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden' },
   againName: { fontFamily: fonts.display, fontSize: 17, color: colors.ivory },
   againSummary: { fontFamily: fonts.body, fontSize: 12, color: colors.textMuted, lineHeight: 16 },
   againDate: { fontFamily: fonts.mono, fontSize: 11, color: colors.textFaint },
-  reorder: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs },
+  reorder: { paddingVertical: spacing.sm, paddingHorizontal: spacing.sm },
   reorderText: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: colors.gold },
   mini: { width: 150, gap: spacing.sm },
   miniCover: { width: '100%', height: 110, borderRadius: radius.md, overflow: 'hidden' },

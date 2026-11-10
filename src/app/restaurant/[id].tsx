@@ -623,7 +623,8 @@ const styles = StyleSheet.create({
   description: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.textMuted },
   itemFoot: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: 2 },
   price: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, fontVariant: ['tabular-nums'] },
-  thumbWrap: { width: 104, alignItems: 'center' },
+  // Sized to the photo, not the row, so the add button always sits on the photo's corner.
+  thumbWrap: { width: 104, alignItems: 'center', alignSelf: 'flex-start' },
   thumb: { width: 104, height: 104, borderRadius: radius.md },
   thumbEmpty: { width: 104, height: 52 },
   addButton: {

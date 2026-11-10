@@ -12,6 +12,7 @@ import { photoSource } from '@/lib/photo';
 import { formatCents, parsePriceToCents } from '@/lib/money';
 import { isMenuComplete } from '@/lib/setup';
 import { digitsOnly, newId } from '@/lib/validation';
+import { useFieldErrors } from '@/lib/use-field-errors';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Allergen, DietaryTag, MenuItem } from '@/types';
@@ -33,7 +34,7 @@ export default function MenuSetup() {
   const [allergens, setAllergens] = useState<Allergen[]>([]);
   const [limit, setLimit] = useState('');
   const [section, setSection] = useState('');
-  const [errors, setErrors] = useState<{ name?: string; price?: string; limit?: string; menu?: string }>({});
+  const { errors, setErrors, clear } = useFieldErrors<'name' | 'price' | 'limit' | 'menu'>();
 
   const resetForm = () => {
     setEditingId(null);
@@ -126,7 +127,13 @@ export default function MenuSetup() {
         )}
       </Pressable>
 
-      <TextField label="Dish name" placeholder="Grandma’s Peach Cobbler" value={name} onChangeText={setName} error={errors.name} />
+      <TextField label="Dish name" placeholder="Grandma’s Peach Cobbler" value={name}
+        onChangeText={(t) => {
+          setName(t);
+          clear('name');
+        }}
+        error={errors.name}
+      />
       <TextField
         label="Description"
         placeholder="What makes it special?"
@@ -142,7 +149,10 @@ export default function MenuSetup() {
           icon="currency-usd"
           keyboardType="decimal-pad"
           value={price}
-          onChangeText={setPrice}
+          onChangeText={(t) => {
+            setPrice(t);
+            clear('price');
+          }}
           error={errors.price}
         />
         <TextField
@@ -152,7 +162,10 @@ export default function MenuSetup() {
           keyboardType="number-pad"
           maxLength={3}
           value={limit}
-          onChangeText={(t) => setLimit(digitsOnly(t))}
+          onChangeText={(t) => {
+            setLimit(digitsOnly(t));
+            clear('limit');
+          }}
           error={errors.limit}
         />
       </View>
@@ -269,7 +282,7 @@ export default function MenuSetup() {
               onPress={() => edit(item)}
               accessibilityRole="button"
               accessibilityLabel={`Edit ${item.name}`}>
-              <Text style={styles.itemName} numberOfLines={1}>
+              <Text style={styles.itemName} numberOfLines={2}>
                 {item.name}
               </Text>
               <Text style={styles.itemMeta} numberOfLines={1}>

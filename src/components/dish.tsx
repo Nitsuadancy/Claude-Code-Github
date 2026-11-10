@@ -163,8 +163,8 @@ const styles = StyleSheet.create({
   sheet: {
     maxHeight: '88%',
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
     borderBottomWidth: 0,
     borderColor: colors.hairline,

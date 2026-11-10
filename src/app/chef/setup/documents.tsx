@@ -32,6 +32,7 @@ export default function RestaurantDocuments() {
       notify('File too large', 'Documents must be 10 MB or smaller.');
       return;
     }
+    setError(null);
     update({
       documents: [
         ...draft.documents.filter((d) => d.kind !== kind),
@@ -42,7 +43,7 @@ export default function RestaurantDocuments() {
 
   const next = () => {
     if (!isDocumentsComplete(draft)) {
-      setError('Upload the required documents to continue.');
+      setError('Add your food handler certificate and your ID to continue.');
       return;
     }
     save();
@@ -50,7 +51,18 @@ export default function RestaurantDocuments() {
   };
 
   return (
-    <FormScreen title="Documents" footer={<GoldButton title="Save" chevron onPress={next} />}>
+    <FormScreen
+      title="Documents"
+      footer={
+        <View style={{ gap: spacing.sm }}>
+          {error ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {error}
+            </Text>
+          ) : null}
+          <GoldButton title="Save" chevron onPress={next} />
+        </View>
+      }>
       <SectionTitle style={{ marginTop: 0 }}>Keep it legit</SectionTitle>
       <Body muted>
         We check your ID and food handler certificate so customers know who’s cooking. A food permit or
@@ -98,7 +110,6 @@ export default function RestaurantDocuments() {
           </View>
         );
       })}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
     </FormScreen>
   );
 }
@@ -134,5 +145,5 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   uploadText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.gold },
-  error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14 },
+  error: { fontFamily: fonts.body, color: colors.danger, fontSize: 14, textAlign: 'center' },
 });

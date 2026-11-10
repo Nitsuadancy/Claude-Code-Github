@@ -79,9 +79,10 @@ const COACH_STEPS = [
 /** The front-page headline changes with the time of day. */
 function headline(now: Date, neighborhood: string): string {
   const h = now.getHours();
-  if (h < 11) return `What’s baking in ${neighborhood}`;
-  if (h < 17) return `Fresh this afternoon in ${neighborhood}`;
-  return `Tonight in ${neighborhood}`;
+  // The neighborhood gets its own line, so the headline never breaks mid-name.
+  if (h < 11) return `What’s baking in\n${neighborhood}`;
+  if (h < 17) return `Fresh this afternoon in\n${neighborhood}`;
+  return `Tonight in\n${neighborhood}`;
 }
 
 /** "Thursday, November 6" */
@@ -167,6 +168,11 @@ export default function FoodieHome() {
   );
   const dishMatches = useMemo(() => searchDishes(restaurants, filters.query), [restaurants, filters.query]);
   const byId = (id: string) => restaurants.find((r) => r.id === id);
+  // Past orders whose kitchen is still on Manna.
+  const againCards = againOrders.flatMap((order) => {
+    const kitchen = byId(order.restaurantId);
+    return kitchen ? [{ order, kitchen }] : [];
+  });
 
   const reorder = (order: Order) => {
     const kitchen = byId(order.restaurantId);
@@ -355,21 +361,28 @@ export default function FoodieHome() {
         </FadeIn>
       ) : null}
 
-      {!searching && againOrders.length ? (
+      {!searching && againCards.length ? (
         <FadeIn style={{ gap: spacing.md }}>
           <SectionHeader title="Order again" />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-            style={{ marginHorizontal: -spacing.lg }}>
-            {againOrders.map((o) => {
-              const kitchen = byId(o.restaurantId);
-              return kitchen ? (
+          {againCards.length === 1 ? (
+            <OrderAgainCard
+              wide
+              order={againCards[0].order}
+              restaurant={againCards[0].kitchen}
+              onOpen={() => open(againCards[0].kitchen)}
+              onReorder={() => reorder(againCards[0].order)}
+            />
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
+              style={{ marginHorizontal: -spacing.lg }}>
+              {againCards.map(({ order: o, kitchen }) => (
                 <OrderAgainCard key={o.id} order={o} restaurant={kitchen} onOpen={() => open(kitchen)} onReorder={() => reorder(o)} />
-              ) : null;
-            })}
-          </ScrollView>
+              ))}
+            </ScrollView>
+          )}
         </FadeIn>
       ) : null}
 
@@ -509,9 +522,18 @@ export default function FoodieHome() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <EmptyState art="plate" compact title="Nothing matches yet" body="No kitchens match those filters yet." />
-            <Pressable onPress={() => setFilters(DEFAULT_FILTERS)} hitSlop={8}>
-              <Text style={styles.reset}>Reset filters</Text>
+            {searching ? (
+              <EmptyState
+                art="plate"
+                compact
+                title={`No kitchens for “${filters.query.trim()}”`}
+                body="Check the spelling, or try a dish, a kitchen or a cook’s name."
+              />
+            ) : (
+              <EmptyState art="plate" compact title="Nothing matches yet" body="No kitchens match those filters yet." />
+            )}
+            <Pressable accessibilityRole="button" onPress={() => setFilters(DEFAULT_FILTERS)} hitSlop={8}>
+              <Text style={styles.reset}>{searching ? 'Clear search' : 'Reset filters'}</Text>
             </Pressable>
           </View>
         }
@@ -611,6 +633,6 @@ const styles = StyleSheet.create({
   suggestHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   suggestChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   clearText: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
-  empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
+  empty: { alignItems: 'center', gap: spacing.xs, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
   reset: { fontFamily: fonts.semibold, color: colors.gold, fontSize: 14 },
 });

@@ -97,17 +97,18 @@ export function AccountSettings({ showIdentity = true }: { showIdentity?: boolea
           label={user.role === 'chef' ? 'Switch to Foodie' : 'Become a Culinary Entrepreneur'}
           onPress={switchRole}
         />
-        <View style={styles.rowDivider} />
-        <Row icon="logout" label="Sign out" onPress={signOut} danger />
-        <View style={styles.rowDivider} />
-        <Row icon="delete-outline" label="Delete account" onPress={deleteAccount} danger />
       </View>
 
       <View style={styles.list}>
         <Row
           icon="lifebuoy"
           label="Help & support"
-          onPress={() => notify('Help & support', 'Live support arrives with the public launch. For now, reach out to the Manna team directly.')}
+          onPress={() =>
+            notify(
+              'Help & support',
+              'For help with an order, open it from Orders and tap “Need help with this order?”. Email support opens with the public launch.',
+            )
+          }
         />
         <View style={styles.rowDivider} />
         <Row
@@ -123,6 +124,19 @@ export function AccountSettings({ showIdentity = true }: { showIdentity?: boolea
         />
       </View>
 
+      <View style={styles.list}>
+        <Row icon="logout" label="Sign out" onPress={signOut} plain />
+      </View>
+
+      {/* Deleting is rare and permanent, so it sits apart from everyday actions. */}
+      <Pressable
+        accessibilityRole="button"
+        onPress={deleteAccount}
+        hitSlop={8}
+        style={({ pressed }) => [styles.deleteLink, pressed && { opacity: 0.6 }]}>
+        <Text style={styles.deleteText}>Delete account</Text>
+      </Pressable>
+
       <View style={styles.footer}>
         <Wordmark width={96} />
         <Text style={styles.version}>Version {Constants.expoConfig?.version ?? '0.1.0'} · Made with care</Text>
@@ -136,21 +150,22 @@ function Row({
   icon,
   label,
   onPress,
-  danger,
+  plain,
 }: {
   icon: IconName;
   label: string;
   onPress: () => void;
-  danger?: boolean;
+  /** An action that happens here, not a page to open: no chevron. */
+  plain?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.goldTint }]}>
-      <Icon name={icon} size={20} color={danger ? colors.danger : colors.gold} />
-      <Text style={[styles.rowText, danger && { color: colors.danger }]}>{label}</Text>
-      {!danger ? <Icon name="chevron-right" size={20} color={colors.textFaint} /> : null}
+      <Icon name={icon} size={20} color={plain ? colors.textMuted : colors.gold} />
+      <Text style={styles.rowText}>{label}</Text>
+      {!plain ? <Icon name="chevron-right" size={20} color={colors.textFaint} /> : null}
     </Pressable>
   );
 }
@@ -179,7 +194,9 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 56 },
   rowText: { flex: 1, fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  deleteLink: { alignSelf: 'center', paddingVertical: spacing.xs },
+  deleteText: { fontFamily: fonts.medium, fontSize: 14, color: colors.danger },
   footer: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg, opacity: 0.8 },
-  version: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint, letterSpacing: 0.4 },
+  version: { fontFamily: fonts.body, fontSize: 11, color: colors.textFaint, letterSpacing: 0.4, textAlign: 'center' },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 52 },
 });

@@ -27,6 +27,10 @@ export function isCategoryId(value: string): value is CategoryId {
 
 /** Options for the Cuisine picker during chef onboarding. */
 export const CUISINES = [
+  // Baking first: it's what most Manna kitchens make.
+  'Bakery',
+  'Desserts',
+  'Breakfast',
   'American',
   'BBQ',
   'Caribbean',
@@ -49,6 +53,7 @@ export const CUISINES = [
   'Soul Food',
   'Southern',
   'Thai',
+  'Vegan',
   'Vietnamese',
   'Other',
 ];

@@ -91,10 +91,14 @@ export default function Login() {
                   placeholder="Mobile number"
                   icon="cellphone"
                   keyboardType="phone-pad"
+                  autoFocus
                   textContentType="telephoneNumber"
                   autoComplete="tel"
                   value={formatUsPhone(phone)}
-                  onChangeText={(t) => setPhone(digitsOnly(t).slice(0, 10))}
+                  onChangeText={(t) => {
+                    setPhone(digitsOnly(t).slice(0, 10));
+                    setError(null);
+                  }}
                   onSubmitEditing={sendCode}
                 />
               </View>
@@ -119,11 +123,15 @@ export default function Login() {
               <TextField
                 placeholder="• • • • • •"
                 keyboardType="number-pad"
+                autoFocus
                 textContentType="oneTimeCode"
                 autoComplete="sms-otp"
                 maxLength={6}
                 value={code}
-                onChangeText={(t) => setCode(digitsOnly(t))}
+                onChangeText={(t) => {
+                  setCode(digitsOnly(t));
+                  setError(null);
+                }}
                 onSubmitEditing={verify}
                 error={error}
                 accessibilityLabel="Verification code"

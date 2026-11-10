@@ -5,6 +5,11 @@ import { BackButton, Heading, Screen } from '@/components/ui';
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '@/data/legal';
 import { colors, fonts, radius, spacing } from '@/theme';
 
+/** Both pages are built ahead of time for the web, so their links open directly. */
+export function generateStaticParams(): { doc: string }[] {
+  return [{ doc: 'privacy' }, { doc: 'terms' }];
+}
+
 /** The privacy policy (/legal/privacy) or the terms of service (/legal/terms). */
 export default function LegalScreen() {
   const { doc } = useLocalSearchParams<{ doc: string }>();
