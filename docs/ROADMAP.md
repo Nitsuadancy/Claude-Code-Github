@@ -10,7 +10,7 @@ then expand. Each phase ends with something real people can use.
 | Where | Orlando, starting with College Park and nearby neighborhoods | Density beats reach: 20 cooks in one area make a better first week than 60 spread out |
 | What can be sold | Any food, hot meals included (changed November 2026). Cooks confirm they follow their state's and county's food laws; Manna doesn't enforce or inspect. A permit or license is optional and earns a "Licensed kitchen" label and a ranking lift; everyone else is labeled "Home kitchen · not inspected" | Open to every cook, honest with every customer. **Have the lawyer review this setup and the label wording before public launch** |
 | How food changes hands | Pickup only, at a time the customer picks. The street address is shared once the chef accepts | No courier costs, and home cooks keep their address private |
-| Fee | One movement fee paid by the customer: 8% of the food, at least $1 (raised from 5% in November 2026). Card processing comes out of it, and kitchens keep 100% of their prices | At 5%, card fees left about 20¢ an order; 8% leaves about $1.07 on a $30 order and is still far below delivery apps |
+| Fees | Customers pay a movement fee of 10% of the food, at least $1.50. Kitchens pay 5% of their food sales (founding kitchens pay nothing for their first 3 months). Tips are never charged, and card processing comes out of Manna's share. Set in November 2026, before launch | At 8% from customers only, Manna kept about $1.06 on a $30 order and needed about 60 busy kitchens to pay a founder. At 10% + 5% it keeps about $3.14, so about 21 busy kitchens cover the same, and the total is still well below delivery apps |
 | Manna Fest | Postponed. Recruit the first cooks at existing markets (Lake Eola, Winter Park, Audubon Park), on Instagram and through churches | Same people the Fest would reach, without the cost and risk of running an event |
 | Farmers and artisans | Waitlist in the app now; Manna Mart after the food side works | Growers need buyers first |
 | Rewards | Badges, placement and early access first. Physical gifts only once the fee covers them, or a sponsor pays | Early gift tiers cost more than the orders bring in |
@@ -81,7 +81,7 @@ Without this, a chef and a customer on different phones can't see each other.
 
 - [ ] Stripe Connect (Express accounts): chefs onboard to get paid, and Stripe handles identity checks and 1099-K tax forms
 - [ ] Card, Apple Pay and Google Pay checkout
-- [x] Fee model: one movement fee paid by the customer (8%, at least $1); kitchens keep 100% of their prices
+- [x] Fee model: movement fee paid by the customer (10%, at least $1.50) plus a 5% kitchen fee (0% for a founding kitchen's first 3 months); tips never charged
 - [ ] Refunds and order cancellation rules
 
 ## Phase 3: Trust and safety (required before public launch)
@@ -114,10 +114,12 @@ Pickup only for launch (see Launch decisions). Delivery can come back as an opti
 ## Phase 6: Paid plans and promotion for cooks
 
 Start once cooks are making money on Manna, roughly 30–50 active kitchens with most getting repeat
-orders. Selling and getting paid stay free forever: storefront, orders, payouts, reviews and the
-Instagram Story card. Paid features help cooks sell more or save time.
+orders. Every kitchen keeps its storefront, orders, payouts, reviews and the Instagram Story card
+without a plan. Paid features help cooks sell more or save time.
 
-**Manna Pro** (about $15–25 a month; free for a year for founding kitchens)
+**Manna Pro** ($15 a month; free for a year for founding kitchens). Sell it on the Manna website, not
+as an in-app purchase: Apple takes 15–30% of digital subscriptions bought in the app, but nothing from
+the food payments.
 
 - [x] In-app Manna Pro page: what Pro adds, what stays free, the founding free year and a Notify me button (no billing yet)
 

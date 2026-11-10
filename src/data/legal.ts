@@ -1,4 +1,4 @@
-import { MOVEMENT_FEE_TERMS } from '@/lib/pricing';
+import { FOUNDING_FEE_FREE_MONTHS, KITCHEN_FEE_TERMS, MOVEMENT_FEE_TERMS } from '@/lib/pricing';
 
 /**
  * Manna's privacy policy and terms of service, shown in the app.
@@ -122,7 +122,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       heading: 'Ordering',
       body: [
         '- Kitchens set their own prices, menus, hours and daily limits.',
-        `- Manna adds a movement fee at checkout: ${MOVEMENT_FEE_TERMS}. Kitchens keep 100% of their prices, and tips go entirely to the kitchen.`,
+        `- Manna adds a movement fee at checkout: ${MOVEMENT_FEE_TERMS}. Menu prices are the kitchen’s own, with no markup, and tips go entirely to the kitchen.`,
         '- Orders are for pickup at the time you choose. The kitchen shares its pickup address once it accepts your order.',
         '- If a kitchen declines your order or cancels a bake day, you are not charged, or you get a full refund.',
         '- You can cancel an order until the kitchen accepts it.',
@@ -147,7 +147,8 @@ export const TERMS_OF_SERVICE: LegalDocument = {
         '- List accurate ingredients, allergens, prices and photos of your own food.',
         '- Post only photos and videos you took or have the right to share, and don’t show other people without their permission. Your pickup spot photo is shared only with customers whose orders you accept.',
         '- Honor the orders you accept, and keep customers’ information private.',
-        '- Payouts and any fees are described in the app before you publish your kitchen.',
+        `- Opening a kitchen is free. Manna keeps a kitchen fee of ${KITCHEN_FEE_TERMS} (the food subtotal of each completed order) from your payout. Tips are never charged. Founding kitchens pay no kitchen fee for their first ${FOUNDING_FEE_FREE_MONTHS} months after opening.`,
+        '- Manna will tell you at least 30 days before any change to the kitchen fee. Manna Pro is optional and billed separately.',
       ],
     },
     {

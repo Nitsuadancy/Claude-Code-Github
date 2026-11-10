@@ -20,7 +20,7 @@ const SHOTS = [
   ['03-kitchen', 'Real cooks, verified', 'Meet the cook behind every dish.'],
   ['05-dish', 'Every ingredient, upfront', 'Know what’s in it before you order.'],
   ['08-order', 'Live from the kitchen', 'Follow your order from oven to pickup.'],
-  ['07-cart-total', 'Cooks keep 100% of their prices', 'One small fee. Nothing hidden.'],
+  ['07-cart-total', 'No delivery fees. No markups.', 'One small fee. Every tip goes to the cook.'],
   ['09-chef', 'For home cooks', 'Your kitchen, now a storefront.'],
   ['11-share', 'Bring your followers', 'Turn your Instagram into orders.'],
 ];

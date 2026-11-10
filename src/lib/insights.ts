@@ -2,6 +2,7 @@ import type { CartLine, MenuItem, Order, Restaurant } from '@/types';
 
 import { remainingToday } from './limits';
 import { endedWithoutSale } from './orders';
+import { kitchenPayout } from './pricing';
 
 /* ---------- Order again ---------- */
 
@@ -111,7 +112,7 @@ export interface DayEarnings {
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
- * The chef's earnings (food subtotal plus tips, before Manna's fees) for the last 7 days,
+ * The chef's earnings (food and tips, after the kitchen fee) for the last 7 days,
  * oldest first. Only completed orders count.
  */
 export function weeklyEarnings(orders: Order[], restaurantId: string, now: Date): DayEarnings[] {
@@ -127,7 +128,7 @@ export function weeklyEarnings(orders: Order[], restaurantId: string, now: Date)
     const created = new Date(order.createdAt);
     const createdDay = new Date(created.getFullYear(), created.getMonth(), created.getDate());
     const diff = Math.round((start.getTime() - createdDay.getTime()) / 86_400_000);
-    if (diff >= 0 && diff <= 6) days[6 - diff].cents += order.subtotalCents + (order.tipCents ?? 0);
+    if (diff >= 0 && diff <= 6) days[6 - diff].cents += kitchenPayout(order);
   }
   return days;
 }

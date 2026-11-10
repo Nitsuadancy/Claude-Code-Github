@@ -40,7 +40,7 @@ FOR FOOD LOVERS
 • Follow your order from oven to pickup, then tap "I'm here" when you arrive
 • Message the cook about your order once it's accepted: a swap, running late, which door
 • Pay upfront in the app. No ordering through Instagram DMs, no Venmo requests, no guessing
-• One small fee at checkout (8%, at least $1). Cooks keep every dollar of their prices, and every tip
+• One small fee at checkout (10%, at least $1.50). No delivery fees, no markups, and every tip goes to the cook
 
 FOR HOME COOKS
 • Turn your kitchen into a storefront in minutes

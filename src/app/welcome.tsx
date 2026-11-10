@@ -28,7 +28,7 @@ const SLIDES = [
     key: 'chef',
     eyebrow: 'For the Culinary Entrepreneur',
     title: 'Your kitchen.\nYour storefront.',
-    body: 'Sell what you bake to your neighbors and your followers. Paid upfront, picked up at the time you set, and you keep every dollar of your prices.',
+    body: 'Sell what you bake to your neighbors and your followers. Paid upfront, picked up at the time you set. You keep 95% of every sale and every tip.',
   },
 ];
 

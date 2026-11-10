@@ -67,6 +67,8 @@ export interface RestaurantRow {
   signature_item_id: string | null;
   rating_sum: number;
   rating_count: number;
+  /** When the Manna team first approved the kitchen. */
+  live_since: string | null;
   created_at: string;
 }
 
@@ -115,6 +117,7 @@ export interface OrderRow {
   restaurant_name: string;
   subtotal_cents: number;
   movement_fee_cents: number;
+  kitchen_fee_cents: number;
   tip_cents: number;
   total_cents: number;
   pickup_address: string;

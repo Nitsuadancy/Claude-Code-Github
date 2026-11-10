@@ -9,7 +9,7 @@ import { Eyebrow } from './ui';
 const CHART_HEIGHT = 96;
 
 /** Seven slim gold bars of completed sales, today highlighted. */
-export function WeeklyChart({ days }: { days: DayEarnings[] }) {
+export function WeeklyChart({ days, note }: { days: DayEarnings[]; note?: string }) {
   const total = days.reduce((sum, d) => sum + d.cents, 0);
   const max = Math.max(...days.map((d) => d.cents), 1);
   const best = days.reduce((a, b) => (b.cents > a.cents ? b : a), days[0]);
@@ -17,7 +17,7 @@ export function WeeklyChart({ days }: { days: DayEarnings[] }) {
     <View
       style={styles.card}
       accessible
-      accessibilityLabel={`This week: ${formatCents(total)} in completed sales. ${days
+      accessibilityLabel={`This week: ${formatCents(total)} you received from completed orders. ${days
         .map((d) => `${d.label} ${formatCents(d.cents)}`)
         .join(', ')}`}>
       <View style={styles.header}>
@@ -49,6 +49,7 @@ export function WeeklyChart({ days }: { days: DayEarnings[] }) {
           );
         })}
       </View>
+      {note ? <Text style={styles.note}>{note}</Text> : null}
     </View>
   );
 }
@@ -88,6 +89,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   total: { fontFamily: fonts.display, fontSize: 26, color: colors.ivory, fontVariant: ['tabular-nums'] },
   best: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
+  note: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textFaint },
   chart: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-end' },
   col: { flex: 1, alignItems: 'center', gap: 6 },
   barTrack: { height: CHART_HEIGHT, justifyContent: 'flex-end', width: '100%', alignItems: 'center' },

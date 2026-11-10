@@ -90,7 +90,7 @@ To do before launch:
 
 ## 6. Money and taxes
 
-- [ ] Choose the fee model: customer service fee, chef commission, or both.
+- [x] Choose the fee model: both. Customers pay 10% (at least $1.50) and kitchens pay 5% (0% for a founding kitchen's first 3 months). Tips are never charged.
 - [ ] **Sales tax:** in many states, platforms that take payment count as "marketplace
       facilitators" and must collect and pay sales tax on prepared food. Confirm this with an accountant.
 - [ ] **Chef payouts and tax forms:** Stripe Connect can send chefs their 1099-K forms.

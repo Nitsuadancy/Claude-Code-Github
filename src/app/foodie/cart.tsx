@@ -25,7 +25,7 @@ import { allergenConflicts } from '@/lib/diet';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
-import { computeCartTotals, MOVEMENT_FEE_TERMS, TIP_RATES, tipFor } from '@/lib/pricing';
+import { computeCartTotals, kitchenFee, kitchenFeeRate, MOVEMENT_FEE_TERMS, TIP_RATES, tipFor } from '@/lib/pricing';
 import { bakeDayDate, formatBakeDay, formatCutoff, openBakeDays } from '@/lib/bake-days';
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
@@ -123,6 +123,7 @@ export default function Cart() {
         lines: totals.lines,
         subtotalCents: totals.subtotalCents,
         movementFeeCents: totals.movementFeeCents,
+        kitchenFeeCents: kitchenFee(totals.subtotalCents, kitchenFeeRate(restaurant, placedAt)),
         tipCents: tip,
         totalCents: grandTotal,
         pickupAddress: [restaurant.address, restaurant.city].filter(Boolean).join(', '),
@@ -302,7 +303,7 @@ export default function Cart() {
           totalCents={grandTotal}
           footer={
             <Text style={styles.movement}>
-              Manna’s only fee: {MOVEMENT_FEE_TERMS}. {chefFirst} keeps every dollar of the menu price.
+              The movement fee keeps Manna running: {MOVEMENT_FEE_TERMS}. No delivery fee, and no markup on the menu prices.
             </Text>
           }
         />

@@ -192,7 +192,8 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     rating: averageRating(row.rating_sum, row.rating_count),
     ratingCount: row.rating_count,
     hasOffer: row.has_offer,
-    createdAt: row.created_at,
+    // On Manna since it went live: new-kitchen labels and founding fee months count from here.
+    createdAt: row.live_since ?? row.created_at,
     acceptingOrders: row.accepting_orders,
     menu,
     documents: (extras.documents ?? []).map(documentFromRow),
@@ -268,6 +269,7 @@ export function orderFromRow(row: OrderWithChildren, privateUrl?: (path: string)
     })),
     subtotalCents: row.subtotal_cents,
     movementFeeCents: row.movement_fee_cents,
+    kitchenFeeCents: row.kitchen_fee_cents,
     tipCents: row.tip_cents,
     totalCents: row.total_cents,
     pickupAddress: row.pickup_address,

@@ -28,10 +28,13 @@ export function OrderCard({
   title,
   children,
   compact = false,
+  amountCents,
 }: {
   order: Order;
   title: string;
   children?: ReactNode;
+  /** The amount shown on the card. Customers see what they paid; kitchens see their payout. */
+  amountCents?: number;
   /**
    * The customer's own list: dishes on one line and no order note (they wrote
    * it). Kitchens get the full card, since the note and each line matter to them.
@@ -51,7 +54,7 @@ export function OrderCard({
             {title}
           </Text>
         </View>
-        <Text style={styles.total}>{formatCents(order.totalCents)}</Text>
+        <Text style={styles.total}>{formatCents(amountCents ?? order.totalCents)}</Text>
       </View>
       {active ? <OrderProgress order={order} /> : null}
       {order.scheduledFor && active ? (

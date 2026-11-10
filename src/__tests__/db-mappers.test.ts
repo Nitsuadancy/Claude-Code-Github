@@ -62,6 +62,7 @@ const restaurantRow: RestaurantRow = {
   signature_item_id: 'm2',
   rating_sum: 47,
   rating_count: 10,
+  live_since: '2026-04-10T12:00:00Z',
   created_at: '2026-04-03T12:00:00Z',
 };
 
@@ -190,6 +191,7 @@ describe('database mappers', () => {
       restaurant_name: 'Susie’s Sweets',
       subtotal_cents: 3300,
       movement_fee_cents: 165,
+      kitchen_fee_cents: 83,
       tip_cents: 300,
       total_cents: 3765,
       pickup_address: '5 Willow Way, Orlando',

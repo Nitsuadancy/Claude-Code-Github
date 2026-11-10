@@ -48,6 +48,7 @@ insert into public.restaurants (id, owner_id, name, chef_name, cuisine, working_
           array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'], '00:00', '23:59', 'UTC');
 select pg_temp.expect_error($$ update public.restaurants set verified = true $$, 'only the manna team');
 select pg_temp.expect_error($$ update public.restaurants set founding = true $$, 'only the manna team');
+select pg_temp.expect_error($$ update public.restaurants set live_since = now() - interval '1 year' $$, 'only the manna team');
 select pg_temp.expect_error($$ update public.restaurants set licensed = true $$, 'only the manna team');
 update public.restaurants set in_person = '[{"place": "Lantern Coffee", "when": "Saturdays"}]';
 select pg_temp.expect_error($$ update public.restaurants set status = 'live' $$, 'after review');
@@ -87,6 +88,7 @@ update public.restaurant_documents set review_status = 'approved', reviewed_by =
   where kind <> 'home-kitchen-permit';
 select public.approve_restaurant('10000000-0000-0000-0000-000000000001');
 select pg_temp.check((select verified and not licensed from public.restaurants), 'verified, not licensed without a permit');
+select pg_temp.check((select live_since is not null from public.restaurants), 'live_since set on approval');
 update public.restaurant_documents set review_status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
   where kind = 'home-kitchen-permit';
 select public.refresh_licensed('10000000-0000-0000-0000-000000000001');
@@ -105,8 +107,9 @@ create temp table first_order as
     '[{"menu_item_id":"20000000-0000-0000-0000-000000000001","quantity":2},
       {"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]',
     'No nuts please', null, 300) as id;
-select pg_temp.check((select subtotal_cents = 3300 and movement_fee_cents = 264 and pickup_address = ''
-                             and tip_cents = 300 and total_cents = 3864 and customer_note = 'No nuts please'
+select pg_temp.check((select subtotal_cents = 3300 and movement_fee_cents = 330 and kitchen_fee_cents = 165
+                             and pickup_address = '' and tip_cents = 300 and total_cents = 3930
+                             and customer_note = 'No nuts please'
                       from public.orders where id = (select id from first_order)), 'server-side totals');
 select pg_temp.check((select count(*) = 1 from public.order_status_events where order_id = (select id from first_order)), 'placed event');
 select pg_temp.expect_error(
@@ -169,8 +172,29 @@ select pg_temp.act_as(null);
 select pg_temp.check((select menu_item_id = '20000000-0000-0000-0000-000000000002' from public.popular_menu_items()),
   'garlic knots are the most ordered after three orders');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
-select pg_temp.check((select bool_and(movement_fee_cents = 100) from public.orders where subtotal_cents = 600),
-  'small orders pay the $1 minimum fee');
+select pg_temp.check((select bool_and(movement_fee_cents = 150) from public.orders where subtotal_cents = 600),
+  'small orders pay the $1.50 minimum fee');
+
+-- Founding kitchens pay no kitchen fee for their first 3 months ---------------
+reset role;
+update public.restaurants set founding = true where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+create temp table founding_order as
+  select public.place_order('10000000-0000-0000-0000-000000000001',
+    '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]') as id;
+select pg_temp.check((select kitchen_fee_cents = 0 and movement_fee_cents = 150 from public.orders
+                      where id = (select id from founding_order)), 'founding kitchen keeps the full food price');
+reset role;
+update public.restaurants set live_since = now() - interval '3 months 1 day' where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+create temp table later_order as
+  select public.place_order('10000000-0000-0000-0000-000000000001',
+    '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]') as id;
+select pg_temp.check((select kitchen_fee_cents = 30 from public.orders where id = (select id from later_order)),
+  'kitchen fee starts after the founding months');
+reset role;
+update public.restaurants set founding = false where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
 
 -- Grower waitlist: anyone can join, only admins can read ---------------------
 select pg_temp.act_as(null);

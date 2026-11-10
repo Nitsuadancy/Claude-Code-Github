@@ -32,6 +32,7 @@ import { firstOrderSteps, type FirstOrderStep } from '@/lib/launch';
 import { formatTime, hoursOn, isOpenAt, nextOpening, WEEKDAYS } from '@/lib/hours';
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
+import { kitchenFeeNote, kitchenPayout } from '@/lib/pricing';
 import { chatState } from '@/lib/order-chat';
 import { canPostOrderUpdate, ORDER_UPDATE_MAX, orderUpdates } from '@/lib/order-updates';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
@@ -63,7 +64,7 @@ export default function ChefDashboard() {
   const today = new Date().toDateString();
   const todaysSales = orders
     .filter((o) => o.status === 'completed' && new Date(o.createdAt).toDateString() === today)
-    .reduce((sum, o) => sum + o.subtotalCents + (o.tipCents ?? 0), 0);
+    .reduce((sum, o) => sum + kitchenPayout(o), 0);
   const inHours = isOpenAt(restaurant, new Date());
   const prep = prepList(state.orders, restaurant.id);
   const week = weeklyEarnings(state.orders, restaurant.id, new Date());
@@ -225,7 +226,7 @@ export default function ChefDashboard() {
           </View>
         ) : null}
         {active.map((order) => (
-          <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'}>
+          <OrderCard key={order.id} order={order} title={order.customerName || 'Customer'} amountCents={kitchenPayout(order)}>
             {order.arrivedAt ? (
               <View style={styles.arrived}>
                 <Icon name="map-marker-outline" size={16} color={colors.bg} />
@@ -294,7 +295,7 @@ export default function ChefDashboard() {
           </>
         ) : null}
 
-        {isNew ? null : <WeeklyChart days={week} />}
+        {isNew ? null : <WeeklyChart days={week} note={kitchenFeeNote(restaurant, now)} />}
 
         <SectionHeader title="Reviews" />
         {reviews.length ? (
@@ -363,7 +364,7 @@ export default function ChefDashboard() {
           <>
             <SectionHeader title="Past orders" />
             {past.map((order) => (
-              <OrderCard compact key={order.id} order={order} title={order.customerName || 'Customer'} />
+              <OrderCard compact key={order.id} order={order} title={order.customerName || 'Customer'} amountCents={kitchenPayout(order)} />
             ))}
           </>
         ) : null}

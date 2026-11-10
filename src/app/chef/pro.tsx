@@ -5,6 +5,7 @@ import { Icon } from '@/components/icon';
 import { BackButton, Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
 import { FREE_FEATURES, hasFoundingProOffer, PRO_FEATURES } from '@/data/pro';
 import * as haptics from '@/lib/haptics';
+import { PRO_PRICE_CENTS } from '@/lib/pricing';
 import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -27,8 +28,8 @@ export default function MannaPro() {
           <Eyebrow>Manna Pro · coming soon</Eyebrow>
           <Heading size={32}>Sell more, with less work</Heading>
           <Body muted>
-            Selling on Manna stays free: your storefront, orders and payouts never cost you anything. Pro is an
-            optional plan with tools for busy kitchens.
+            Your storefront, orders and payouts come with every kitchen. Pro is an optional plan with tools for
+            busy kitchens, for ${PRO_PRICE_CENTS / 100} a month once it opens.
           </Body>
         </View>
 

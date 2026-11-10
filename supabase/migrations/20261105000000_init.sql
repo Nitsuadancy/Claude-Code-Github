@@ -99,6 +99,9 @@ create table public.restaurants (
   signature_item_id uuid,
   rating_sum integer not null default 0,
   rating_count integer not null default 0,
+  -- When the Manna team first approved the kitchen. A founding kitchen's
+  -- fee-free months count from here.
+  live_since timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -168,9 +171,12 @@ create table public.orders (
   customer_name text not null default '',
   restaurant_name text not null default '',
   subtotal_cents integer not null check (subtotal_cents > 0),
-  -- Manna's movement fee (8%, at least $1), paid by the customer. There is no delivery fee:
+  -- Manna's movement fee (10%, at least $1.50), paid by the customer. There is no delivery fee:
   -- orders are picked up.
   movement_fee_cents integer not null check (movement_fee_cents >= 0),
+  -- Manna's share of the food (5%, or 0 in a founding kitchen's first 3 months),
+  -- taken from the kitchen's payout. Tips are never charged.
+  kitchen_fee_cents integer not null default 0 check (kitchen_fee_cents >= 0 and kitchen_fee_cents <= subtotal_cents),
   tip_cents integer not null default 0 check (tip_cents >= 0),
   total_cents integer not null,
   -- Filled in when the chef accepts; empty until then.
@@ -380,6 +386,16 @@ language sql immutable as $$
   end;
 $$;
 
+-- Manna's share of a kitchen's food sales: 5%, or nothing for a founding
+-- kitchen's first 3 months after it went live. Mirrors kitchenFeeRate() in src/lib/pricing.ts.
+create function public.kitchen_fee_rate(r public.restaurants, ts timestamptz) returns numeric
+language sql stable set search_path = public as $$
+  select case
+    when r.founding and ts < coalesce(r.live_since, r.created_at) + interval '3 months' then 0
+    else 0.05
+  end;
+$$;
+
 create function public.kitchen_open_at(r public.restaurants, ts timestamptz) returns boolean
 language plpgsql stable as $$
 declare
@@ -451,6 +467,7 @@ begin
      or new.licensed is distinct from old.licensed
      or new.rating_sum is distinct from old.rating_sum
      or new.rating_count is distinct from old.rating_count
+     or new.live_since is distinct from old.live_since
      or new.owner_id is distinct from old.owner_id then
     raise exception 'Only the Manna team can change that' using errcode = '42501';
   end if;
@@ -710,12 +727,13 @@ begin
   if p_tip_cents < 0 or p_tip_cents > subtotal then
     raise exception 'Tip must be between $0 and the food subtotal';
   end if;
-  -- 8% of the food, at least $1. Mirrors movementFee() in src/lib/pricing.ts.
-  movement_fee := greatest(round(subtotal * 0.08), 100);
+  -- 10% of the food, at least $1.50. Mirrors movementFee() in src/lib/pricing.ts.
+  movement_fee := greatest(round(subtotal * 0.10), 150);
 
   update public.orders set
     subtotal_cents = subtotal,
     movement_fee_cents = movement_fee,
+    kitchen_fee_cents = round(subtotal * public.kitchen_fee_rate(r, now())),
     tip_cents = p_tip_cents,
     total_cents = subtotal + movement_fee + p_tip_cents
   where id = new_id;
@@ -860,7 +878,8 @@ begin
   ) then
     raise exception 'Approve the food handler certificate and ID first';
   end if;
-  update public.restaurants set verified = true, status = 'live' where id = p_restaurant_id;
+  update public.restaurants set verified = true, status = 'live', live_since = coalesce(live_since, now())
+    where id = p_restaurant_id;
   perform public.refresh_licensed(p_restaurant_id);
 end;
 $$;

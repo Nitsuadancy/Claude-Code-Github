@@ -4,7 +4,7 @@ import type { Restaurant } from '@/types';
 /**
  * Manna Pro: an optional plan for cooks, planned for once kitchens are
  * selling steadily (see docs/ROADMAP.md, Phase 6). Selling and getting paid
- * stay free forever; Pro adds tools that help a kitchen sell more or save time.
+ * come with every kitchen; Pro adds tools that help a kitchen sell more or save time.
  * Billing isn't built yet, so the app shows the plan and takes interest only.
  */
 export interface PlanFeature {

@@ -7,10 +7,14 @@ import { Body, GoldButton, SectionTitle, TextLink } from '@/components/ui';
 import { isOpenState, stateName } from '@/data/regions';
 import { resetTo } from '@/lib/navigation';
 import { LAW_ATTESTATION } from '@/lib/kitchen-kind';
+import { KITCHEN_FEE_TERMS } from '@/lib/pricing';
 import { completedSteps, isReadyToOpen, SETUP_STEPS } from '@/lib/setup';
 import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
+
+/** What opening costs, said before the cook opens (the terms promise this). */
+const OPENING_TERMS = `Free to open. Manna keeps ${KITCHEN_FEE_TERMS}, and tips are always yours.`;
 
 const STEPS_TO_CHECK = SETUP_STEPS.filter((s) => s.key !== 'preview');
 const STEP_ROUTE = {
@@ -54,6 +58,7 @@ export default function Preview() {
         ) : (
           <View style={{ gap: spacing.sm }}>
             {ready ? null : <Text style={styles.remaining}>{remaining}</Text>}
+            <Text style={styles.remaining}>{OPENING_TERMS}</Text>
             <GoldButton title="Open my kitchen" chevron disabled={!ready} onPress={publish} />
           </View>
         )

@@ -4,7 +4,15 @@ import { browseRestaurants, cuisineTags, DEFAULT_FILTERS, isNew } from '@/lib/br
 import { formatTime, isOpenAt, TIME_SLOTS, toMinutes } from '@/lib/hours';
 import { normalizeMenuItem } from '@/lib/migrate';
 import { formatCents, parsePriceToCents } from '@/lib/money';
-import { computeCartTotals, movementFee } from '@/lib/pricing';
+import {
+  computeCartTotals,
+  feeFreeUntil,
+  kitchenFee,
+  kitchenFeeNote,
+  kitchenFeeRate,
+  kitchenPayout,
+  movementFee,
+} from '@/lib/pricing';
 import { blankRestaurant, currentStep, isInformationComplete } from '@/lib/setup';
 import { formatUsPhone, isValidEmail, isValidUsPhone, isValidZip } from '@/lib/validation';
 import type { MenuItem, Restaurant } from '@/types';
@@ -42,17 +50,38 @@ describe('pricing', () => {
     );
     expect(totals.itemCount).toBe(3);
     expect(totals.subtotalCents).toBe(2550);
-    // One movement fee, 8% with a $1 minimum, and no delivery fee: orders are picked up.
-    expect(totals.movementFeeCents).toBe(204);
-    expect(totals.totalCents).toBe(2550 + 204);
+    // One movement fee, 10% with a $1.50 minimum, and no delivery fee: orders are picked up.
+    expect(totals.movementFeeCents).toBe(255);
+    expect(totals.totalCents).toBe(2550 + 255);
   });
 
-  it('charges at least $1 on small orders', () => {
+  it('charges customers at least $1.50 on small orders', () => {
     expect(movementFee(0)).toBe(0);
-    expect(movementFee(800)).toBe(100);
-    expect(movementFee(1250)).toBe(100);
-    expect(movementFee(1300)).toBe(104);
-    expect(movementFee(4000)).toBe(320);
+    expect(movementFee(800)).toBe(150);
+    expect(movementFee(1500)).toBe(150);
+    expect(movementFee(1600)).toBe(160);
+    expect(movementFee(3000)).toBe(300);
+  });
+
+  it('takes 5% of the food from the kitchen, never from tips', () => {
+    const kitchen = { founding: false, createdAt: '2026-01-01T12:00:00Z' };
+    const rate = kitchenFeeRate(kitchen, new Date('2026-11-10T12:00:00Z'));
+    expect(rate).toBe(0.05);
+    expect(kitchenFee(3000, rate)).toBe(150);
+    expect(kitchenFee(0, rate)).toBe(0);
+    expect(kitchenPayout({ subtotalCents: 3000, tipCents: 450, kitchenFeeCents: 150 })).toBe(3300);
+    // Orders from before the kitchen fee paid the kitchen in full.
+    expect(kitchenPayout({ subtotalCents: 3000, tipCents: 450 })).toBe(3450);
+    expect(kitchenFeeNote(kitchen, new Date())).toContain('5% of food sales');
+  });
+
+  it('gives founding kitchens their first 3 months without a kitchen fee', () => {
+    const founding = { founding: true, createdAt: '2026-11-01T12:00:00Z' };
+    expect(feeFreeUntil(founding)?.toISOString()).toBe('2027-02-01T12:00:00.000Z');
+    expect(kitchenFeeRate(founding, new Date('2027-01-31T12:00:00Z'))).toBe(0);
+    expect(kitchenFeeRate(founding, new Date('2027-02-01T12:00:00Z'))).toBe(0.05);
+    expect(feeFreeUntil({ founding: false, createdAt: founding.createdAt })).toBeNull();
+    expect(kitchenFeeNote(founding, new Date('2026-12-01T12:00:00Z'))).toMatch(/no Manna fee until/);
   });
 
   it('skips unavailable and unknown items, and charges nothing for an empty cart', () => {

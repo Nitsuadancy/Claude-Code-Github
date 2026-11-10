@@ -23,8 +23,8 @@ const NOW = new Date('2026-11-07T10:40:00-05:00');
     ];
     const order = (id, name, lines, status, minsAgo, history) => {
       const sub = lines.reduce((s, l) => s + l.priceCents * l.quantity, 0);
-      const fee = Math.round(sub * 0.05);
-      return { id, customerId: 'c-' + id, customerName: name, restaurantId: 'r1', restaurantName: 'Susie’s Sweets', lines, subtotalCents: sub, movementFeeCents: fee, tipCents: Math.round(sub * 0.15), totalCents: sub + fee + Math.round(sub * 0.15), pickupAddress: '5 Willow Way, Orlando', status, statusHistory: history.map(([s, m]) => ({ status: s, at: t(m) })), chefNote: '', customerNote: '', createdAt: t(minsAgo), estimatedReadyAt: t(minsAgo - 35), scheduledFor: null };
+      const fee = Math.max(Math.round(sub * 0.1), 150);
+      return { id, customerId: 'c-' + id, customerName: name, restaurantId: 'r1', restaurantName: 'Susie’s Sweets', lines, subtotalCents: sub, movementFeeCents: fee, kitchenFeeCents: Math.round(sub * 0.05), tipCents: Math.round(sub * 0.15), totalCents: sub + fee + Math.round(sub * 0.15), pickupAddress: '5 Willow Way, Orlando', status, statusHistory: history.map(([s, m]) => ({ status: s, at: t(m) })), chefNote: '', customerNote: '', createdAt: t(minsAgo), estimatedReadyAt: t(minsAgo - 35), scheduledFor: null };
     };
     const pc = (q) => ({ itemId: 'pc', name: 'Peach Cobbler', priceCents: 2200, quantity: q });
     const pd = (q) => ({ itemId: 'pd', name: 'Earl Grey Pound Cake', priceCents: 1800, quantity: q });
