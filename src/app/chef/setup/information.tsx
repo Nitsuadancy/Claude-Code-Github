@@ -14,6 +14,7 @@ import {
 
 import { BakeDaysEditor } from '@/components/bake-days-editor';
 import { ChefAvatar } from '@/components/chef';
+import { IntroVideo } from '@/components/intro-video';
 import { OptionSheet } from '@/components/option-sheet';
 import { Photo } from '@/components/photo';
 import { RestaurantCard } from '@/components/restaurant-card';
@@ -35,7 +36,7 @@ import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
 import { CATEGORIES, CUISINES } from '@/data/categories';
 import { DEFAULT_STATE, isOpenState, neighborhoodsFor, STATE_RULES, stateName, US_STATES } from '@/data/regions';
 import { capitalize, formatTime, hoursOn, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
-import { pickImages } from '@/lib/images';
+import { INTRO_VIDEO_SECONDS, pickImages, pickIntroVideo } from '@/lib/images';
 import { photoSource } from '@/lib/photo';
 import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
 import { digitsOnly, isValidZip } from '@/lib/validation';
@@ -282,6 +283,29 @@ export default function RestaurantInformation() {
                 value={draft.chefBio}
                 onChangeText={(chefBio) => update({ chefBio })}
               />
+              {draft.introVideoUri ? (
+                <View>
+                  <IntroVideo uri={draft.introVideoUri} chefName={draft.chefName || 'you'} style={styles.introPreview} />
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove video"
+                    style={[styles.remove, { top: spacing.sm, right: spacing.sm }]}
+                    onPress={() => update({ introVideoUri: undefined })}>
+                    <Icon name="close" size={18} color={colors.text} />
+                  </Pressable>
+                </View>
+              ) : (
+                <UploadBox
+                  label={`Add a ${INTRO_VIDEO_SECONDS}-second hello (optional)`}
+                  onPress={async () => {
+                    const uri = await pickIntroVideo();
+                    if (uri) update({ introVideoUri: uri });
+                  }}
+                />
+              )}
+              <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
+                Say hi and show your kitchen. It plays quietly on your page until someone taps for sound.
+              </Body>
               <PickerField
                 label="Typical prep time"
                 placeholder="How long does an order take?"
@@ -819,6 +843,7 @@ const styles = StyleSheet.create({
   covers: { flexDirection: 'row', gap: spacing.lg, paddingTop: spacing.sm },
   cover: { width: 88, height: 88, borderRadius: radius.sm },
   pickupPhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: radius.md },
+  introPreview: { width: '62%', aspectRatio: 4 / 5 },
   remove: {
     position: 'absolute',
     top: -12,

@@ -1,7 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { ALL_NEIGHBORHOODS } from '@/data/regions';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { isUrgent, timeLeft } from '@/lib/countdown';
+import { driveLabel, driveMinutes, NEIGHBORHOOD_CENTERS, placeLabels, project } from '@/lib/geo';
 import { visibleUpdate } from '@/lib/kitchen-style';
 import { canPostOrderUpdate, ORDER_UPDATE_MAX, ORDER_UPDATES_MAX, orderUpdates } from '@/lib/order-updates';
 import { newStampNumber, ordinal, passportStamps, stampTilt } from '@/lib/passport';
@@ -152,5 +154,47 @@ describe('countdowns', () => {
     expect(isUrgent(plus(7 * 3_600_000), now)).toBe(false);
     expect(isUrgent(plus(5 * 3_600_000), now)).toBe(true);
     expect(isUrgent(plus(-60_000), now)).toBe(false);
+  });
+});
+
+describe('neighborhood map', () => {
+  it('knows every neighborhood Manna lists', () => {
+    for (const n of ALL_NEIGHBORHOODS) expect(NEIGHBORHOOD_CENTERS[n]).toBeDefined();
+  });
+
+  it('gives sensible city drive times', () => {
+    expect(driveLabel('College Park', 'College Park')).toBe('In your neighborhood');
+    const near = driveMinutes(NEIGHBORHOOD_CENTERS['College Park'], NEIGHBORHOOD_CENTERS['Ivanhoe Village']);
+    const far = driveMinutes(NEIGHBORHOOD_CENTERS['College Park'], NEIGHBORHOOD_CENTERS['Lake Nona']);
+    expect(near).toBeGreaterThanOrEqual(3);
+    expect(near).toBeLessThan(10);
+    expect(far).toBeGreaterThan(35);
+    expect(driveLabel('College Park', 'Nowhere')).toBeNull();
+  });
+
+  it('fits points inside the box with padding, north at the top', () => {
+    const pts = [NEIGHBORHOOD_CENTERS['Winter Park'], NEIGHBORHOOD_CENTERS['Delaney Park'], NEIGHBORHOOD_CENTERS['Pine Hills']];
+    const to = project(pts, 300, 200, 20);
+    for (const p of pts.map(to)) {
+      expect(p.x).toBeGreaterThanOrEqual(19.99);
+      expect(p.x).toBeLessThanOrEqual(280.01);
+      expect(p.y).toBeGreaterThanOrEqual(19.99);
+      expect(p.y).toBeLessThanOrEqual(180.01);
+    }
+    expect(to(NEIGHBORHOOD_CENTERS['Winter Park']).y).toBeLessThan(to(NEIGHBORHOOD_CENTERS['Delaney Park']).y);
+  });
+});
+
+describe('map labels', () => {
+  it('moves a label to a free side instead of printing over its neighbor', () => {
+    const placed = placeLabels(
+      [
+        { x: 100, y: 100, text: 'Mills 50', gap: 12 },
+        { x: 104, y: 104, text: 'Colonialtown', gap: 12 },
+      ],
+      { width: 300, height: 300 },
+    );
+    expect(placed[0]).toEqual({ x: 100, y: 122, anchor: 'middle' });
+    expect(placed[1].y).toBeLessThan(104); // went above instead
   });
 });

@@ -62,7 +62,8 @@
           "calendarPermission": "Manna adds your pickup time to your calendar when you ask it to.",
           "remindersPermission": false
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -56,6 +56,7 @@ import {
   Navigation,
   Pencil,
   Pin,
+  Play,
   Plus,
   Quote,
   ReceiptText,
@@ -82,6 +83,8 @@ import {
   WheatOff,
   X,
   Zap,
+  Volume2,
+  VolumeX,
 } from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
@@ -108,6 +111,9 @@ const LUCIDE = {
   'book-open-variant': BookOpen,
   'calendar-clock': CalendarClock,
   'calendar-plus': CalendarPlus,
+  'play': Play,
+  'volume-high': Volume2,
+  'volume-off': VolumeX,
   'arrow-up': ArrowUp,
   'dots-horizontal': Ellipsis,
   'flag-outline': Flag,

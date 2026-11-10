@@ -38,6 +38,35 @@ async function prepare(asset: ImagePicker.ImagePickerAsset): Promise<string> {
   }
 }
 
+/** Longest intro video a cook can add, in seconds. */
+export const INTRO_VIDEO_SECONDS = 30;
+
+/**
+ * Lets a cook choose a short video from their library. On iPhone the picker
+ * offers to trim it; anything longer than INTRO_VIDEO_SECONDS is refused.
+ */
+export async function pickIntroVideo(): Promise<string | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) {
+    notify('Photos access needed', 'Allow photo access in Settings to add a video.');
+    return null;
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['videos'],
+    allowsEditing: true,
+    videoMaxDuration: INTRO_VIDEO_SECONDS,
+    quality: 1,
+  });
+  if (result.canceled || !result.assets[0]) return null;
+  const video = result.assets[0];
+  // Duration is in milliseconds; allow a second of slack for rounding.
+  if (video.duration && video.duration > (INTRO_VIDEO_SECONDS + 1) * 1000) {
+    notify('That video is a bit long', `Choose one up to ${INTRO_VIDEO_SECONDS} seconds, or trim it first.`);
+    return null;
+  }
+  return video.uri;
+}
+
 /** Lets the user choose photos from their library. Any size is accepted; large photos are resized. */
 export async function pickImages(
   limit: number,

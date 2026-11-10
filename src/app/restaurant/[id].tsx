@@ -6,6 +6,7 @@ import { Animated, Linking, Pressable, StyleSheet, Text, useWindowDimensions, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Countdown } from '@/components/countdown';
+import { IntroVideo } from '@/components/intro-video';
 import { ChefCard, FoundingMark, LicensedMark, VerifiedSeal } from '@/components/chef';
 import { DietNote } from '@/components/diet';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
@@ -34,6 +35,7 @@ import {
 } from '@/lib/bake-days';
 import { describeHours } from '@/lib/hours';
 import { kitchenDisclosure, kitchenKindLabel } from '@/lib/kitchen-kind';
+import { driveLabel } from '@/lib/geo';
 import { instagramUrl, visibleUpdate } from '@/lib/kitchen-style';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
@@ -67,6 +69,10 @@ export default function RestaurantDetail() {
   const reviews = useReviews(id);
   const diet = useDietProfile();
   const cart = useAddToCart();
+  const drive =
+    restaurant && state.user?.role === 'foodie' && state.user.neighborhood && restaurant.neighborhood
+      ? driveLabel(state.user.neighborhood, restaurant.neighborhood)
+      : null;
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -132,6 +138,17 @@ export default function RestaurantDetail() {
                 {restaurant.verified ? <VerifiedSeal size={18} /> : null}
               </View>
               {restaurant.tagline ? <Text style={styles.tagline}>{restaurant.tagline}</Text> : null}
+              {restaurant.introVideoUri ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Watch ${chefFirst}’s video`}
+                  onPress={() => setTab('about')}
+                  hitSlop={6}
+                  style={({ pressed }) => [styles.watch, pressed && { opacity: 0.8 }]}>
+                  <Icon name="play" size={14} color={colors.bg} />
+                  <Text style={styles.watchText}>Meet {chefFirst}</Text>
+                </Pressable>
+              ) : null}
               <Text style={styles.chef}>
                 {restaurant.chefName}
                 {restaurant.neighborhood ? `, ${restaurant.neighborhood}` : ''}
@@ -338,6 +355,9 @@ export default function RestaurantDetail() {
 
           {tab === 'about' ? (
             <View style={{ gap: spacing.lg }}>
+              {restaurant.introVideoUri ? (
+                <IntroVideo uri={restaurant.introVideoUri} chefName={chefFirst} style={styles.introVideo} />
+              ) : null}
               {restaurant.chefBio.trim() || restaurant.verified ? <ChefCard restaurant={restaurant} /> : null}
 
               {restaurant.inPerson?.length ? (
@@ -384,6 +404,14 @@ export default function RestaurantDetail() {
                 <Text style={styles.aboutText}>
                   {restaurant.neighborhood || restaurant.city}. The exact address is shared once your order is accepted.
                 </Text>
+                {drive ? (
+                  <Pressable accessibilityRole="button" onPress={() => router.push('/map')} hitSlop={6} style={styles.driveRow}>
+                    <Icon name="map-marker-outline" size={15} color={colors.gold} />
+                    <Text style={styles.driveText}>
+                      {drive} from {state.user?.neighborhood}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
             </View>
           ) : null}
@@ -586,6 +614,20 @@ const styles = StyleSheet.create({
   bakeDayLabel: { fontFamily: fonts.semibold, fontSize: 12 },
   bakeDayWhen: { fontFamily: fonts.semibold, fontSize: 17, color: colors.ivory },
   bakeDayCutoff: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
+  introVideo: { width: '100%', aspectRatio: 4 / 5 },
+  driveRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs, alignSelf: 'flex-start' },
+  driveText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold },
+  watch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    backgroundColor: colors.ivory,
+  },
+  watchText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.bg },
   tagline: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 23, color: colors.ivory, opacity: 0.92 },
   update: {
     borderLeftWidth: 3,

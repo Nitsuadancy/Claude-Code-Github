@@ -486,6 +486,7 @@ export default function FoodieHome() {
             selected={filters.sort !== 'recommended'}
             onPress={() => setSheet('sort')}
           />
+          <Chip label="Map" icon="map-marker-outline" onPress={() => router.push('/map')} />
           <Chip
             label={filters.cuisines.length ? `Cuisines · ${filters.cuisines.length}` : 'Cuisines'}
             icon="chevron-down"

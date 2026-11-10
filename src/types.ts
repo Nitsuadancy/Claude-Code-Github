@@ -153,6 +153,8 @@ export interface Restaurant {
   skippedBakeDays?: string[];
   /** e.g. "Cooler on the porch, ring once". Shared with a customer once the kitchen accepts. */
   pickupInstructions?: string;
+  /** A short hello from the cook (up to 30 seconds), shown on the kitchen page. */
+  introVideoUri?: string;
   /** A photo of the door, gate or cooler where customers pick up. Private, like the address. */
   pickupPhotoUri?: string;
   /** Typical minutes from order to ready. */
