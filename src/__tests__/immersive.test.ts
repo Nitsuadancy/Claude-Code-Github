@@ -5,6 +5,7 @@ import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { isUrgent, timeLeft } from '@/lib/countdown';
 import { driveLabel, driveMinutes, NEIGHBORHOOD_CENTERS, placeLabels, project } from '@/lib/geo';
 import { visibleUpdate } from '@/lib/kitchen-style';
+import { liveActivityAction, liveActivityContent } from '@/lib/live-activity';
 import { canPostOrderUpdate, ORDER_UPDATE_MAX, ORDER_UPDATES_MAX, orderUpdates } from '@/lib/order-updates';
 import { newStampNumber, ordinal, passportStamps, stampTilt } from '@/lib/passport';
 import { canOrderFrom, tasteFeed } from '@/lib/taste';
@@ -196,5 +197,28 @@ describe('map labels', () => {
     );
     expect(placed[0]).toEqual({ x: 100, y: 122, anchor: 'middle' });
     expect(placed[1].y).toBeLessThan(104); // went above instead
+  });
+});
+
+describe('lock-screen order status', () => {
+  it('says where the order is, how far along, and what to do next', () => {
+    const baking = liveActivityContent(order({ status: 'preparing' }));
+    expect(baking).toMatchObject({ kitchen: 'Susie’s Sweets', status: 'Being prepared', compact: 'Baking', address: '5 Willow Way' });
+    expect(baking.progress).toBeCloseTo(0.5);
+    expect(baking.detail).toMatch(/^Ready about /);
+    const sent = liveActivityContent(order({ status: 'placed' }));
+    expect(sent.address).toBe(''); // private until the kitchen accepts
+    expect(sent.progress).toBe(0);
+    expect(liveActivityContent(order({ status: 'ready', pickupBy: at(18) })).detail).toMatch(/^Pick up by /);
+    expect(liveActivityContent(order({ status: 'completed' })).progress).toBe(1);
+  });
+
+  it('starts with the order, updates as it moves, and ends when it’s done', () => {
+    expect(liveActivityAction(undefined, 'placed')).toBe('start');
+    expect(liveActivityAction('placed', 'accepted')).toBe('update');
+    expect(liveActivityAction('ready', 'completed')).toBe('end');
+    expect(liveActivityAction('placed', 'cancelled')).toBe('end');
+    expect(liveActivityAction('ready', 'ready')).toBeNull();
+    expect(liveActivityAction(undefined, 'completed')).toBeNull();
   });
 });

@@ -98,6 +98,7 @@ Without this, a chef and a customer on different phones can't see each other.
 Pickup only for launch (see Launch decisions). Delivery can come back as an option once there's demand.
 
 - [ ] Push notifications for new orders (chef), status changes (customer) and new order messages (both)
+- [ ] Lock-screen order status on iPhone (Live Activity). What it shows is built and tested; switching it on needs the first iPhone development build. Steps in [LIVE_ACTIVITY.md](LIVE_ACTIVITY.md)
 - [ ] Text-message fallback for chefs who turn push off
 
 ## Phase 5: Launch
