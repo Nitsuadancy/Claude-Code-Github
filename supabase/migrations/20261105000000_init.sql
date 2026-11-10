@@ -80,6 +80,10 @@ create table public.restaurants (
   tagline text not null default '' check (char_length(tagline) <= 60),
   update_text text not null default '' check (char_length(update_text) <= 140),
   update_posted_at timestamptz,
+  -- Optional photo with the pinned update, in the public-photos bucket.
+  update_photo_path text,
+  -- A cook's hello of up to 30 seconds, in the public-photos bucket.
+  intro_video_path text,
   instagram text not null default '' check (instagram = '' or instagram ~ '^[a-z0-9._]{1,30}$'),
   -- 'bake-days': customers order ahead for weekly bake days and pick up in a window.
   -- 'hours': customers order while the kitchen is open.
@@ -104,7 +108,9 @@ create table public.restaurant_addresses (
   restaurant_id uuid primary key references public.restaurants (id) on delete cascade,
   address text not null default '' check (char_length(address) <= 200),
   -- e.g. "Cooler on the porch, ring once". Shared with the address on accept.
-  instructions text not null default '' check (char_length(instructions) <= 140)
+  instructions text not null default '' check (char_length(instructions) <= 140),
+  -- Photo of the door, gate or cooler, in the private order-photos bucket. Shared with the address on accept.
+  photo_path text
 );
 
 -- Farmers and artisans waiting for Manna Mart. Anyone may sign up; only the
@@ -170,6 +176,7 @@ create table public.orders (
   -- Filled in when the chef accepts; empty until then.
   pickup_address text not null default '',
   pickup_instructions text not null default '',
+  pickup_photo_path text not null default '',
   -- End of the pickup window for bake-day orders.
   pickup_by timestamptz,
   -- When the customer said "I'm here".
@@ -245,6 +252,19 @@ create table public.order_issues (
   -- "Something else" needs a few words so the team knows what happened.
   check (kind <> 'other' or char_length(btrim(note)) >= 3)
 );
+
+-- Oven updates: the kitchen sends the customer a line and a photo while it
+-- makes the order. At most 8 per order; photos live in the private
+-- order-photos bucket.
+create table public.order_updates (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders (id) on delete cascade,
+  body text not null default '' check (char_length(body) <= 280),
+  photo_path text,
+  created_at timestamptz not null default now(),
+  check (char_length(btrim(body)) > 0 or photo_path is not null)
+);
+create index on public.order_updates (order_id, created_at);
 
 -- Order chat: the customer and the kitchen message each other about one
 -- order, from when the kitchen accepts it until 24 hours after pickup.
@@ -464,6 +484,7 @@ alter table public.favorites enable row level security;
 alter table public.review_reports enable row level security;
 alter table public.order_issues enable row level security;
 alter table public.order_messages enable row level security;
+alter table public.order_updates enable row level security;
 alter table public.order_chat_reads enable row level security;
 alter table public.user_blocks enable row level security;
 alter table public.message_reports enable row level security;
@@ -541,6 +562,19 @@ create policy "customers and admins read help requests" on public.order_issues
   for select using (customer_id = auth.uid() or public.is_admin());
 create policy "admins resolve help requests" on public.order_issues
   for update using (public.is_admin()) with check (public.is_admin());
+
+create policy "both sides read oven updates" on public.order_updates
+  for select using (public.in_order_chat(order_id) or public.is_admin());
+create policy "kitchens post oven updates while making the order" on public.order_updates
+  for insert with check (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_id
+        and public.owns_restaurant(o.restaurant_id)
+        and o.status in ('accepted', 'preparing', 'ready')
+    )
+    and (select count(*) from public.order_updates u where u.order_id = order_updates.order_id) < 8
+  );
 
 -- Each side reads its order's chat, minus anyone they blocked. The team sees
 -- only messages someone reported.
@@ -719,7 +753,9 @@ begin
       pickup_address = coalesce(
         (select a.address from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), ''),
       pickup_instructions = coalesce(
-        (select a.instructions from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), '')
+        (select a.instructions from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), ''),
+      pickup_photo_path = coalesce(
+        (select a.photo_path from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), '')
     where id = o.id;
   end if;
   insert into public.order_status_events (order_id, status) values (o.id, p_status);
@@ -947,6 +983,7 @@ grant insert on public.review_reports to authenticated;
 grant insert (order_id, kind, note) on public.order_issues to authenticated;
 grant update (resolved_at) on public.order_issues to authenticated;
 grant insert (order_id, body), delete on public.order_messages to authenticated;
+grant insert (order_id, body, photo_path) on public.order_updates to authenticated;
 grant insert (order_id, read_at), update (read_at) on public.order_chat_reads to authenticated;
 grant insert (blocked_id), delete on public.user_blocks to authenticated;
 grant insert (message_id) on public.message_reports to authenticated;

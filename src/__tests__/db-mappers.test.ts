@@ -47,6 +47,8 @@ const restaurantRow: RestaurantRow = {
   tagline: 'Pound cakes, the Macon way',
   update_text: 'Sweet potato pie is back',
   update_posted_at: '2026-11-05T12:00:00Z',
+  update_photo_path: 'r1/update.jpg',
+  intro_video_path: 'r1/hello.mp4',
   instagram: 'susiessweets',
   order_mode: 'bake-days',
   bake_days: [
@@ -91,7 +93,8 @@ describe('database mappers', () => {
   it('builds a kitchen from its rows and drops values the app does not know', () => {
     const r = restaurantFromRow(restaurantRow, url, {
       menu: [menuRow('m2', 1, { photo_path: 'r1/m2.jpg' }), menuRow('m1', 0)],
-      address: { restaurant_id: 'r1', address: '5 Willow Way', instructions: 'Cooler on the porch' },
+      address: { restaurant_id: 'r1', address: '5 Willow Way', instructions: 'Cooler on the porch', photo_path: 'r1/porch.jpg' },
+      privateUrl: (path) => `https://signed.example/${path}`,
       popularItemIds: new Set(['m1']),
     });
     expect(r).toMatchObject({
@@ -121,7 +124,7 @@ describe('database mappers', () => {
       update: { text: 'Sweet potato pie is back', postedAt: '2026-11-05T12:00:00Z' },
       instagram: 'susiessweets',
     });
-    expect(restaurantFromRow({ ...restaurantRow, accent: 'neon', update_text: '' }, url)).toMatchObject({
+    expect(restaurantFromRow({ ...restaurantRow, accent: 'neon', update_text: '', update_photo_path: null }, url)).toMatchObject({
       accent: undefined,
       update: undefined,
     });
@@ -153,6 +156,7 @@ describe('database mappers', () => {
       restaurant_id: 'r1',
       address: '5 Willow Way',
       instructions: 'Ring once',
+      photo_path: null,
     });
     expect(restaurantUpdate({ ...r, accent: undefined, update: { text: ' ', postedAt: 'x' }, instagram: '@Bad Handle!' }, {
       coverPaths: [],
@@ -190,6 +194,7 @@ describe('database mappers', () => {
       total_cents: 3765,
       pickup_address: '5 Willow Way, Orlando',
       pickup_instructions: 'Cooler on the porch',
+      pickup_photo_path: 'r1/porch.jpg',
       pickup_by: '2026-11-07T19:00:00Z',
       arrived_at: null,
       customer_note: 'No nuts',
@@ -275,5 +280,24 @@ describe('database mappers', () => {
         created_at: '2026-11-07T18:00:00Z',
       }),
     ).toMatchObject({ orderId: 'o1', customerName: 'Bea F.', stars: 5 });
+  });
+});
+
+describe('photos and video from the backend', () => {
+  it('reads the update photo and intro video from public storage, and the pickup photo from private storage', () => {
+    const r = restaurantFromRow(restaurantRow, url, {
+      address: { restaurant_id: 'r1', address: '5 Willow Way', instructions: '', photo_path: 'r1/porch.jpg' },
+      privateUrl: (path) => `https://signed.example/${path}`,
+    });
+    expect(r.update?.photoUri).toBe('https://cdn.example/r1/update.jpg');
+    expect(r.introVideoUri).toBe('https://cdn.example/r1/hello.mp4');
+    expect(r.pickupPhotoUri).toBe('https://signed.example/r1/porch.jpg');
+    expect(restaurantFromRow(restaurantRow, url, { address: { restaurant_id: 'r1', address: '', instructions: '', photo_path: 'x' } }).pickupPhotoUri).toBeUndefined();
+  });
+
+  it('stores the pickup photo path only when the kitchen has a pickup photo', () => {
+    const r = restaurantFromRow(restaurantRow, url);
+    expect(addressRow({ ...r, pickupPhotoUri: 'file:///porch.jpg' }, 'r1/porch.jpg').photo_path).toBe('r1/porch.jpg');
+    expect(addressRow({ ...r, pickupPhotoUri: undefined }, 'r1/porch.jpg').photo_path).toBeNull();
   });
 });

@@ -131,6 +131,8 @@ export interface RestaurantExtras {
   documents?: RestaurantDocumentRow[];
   /** Dish ids from popular_menu_items(). */
   popularItemIds?: ReadonlySet<string>;
+  /** Signed URLs for the private order-photos bucket (the pickup spot photo). */
+  privateUrl?: (path: string) => string;
 }
 
 export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras: RestaurantExtras = {}): Restaurant {
@@ -152,7 +154,15 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     inPerson: row.in_person ?? [],
     accent: isAccentId(row.accent) ? row.accent : undefined,
     tagline: row.tagline,
-    update: row.update_text && row.update_posted_at ? { text: row.update_text, postedAt: row.update_posted_at } : undefined,
+    update:
+      (row.update_text || row.update_photo_path) && row.update_posted_at
+        ? {
+            text: row.update_text,
+            postedAt: row.update_posted_at,
+            ...(row.update_photo_path ? { photoUri: photoUrl(row.update_photo_path) } : {}),
+          }
+        : undefined,
+    ...(row.intro_video_path ? { introVideoUri: photoUrl(row.intro_video_path) } : {}),
     instagram: row.instagram,
     orderMode: row.order_mode,
     bakeDays: row.bake_days
@@ -166,6 +176,7 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     coverUris: row.cover_paths.map(photoUrl),
     address: extras.address?.address ?? '',
     pickupInstructions: extras.address?.instructions ?? '',
+    ...(extras.address?.photo_path && extras.privateUrl ? { pickupPhotoUri: extras.privateUrl(extras.address.photo_path) } : {}),
     city: row.city,
     state: row.state,
     areaCode: row.zip,
@@ -235,7 +246,11 @@ export function restaurantUpdate(
   };
 }
 
-export function orderFromRow(row: OrderWithChildren): Order {
+/**
+ * `privateUrl` turns paths in the private order-photos bucket into signed
+ * URLs the app has already fetched; without it, private photos are left out.
+ */
+export function orderFromRow(row: OrderWithChildren, privateUrl?: (path: string) => string): Order {
   const history = [...row.order_status_events]
     .sort((a, b) => a.at.localeCompare(b.at))
     .map((e) => ({ status: e.status as OrderStatus, at: e.at }));
@@ -257,6 +272,19 @@ export function orderFromRow(row: OrderWithChildren): Order {
     totalCents: row.total_cents,
     pickupAddress: row.pickup_address,
     ...(row.pickup_instructions ? { pickupInstructions: row.pickup_instructions } : {}),
+    ...(row.pickup_photo_path && privateUrl ? { pickupPhotoUri: privateUrl(row.pickup_photo_path) } : {}),
+    ...(row.order_updates?.length
+      ? {
+          updates: [...row.order_updates]
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .map((u) => ({
+              id: u.id,
+              text: u.body,
+              at: u.created_at,
+              ...(u.photo_path && privateUrl ? { photoUri: privateUrl(u.photo_path) } : {}),
+            })),
+        }
+      : {}),
     ...(row.pickup_by ? { pickupBy: row.pickup_by } : {}),
     ...(row.arrived_at ? { arrivedAt: row.arrived_at } : {}),
     status: row.status,
@@ -269,12 +297,16 @@ export function orderFromRow(row: OrderWithChildren): Order {
   };
 }
 
-/** The kitchen's private row: street address and pickup instructions. */
-export function addressRow(r: Restaurant): RestaurantAddressRow {
+/**
+ * The kitchen's private row: street address, pickup instructions and the
+ * storage path of the pickup spot photo once it's uploaded.
+ */
+export function addressRow(r: Restaurant, pickupPhotoPath: string | null = null): RestaurantAddressRow {
   return {
     restaurant_id: r.id,
     address: r.address.trim().slice(0, 200),
     instructions: (r.pickupInstructions ?? '').trim().slice(0, 140),
+    photo_path: r.pickupPhotoUri ? pickupPhotoPath : null,
   };
 }
 

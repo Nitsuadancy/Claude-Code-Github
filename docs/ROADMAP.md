@@ -58,6 +58,7 @@ then expand. Each phase ends with something real people can use.
 - [x] Design quality pass: sharper photos, Manna's own status glyphs and switches, one title-bar style
 - [x] Finishing details: photos in three sizes that appear at once, springy touch feedback, drawn empty states, steady numbers, scroll to top, pull to refresh, a sharper icon and a seamless launch screen
 - [x] Order extras: directions, add to calendar, save the receipt as an image, and "Need help with this order?" for Manna's support team
+- [x] Immersive details: oven updates with photos on orders, an "In the kitchen" photo on the pinned update, a photo of the pickup spot, Taste (swipe through today's food one dish at a time), a neighborhood passport of kitchens tried, live bake-day countdowns, a cook intro video, and a map of kitchens near you
 - [x] Order chat: customer and kitchen message each other from acceptance until a day after pickup, with quick replies, unread counts, report, block and a reminder to keep payments in Manna (`order_messages`, `user_blocks`, `message_reports` in the database)
 
 ## Phase 1: Real accounts and shared data

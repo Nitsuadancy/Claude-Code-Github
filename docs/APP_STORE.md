@@ -98,7 +98,7 @@ All data below is **linked to the user** and **not used for tracking**.
 | Health & fitness: Health | Allergens people choose to avoid | App functionality |
 | Financial info: Payment info | Handled by Stripe; Manna never sees full card numbers. Declare it only if Stripe's SDK runs in the app | App functionality |
 | Purchases: Purchase history | Orders | App functionality |
-| User content: Photos | Menu, kitchen and chef photos (cooks only) | App functionality |
+| User content: Photos or Videos | Menu, kitchen and chef photos, photo updates on orders, a photo of the pickup spot and a short intro video (cooks only) | App functionality |
 | User content: Customer support | "Need help with this order?" requests | Customer support |
 | User content: Other user content | Reviews, order messages, reports, notes to the chef, cook verification documents | App functionality |
 | Identifiers: User ID | Account ID | App functionality |

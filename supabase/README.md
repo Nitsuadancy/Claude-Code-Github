@@ -39,7 +39,10 @@ connected to it yet. The app still stores everything on the device (see
    ```
 3. In the Supabase dashboard:
    - **Authentication → Providers:** turn on **Phone** and connect Twilio, which sends the sign-in codes.
-   - **Storage:** create two buckets. Make `public-photos` public, for kitchen, dish and chef photos. Make `documents` private, for permits.
+   - **Storage:** create three buckets.
+     - `public-photos` (public): kitchen, dish and chef photos, pinned-update photos and cooks' intro videos.
+     - `order-photos` (private): oven-update photos and pickup spot photos. The app shows these with signed URLs, only to that order's customer and kitchen.
+     - `documents` (private): permits and IDs.
    - **Make yourself an admin:** run this in the SQL editor:
      `update profiles set is_admin = true where email = 'you@yourcompany.com';`
 4. Put the project URL and the **anon** key in `.env` as `EXPO_PUBLIC_SUPABASE_URL` and

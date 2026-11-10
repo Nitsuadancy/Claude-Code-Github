@@ -272,7 +272,7 @@ select pg_temp.check((select count(*) = 3 from public.order_messages), 'the hist
 
 -- Bake days ---------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
-update public.restaurant_addresses set instructions = 'Cooler on the porch, ring once.';
+update public.restaurant_addresses set instructions = 'Cooler on the porch, ring once.', photo_path = 'r1/porch.jpg';
 create temp table bake_dates as select (now() at time zone 'UTC')::date + 3 as open_day, (now() at time zone 'UTC')::date + 2 as closed_day;
 update public.restaurants set order_mode = 'bake-days', bake_days = jsonb_build_array(
   jsonb_build_object('day', lower(trim(to_char((select open_day from bake_dates), 'Day'))),
@@ -297,14 +297,32 @@ create temp table bake_order as
     '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]', '',
     ((select open_day from bake_dates) + time '10:00') at time zone 'UTC') as id;
 select pg_temp.check((select pickup_by = ((select open_day from bake_dates) + time '13:00') at time zone 'UTC'
-                      and pickup_instructions = '' from public.orders where id = (select id from bake_order)),
-  'bake-day order gets its pickup window, and no instructions before accept');
+                      and pickup_instructions = '' and pickup_photo_path = '' from public.orders where id = (select id from bake_order)),
+  'bake-day order gets its pickup window, and no instructions or photo before accept');
 select pg_temp.expect_error($$ select public.mark_arrived((select id from bake_order)) $$, 'isn''t ready');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 select public.set_order_status((select id from bake_order), 'accepted');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
-select pg_temp.check((select pickup_instructions = 'Cooler on the porch, ring once.' from public.orders
-                      where id = (select id from bake_order)), 'instructions shared on accept');
+select pg_temp.check((select pickup_instructions = 'Cooler on the porch, ring once.' and pickup_photo_path = 'r1/porch.jpg'
+                      from public.orders where id = (select id from bake_order)), 'instructions and pickup photo shared on accept');
+
+-- Oven updates: only the kitchen posts, only while making the order, at most 8.
+select pg_temp.expect_error($$ insert into public.order_updates (order_id, body) values ((select id from bake_order), 'hi') $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+insert into public.order_updates (order_id, body, photo_path) values ((select id from bake_order), 'Dough is proofing', 'r1/dough.jpg');
+select pg_temp.expect_error($$ insert into public.order_updates (order_id, body) values ((select id from bake_order), '  ') $$,
+  'check constraint');
+select pg_temp.expect_error($$ insert into public.order_updates (order_id, body) values ((select id from first_order), 'Too late') $$,
+  'row-level security');
+insert into public.order_updates (order_id, body) select (select id from bake_order), 'Update ' || n from generate_series(2, 8) n;
+select pg_temp.expect_error($$ insert into public.order_updates (order_id, body) values ((select id from bake_order), 'Ninth') $$,
+  'row-level security');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select count(*) = 8 from public.order_updates), 'the customer sees the kitchen''s updates');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select count(*) = 0 from public.order_updates), 'other customers see none');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect_error($$ select public.mark_arrived((select id from bake_order)) $$, 'order not found');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');

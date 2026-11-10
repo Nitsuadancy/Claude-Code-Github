@@ -158,3 +158,21 @@ relearn the app. Cooks make their page their own with a few controlled choices:
 - **Lists** scroll to the top when you tap the tab you're already on. Orders and the cook
   dashboard refresh when pulled down, with a gold spinner.
 
+## Immersive pieces
+
+- **Taste** (`src/app/taste.tsx`): one dish per screen, full-bleed photo, text on a bottom
+  gradient, Add and Full menu at the thumb. Kitchens take turns (`src/lib/taste.ts`).
+- **Kitchen updates** (`src/components/kitchen-updates.tsx`): the newest update large with a
+  4:3 photo, older ones smaller. Captions are italic, in the cook's voice.
+- **Pickup spot** (`src/components/pickup-spot.tsx`): photo with an ivory "Your pickup spot"
+  pill, then the address and instructions. Only after the kitchen accepts.
+- **Passport stamps** (`src/components/passport.tsx`): the kitchen's food in a gold ring,
+  tilted a few degrees per kitchen; untried kitchens are dashed rings.
+- **Countdown** (`src/components/countdown.tsx`): muted text that turns gold in the last six
+  hours before a cutoff. Never red: it's a nudge, not an alarm.
+- **Intro video** (`src/components/intro-video.tsx`): plays muted on a loop, tap for sound;
+  waits for a tap when Reduce Motion is on.
+- **Map** (`src/app/map.tsx`): drawn, not a tile map. Dot grid, mile rings, a few soft lakes,
+  gold dots per kitchen (hollow when it opens later), an ivory dot for you. Neighborhoods
+  only, never addresses.
+

@@ -32,6 +32,9 @@ Expo (React Native) app ── one codebase for iOS, Android and web
 | Help with an order | Saved on the phone; the sheet says so | `order_issues` table, sent to Manna's support inbox |
 | Pull to refresh | Redraws with the current time | Refetches orders |
 | Order chat | Messages stay on the phone; the chat says so | `order_messages` with Realtime, plus push notifications |
+| Oven updates, pickup spot photo, intro video | Saved on the phone as local files | `order_updates` and storage buckets (`order-photos` private, `public-photos`) |
+| Drive times on the map | Estimated from neighborhood centers | Same estimate; real routing only if people ask for it |
+| Lock-screen order status | Content and timing built and tested | `expo-widgets` Live Activity in the first iPhone build ([LIVE_ACTIVITY.md](LIVE_ACTIVITY.md)) |
 
 ## Next: backend
 

@@ -54,6 +54,8 @@ export interface RestaurantRow {
   tagline: string;
   update_text: string;
   update_posted_at: string | null;
+  update_photo_path: string | null;
+  intro_video_path: string | null;
   instagram: string;
   order_mode: 'bake-days' | 'hours';
   bake_days: { day: string; pickupStart: string; pickupEnd: string; closeDaysBefore: number }[];
@@ -73,6 +75,7 @@ export interface RestaurantAddressRow {
   restaurant_id: string;
   address: string;
   instructions: string;
+  photo_path: string | null;
 }
 
 export interface MenuItemRow {
@@ -116,6 +119,7 @@ export interface OrderRow {
   total_cents: number;
   pickup_address: string;
   pickup_instructions: string;
+  pickup_photo_path: string;
   pickup_by: string | null;
   arrived_at: string | null;
   customer_note: string;
@@ -156,4 +160,15 @@ export interface ReviewRow {
 export type OrderWithChildren = OrderRow & {
   order_lines: OrderLineRow[];
   order_status_events: Pick<OrderStatusEventRow, 'status' | 'at'>[];
+  /** Selected alongside the order; absent from older queries. */
+  order_updates?: OrderUpdateRow[];
 };
+
+/** An oven update on an order. Photo paths are in the private order-photos bucket. */
+export interface OrderUpdateRow {
+  id: string;
+  order_id: string;
+  body: string;
+  photo_path: string | null;
+  created_at: string;
+}
