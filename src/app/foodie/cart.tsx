@@ -2,6 +2,7 @@ import { router, useScrollToTop } from 'expo-router';
 import { type ComponentRef, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Countdown } from '@/components/countdown';
 import { CartAllergyWarning } from '@/components/diet';
 import { EmptyState } from '@/components/empty-state';
 import { Ticket } from '@/components/ticket';
@@ -77,7 +78,9 @@ export default function Cart() {
   const bakeDayKitchen = isBakeDayKitchen(restaurant);
   const bakeDays = bakeDayKitchen && restaurant.acceptingOrders ? openBakeDays(restaurant, now).slice(0, 4) : [];
   const bakeDay = bakeDays.find((b) => b.pickupStart === bakeDayStart) ?? bakeDays[0];
-  const chefFirst = restaurant.chefName.replace(/\.$/, '');
+  // Mid-sentence the name keeps its initial's period ("Rosa M. bakes"); at a sentence end it drops it to avoid "M..".
+  const chefFirst = restaurant.chefName;
+  const chefAtEnd = restaurant.chefName.replace(/\.$/, '');
 
   const placeOrder = () => {
     const user = state.user;
@@ -221,6 +224,7 @@ export default function Cart() {
                     icon="calendar-clock"
                     title={formatBakeDay(b, now)}
                     detail={formatCutoff(b, now)}
+                    closesAt={b.closesAt}
                     selected={b.pickupStart === bakeDay?.pickupStart}
                     disabled={false}
                     onPress={() => setBakeDayStart(b.pickupStart)}
@@ -286,7 +290,7 @@ export default function Cart() {
               );
             })}
           </View>
-          <Text style={styles.tipNote}>100% of your tip goes to {chefFirst}.</Text>
+          <Text style={styles.tipNote}>100% of your tip goes to {chefAtEnd}.</Text>
         </View>
 
         <Ticket
@@ -342,6 +346,7 @@ function WhenOption({
   selected,
   disabled,
   onPress,
+  closesAt,
 }: {
   icon: IconName;
   title: string;
@@ -349,6 +354,8 @@ function WhenOption({
   selected: boolean;
   disabled: boolean;
   onPress: () => void;
+  /** For bake days: a live countdown to when orders close. */
+  closesAt?: string;
 }) {
   return (
     <Pressable
@@ -360,6 +367,7 @@ function WhenOption({
       <Icon name={icon} size={20} color={selected ? colors.gold : colors.textMuted} />
       <Text style={[styles.whenTitle, selected && { color: colors.ivory }]}>{title}</Text>
       <Text style={styles.whenDetail}>{detail}</Text>
+      {closesAt ? <Countdown to={closesAt} prefix="Closes in " style={{ fontSize: 12 }} /> : null}
     </Pressable>
   );
 }

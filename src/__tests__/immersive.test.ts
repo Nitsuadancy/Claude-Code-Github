@@ -1,8 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
+import { isUrgent, timeLeft } from '@/lib/countdown';
 import { visibleUpdate } from '@/lib/kitchen-style';
 import { canPostOrderUpdate, ORDER_UPDATE_MAX, ORDER_UPDATES_MAX, orderUpdates } from '@/lib/order-updates';
+import { newStampNumber, ordinal, passportStamps, stampTilt } from '@/lib/passport';
 import { canOrderFrom, tasteFeed } from '@/lib/taste';
 import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
 import type { Order } from '@/types';
@@ -97,5 +99,58 @@ describe('taste feed', () => {
   it('skips kitchens that paused orders', () => {
     const paused = SAMPLE_RESTAURANTS.map((r) => ({ ...r, acceptingOrders: false }));
     expect(tasteFeed(paused, now)).toEqual([]);
+  });
+});
+
+describe('neighborhood passport', () => {
+  const done = (id: string, restaurantId: string, h: number, customerId = 'c1') =>
+    order({ id, restaurantId, restaurantName: restaurantId, customerId, status: 'completed', statusHistory: [{ status: 'completed', at: at(h) }] });
+
+  it('stamps each kitchen once, on the first pickup, in the order earned', () => {
+    const orders = [
+      done('a', 'k2', 12),
+      done('b', 'k1', 10),
+      done('c', 'k1', 14),
+      order({ id: 'd', restaurantId: 'k3' }), // still being made: no stamp yet
+      done('e', 'k4', 9, 'someone-else'),
+    ];
+    const stamps = passportStamps(orders, 'c1');
+    expect(stamps.map((s) => [s.restaurantId, s.pickups])).toEqual([
+      ['k1', 2],
+      ['k2', 1],
+    ]);
+    expect(newStampNumber(orders[1], orders)).toBe(1);
+    expect(newStampNumber(orders[0], orders)).toBe(2);
+    expect(newStampNumber(orders[2], orders)).toBeNull(); // second pickup from k1
+    expect(newStampNumber(orders[3], orders)).toBeNull();
+  });
+
+  it('writes ordinals the usual way and tilts stamps the same way every time', () => {
+    expect([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 101].map(ordinal)).toEqual([
+      '1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '23rd', '101st',
+    ]);
+    expect(stampTilt('sample_susies_sweets')).toBe(stampTilt('sample_susies_sweets'));
+    expect(Math.abs(stampTilt('anything'))).toBeLessThanOrEqual(7);
+  });
+});
+
+describe('countdowns', () => {
+  const now = new Date(at(12));
+  const plus = (ms: number) => new Date(now.getTime() + ms).toISOString();
+
+  it('shows the two most useful units, rounded down', () => {
+    expect(timeLeft(plus(30 * 3_600_000 + 5 * 60_000), now)).toBe('1d 6h');
+    expect(timeLeft(plus(48 * 3_600_000), now)).toBe('2d');
+    expect(timeLeft(plus(5 * 3_600_000 + 12 * 60_000 + 59_000), now)).toBe('5h 12m');
+    expect(timeLeft(plus(3 * 3_600_000), now)).toBe('3h');
+    expect(timeLeft(plus(42 * 60_000), now)).toBe('42 min');
+    expect(timeLeft(plus(20_000), now)).toBe('1 min');
+    expect(timeLeft(plus(-1), now)).toBeNull();
+  });
+
+  it('turns urgent in the last six hours', () => {
+    expect(isUrgent(plus(7 * 3_600_000), now)).toBe(false);
+    expect(isUrgent(plus(5 * 3_600_000), now)).toBe(true);
+    expect(isUrgent(plus(-60_000), now)).toBe(false);
   });
 });

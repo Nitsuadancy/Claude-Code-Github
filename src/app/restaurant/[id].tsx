@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Animated, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Countdown } from '@/components/countdown';
 import { ChefCard, FoundingMark, LicensedMark, VerifiedSeal } from '@/components/chef';
 import { DietNote } from '@/components/diet';
 import { DietaryIcons, DishSheet, StockNote } from '@/components/dish';
@@ -171,7 +172,10 @@ export default function RestaurantDetail() {
           ) : bakeDayKitchen ? (
             bakeDays.length ? (
               <View style={[styles.bakeDay, { borderColor: accent }]}>
-                <Text style={[styles.bakeDayLabel, { color: accent }]}>Next bake day</Text>
+                <View style={styles.bakeDayTop}>
+                  <Text style={[styles.bakeDayLabel, { color: accent }]}>Next bake day</Text>
+                  <Countdown to={bakeDays[0].closesAt} prefix="Closes in " style={{ fontSize: 12 }} />
+                </View>
                 <Text style={styles.bakeDayWhen}>{formatBakeDay(bakeDays[0], now)}</Text>
                 <Text style={styles.bakeDayCutoff}>
                   {formatCutoff(bakeDays[0], now)}. {chefFirst} bakes everything fresh for that day.
@@ -578,6 +582,7 @@ const styles = StyleSheet.create({
   tabText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textMuted },
   tabTextOn: { color: colors.ivory },
   bakeDay: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, gap: 4, backgroundColor: colors.surface },
+  bakeDayTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   bakeDayLabel: { fontFamily: fonts.semibold, fontSize: 12 },
   bakeDayWhen: { fontFamily: fonts.semibold, fontSize: 17, color: colors.ivory },
   bakeDayCutoff: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },

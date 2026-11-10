@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Countdown } from '@/components/countdown';
 import { DietaryIcons } from '@/components/dish';
 import { EmptyState } from '@/components/empty-state';
 import { Icon } from '@/components/icon';
@@ -14,7 +15,8 @@ import { allergenSentence } from '@/lib/dietary';
 import { allergenConflicts } from '@/lib/diet';
 import * as haptics from '@/lib/haptics';
 import { formatCents } from '@/lib/money';
-import { orderingLine } from '@/lib/ordering';
+import { openBakeDays } from '@/lib/bake-days';
+import { isBakeDayKitchen, orderingLine } from '@/lib/ordering';
 import { tasteFeed, type TasteDish } from '@/lib/taste';
 import { useAllRestaurants, useDietProfile, useStore } from '@/state/store';
 import { useAddToCart } from '@/state/use-add-to-cart';
@@ -58,6 +60,7 @@ export default function Taste() {
     const soldOut = left !== null && left <= 0;
     const atLimit = left !== null && q >= left;
     const conflicts = allergenConflicts(item, diet.avoid);
+    const closesAt = isBakeDayKitchen(restaurant) ? openBakeDays(restaurant, now)[0]?.closesAt : undefined;
     return (
       <View style={{ width, height }} accessibilityLabel={`${item.name} from ${restaurant.name}, ${formatCents(item.priceCents)}`}>
         <Photo uri={item.photoUri!} size="full" priority={i <= index + 1 ? 'high' : 'low'} style={StyleSheet.absoluteFill} />
@@ -88,7 +91,10 @@ export default function Taste() {
             </Text>
             <Icon name="chevron-right" size={16} color={colors.text} />
           </Pressable>
-          <Text style={styles.when}>{orderingLine(restaurant, now, { long: true })}</Text>
+          <View style={styles.whenRow}>
+            <Text style={styles.when}>{orderingLine(restaurant, now, { long: true })}</Text>
+            {closesAt ? <Countdown to={closesAt} prefix="· closes in " color={colors.text} /> : null}
+          </View>
           <Text style={styles.name}>{item.name}</Text>
           {item.description ? (
             <Text style={styles.description} numberOfLines={3}>
@@ -220,6 +226,7 @@ const styles = StyleSheet.create({
   kitchen: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory, flexShrink: 1 },
   kitchenDot: { color: colors.textMuted, fontSize: 15 },
   cook: { fontFamily: fonts.body, fontSize: 15, color: colors.text, flexShrink: 1 },
+  whenRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   when: { fontFamily: fonts.medium, fontSize: 13, color: colors.gold },
   name: { fontFamily: fonts.display, fontSize: 34, lineHeight: 38, letterSpacing: -0.8, color: colors.ivory, marginTop: spacing.xs },
   description: { fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: colors.text },

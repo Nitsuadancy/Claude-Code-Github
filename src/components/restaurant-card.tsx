@@ -2,7 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { orderingLine, takingOrders } from '@/lib/ordering';
+import { openBakeDays } from '@/lib/bake-days';
+import { isBakeDayKitchen, orderingLine, takingOrders } from '@/lib/ordering';
 import type { PhotoSize } from '@/lib/photo';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Restaurant } from '@/types';
@@ -10,6 +11,7 @@ import type { Restaurant } from '@/types';
 import { FoundingMark, LicensedMark, VerifiedSeal } from './chef';
 import { Pop, PressableScale } from './motion';
 import { Icon } from './icon';
+import { Countdown } from './countdown';
 import { Photo } from './photo';
 
 
@@ -82,6 +84,8 @@ export function RestaurantCard({
   onToggleFavorite: () => void;
   now: Date;
 }) {
+  const next = isBakeDayKitchen(restaurant) && restaurant.acceptingOrders ? openBakeDays(restaurant, now)[0] : undefined;
+  const closingSoon = next && new Date(next.closesAt).getTime() - now.getTime() < 24 * 3_600_000 ? next : undefined;
   const open = isOpenNow(restaurant, now);
   // The heart sits beside the card's main button, not inside it, so screen
   // readers and browsers treat them as two separate controls.
@@ -113,9 +117,14 @@ export function RestaurantCard({
               {orderingLine(restaurant, now)}
             </Text>
             <Text style={styles.metaDot}>·</Text>
-            <Text style={styles.meta} numberOfLines={1}>
-              {cuisineLine(restaurant)}
-            </Text>
+            {closingSoon ? (
+              // In the last day before orders close, the countdown matters more than the cuisine.
+              <Countdown to={closingSoon.closesAt} prefix="closes in " color={colors.textFaint} />
+            ) : (
+              <Text style={styles.meta} numberOfLines={1}>
+                {cuisineLine(restaurant)}
+              </Text>
+            )}
             <Text style={styles.metaDot}>·</Text>
             <Icon name="star" size={11} color={colors.gold} />
             <Text style={[styles.meta, styles.noShrink]}>{formatRating(restaurant)}</Text>

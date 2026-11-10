@@ -9,6 +9,7 @@ import { OrderCelebration } from '@/components/order-celebration';
 import { KitchenUpdates } from '@/components/kitchen-updates';
 import { MessageButton } from '@/components/message-button';
 import { OrderHelpSheet } from '@/components/order-help-sheet';
+import { PassportStamp } from '@/components/passport';
 import { PickupSpot } from '@/components/pickup-spot';
 import { RateOrderSheet, Stars } from '@/components/reviews';
 import { Ticket } from '@/components/ticket';
@@ -42,6 +43,7 @@ import {
 } from '@/lib/orders';
 import { chatState } from '@/lib/order-chat';
 import { orderUpdates } from '@/lib/order-updates';
+import { newStampNumber, ordinal } from '@/lib/passport';
 import { directionsUrl, helpTopicsFor, pickupEvent } from '@/lib/order-extras';
 import { publicName } from '@/lib/reviews';
 import { formatPickup } from '@/lib/schedule';
@@ -85,6 +87,7 @@ export default function OrderTracking() {
   const addressShared = isAddressShared(order.status) && order.pickupAddress.trim().length > 0;
   const helpTopics = helpTopicsFor(order.status);
   const helpLabel = helpTopics.find((t) => t.kind === order.issue?.kind)?.label;
+  const stampNumber = newStampNumber(order, state.orders);
   const chat = chatState(order, new Date());
   const hasMessages = state.messages.some((m) => m.orderId === order.id);
   const openChat = () => router.push({ pathname: '/chat/[orderId]', params: { orderId: order.id } });
@@ -185,6 +188,25 @@ export default function OrderTracking() {
           <Body muted style={{ textAlign: 'center' }}>
             {chefName} knows you’re here. Hang tight.
           </Body>
+        ) : null}
+
+        {mine && stampNumber && restaurant ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`New passport stamp: ${order.restaurantName} is the ${ordinal(stampNumber)} kitchen in your passport. Open your passport`}
+            onPress={() => router.navigate('/foodie/profile')}
+            style={({ pressed }) => [styles.stamp, pressed && { opacity: 0.85 }]}>
+            <PassportStamp restaurant={restaurant} size={60} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.stampEyebrow}>New stamp</Text>
+              <Text style={styles.stampText}>
+                {stampNumber === 1
+                  ? `${order.restaurantName} is the first kitchen in your passport.`
+                  : `${order.restaurantName} is the ${ordinal(stampNumber)} kitchen in your passport.`}
+              </Text>
+            </View>
+            <Icon name="chevron-right" size={18} color={colors.gold} />
+          </Pressable>
         ) : null}
 
         {order.status === 'completed' && !myReview && order.customerId === state.user?.id ? (
@@ -404,6 +426,18 @@ function OrderAction({
 }
 
 const styles = StyleSheet.create({
+  stamp: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.goldTint,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  stampEyebrow: { fontFamily: fonts.semibold, fontSize: 12, color: colors.gold },
+  stampText: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 21, color: colors.ivory },
   receipt: { backgroundColor: colors.bg },
   actions: { flexDirection: 'row', gap: spacing.sm },
   action: {

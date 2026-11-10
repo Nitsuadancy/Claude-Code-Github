@@ -3,11 +3,14 @@ import { type ComponentRef, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
+import { Passport } from '@/components/passport';
 import { DietPreferences } from '@/components/diet';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Heading, Screen } from '@/components/ui';
 import { endedWithoutSale } from '@/lib/orders';
-import { useStore } from '@/state/store';
+import { marketFor } from '@/data/regions';
+import { passportStamps } from '@/lib/passport';
+import { useAllRestaurants, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 export default function Profile() {
@@ -18,6 +21,13 @@ export default function Profile() {
   const orders = state.orders.filter((o) => o.customerId === userId && !endedWithoutSale(o.status)).length;
   const kitchens = new Set(state.orders.filter((o) => o.customerId === userId).map((o) => o.restaurantId)).size;
   const reviews = state.reviews.filter((r) => r.customerId === userId).length;
+  const restaurants = useAllRestaurants();
+  const market = marketFor(state.user?.neighborhood ?? '');
+  const stamps = passportStamps(state.orders, userId ?? '');
+  // Every open kitchen in your city is a spot in the passport, plus any you've stamped elsewhere.
+  const passportKitchens = restaurants.filter(
+    (r) => r.status === 'live' && ((market && marketFor(r.neighborhood, r.state)?.id === market.id) || stamps.some((s) => s.restaurantId === r.id)),
+  );
   const initials = (state.user?.name ?? '')
     .split(' ')
     .map((p) => p.charAt(0))
@@ -49,6 +59,7 @@ export default function Profile() {
             <Stat value={state.favoriteRestaurantIds.length} label="Favorites" />
             <Stat value={reviews} label={reviews === 1 ? 'Review' : 'Reviews'} />
           </View>
+          <Passport city={market?.city ?? 'neighborhood'} stamps={stamps} kitchens={passportKitchens} />
           <DietPreferences />
           <AccountSettings showIdentity={false} />
         </ScrollView>
