@@ -23,22 +23,21 @@ let table: Map<string, ZipPlace> | null = null;
 
 function load(): Map<string, ZipPlace> {
   if (table) return table;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const data = require("@/data/zips.json") as ZipFile;
+  const data = require('@/data/zips.json') as ZipFile;
   const places = data.places.map((p) => {
-    const [city, stateIndex] = p.split("|");
+    const [city, stateIndex] = p.split('|');
     return { city, state: data.states[Number(stateIndex)] };
   });
   const map = new Map<string, ZipPlace>();
   let zip = 0;
   let lat = 0;
   let lng = 0;
-  for (const row of data.rows.split(";")) {
-    const [dz, dlat, dlng, place] = row.split(",");
+  for (const row of data.rows.split(';')) {
+    const [dz, dlat, dlng, place] = row.split(',');
     zip += parseInt(dz, 36);
     lat += parseInt(dlat, 36);
     lng += parseInt(dlng, 36);
-    const key = String(zip).padStart(5, "0");
+    const key = String(zip).padStart(5, '0');
     const p = places[parseInt(place, 36)];
     map.set(key, {
       zip: key,
@@ -54,12 +53,12 @@ function load(): Map<string, ZipPlace> {
 
 /** The place for a 5-digit ZIP, or null if it isn't a known US ZIP. */
 export function lookupZip(zip: string | undefined | null): ZipPlace | null {
-  const z = (zip ?? "").trim();
+  const z = (zip ?? '').trim();
   if (!/^\d{5}$/.test(z)) return null;
   return load().get(z) ?? null;
 }
 
 /** "Austin, TX" */
-export function placeLabel(p: Pick<ZipPlace, "city" | "state">): string {
+export function placeLabel(p: Pick<ZipPlace, 'city' | 'state'>): string {
   return `${p.city}, ${p.state}`;
 }

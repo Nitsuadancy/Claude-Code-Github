@@ -1,6 +1,6 @@
-import { Image } from "expo-image";
-import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,15 +10,15 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
+} from 'react-native';
 
-import { BakeDaysEditor } from "@/components/bake-days-editor";
-import { ChefAvatar } from "@/components/chef";
-import { IntroVideo } from "@/components/intro-video";
-import { OptionSheet } from "@/components/option-sheet";
-import { Photo } from "@/components/photo";
-import { RestaurantCard } from "@/components/restaurant-card";
-import { TwoStepHeader } from "@/components/two-step-header";
+import { BakeDaysEditor } from '@/components/bake-days-editor';
+import { ChefAvatar } from '@/components/chef';
+import { IntroVideo } from '@/components/intro-video';
+import { OptionSheet } from '@/components/option-sheet';
+import { Photo } from '@/components/photo';
+import { RestaurantCard } from '@/components/restaurant-card';
+import { TwoStepHeader } from '@/components/two-step-header';
 import {
   BackButton,
   Body,
@@ -32,45 +32,25 @@ import {
   TextField,
   TextLink,
   Toggle,
-} from "@/components/ui";
-import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from "@/data/accents";
-import { CATEGORIES, CUISINES } from "@/data/categories";
-import {
-  ALL_NEIGHBORHOODS,
-  DEFAULT_STATE,
-  isOpenState,
-  STATE_RULES,
-  stateName,
-  US_STATES,
-} from "@/data/regions";
-import { centerOf } from "@/lib/geo";
-import { distanceMiles } from "@/lib/location";
-import { lookupZip } from "@/lib/zips";
-import {
-  capitalize,
-  formatTime,
-  hoursOn,
-  TIME_SLOTS,
-  WEEKDAYS,
-} from "@/lib/hours";
-import { INTRO_VIDEO_SECONDS, pickImages, pickIntroVideo } from "@/lib/images";
-import { photoSource } from "@/lib/photo";
-import { cleanInstagram, TAGLINE_MAX } from "@/lib/kitchen-style";
-import { digitsOnly, isValidZip } from "@/lib/validation";
-import { useFieldErrors } from "@/lib/use-field-errors";
-import { useRestaurantDraft } from "@/state/use-restaurant-draft";
-import { colors, fonts, radius, spacing } from "@/theme";
-import type { CategoryId, Restaurant, Weekday } from "@/types";
-import { Icon } from "@/components/icon";
+} from '@/components/ui';
+import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
+import { CATEGORIES, CUISINES } from '@/data/categories';
+import { ALL_NEIGHBORHOODS, DEFAULT_STATE, isOpenState, STATE_RULES, stateName, US_STATES } from '@/data/regions';
+import { centerOf } from '@/lib/geo';
+import { distanceMiles } from '@/lib/location';
+import { lookupZip } from '@/lib/zips';
+import { capitalize, formatTime, hoursOn, TIME_SLOTS, WEEKDAYS } from '@/lib/hours';
+import { INTRO_VIDEO_SECONDS, pickImages, pickIntroVideo } from '@/lib/images';
+import { photoSource } from '@/lib/photo';
+import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
+import { digitsOnly, isValidZip } from '@/lib/validation';
+import { useFieldErrors } from '@/lib/use-field-errors';
+import { useRestaurantDraft } from '@/state/use-restaurant-draft';
+import { colors, fonts, radius, spacing } from '@/theme';
+import type { CategoryId, Restaurant, Weekday } from '@/types';
+import { Icon } from '@/components/icon';
 
-type Sheet =
-  | "cuisine"
-  | "specialties"
-  | "open"
-  | "close"
-  | "prep"
-  | null
-  | "state";
+type Sheet = 'cuisine' | 'specialties' | 'open' | 'close' | 'prep' | null | 'state';
 
 const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
   value: String(m),
@@ -78,35 +58,26 @@ const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
 }));
 
 const BIO_MAX = 280;
-const OPEN_STATE_NAMES = Object.keys(STATE_RULES).map(stateName).join(", ");
-type ErrorKey =
-  | "name"
-  | "instagram"
-  | "cuisine"
-  | "neighborhood"
-  | "address"
-  | "city"
-  | "areaCode"
-  | "days"
-  | "hours";
+const OPEN_STATE_NAMES = Object.keys(STATE_RULES).map(stateName).join(', ');
+type ErrorKey = 'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours';
 type Errors = Partial<Record<ErrorKey, string>>;
 
 /** Which error message each kitchen field can clear when it's edited. */
 const ERROR_FOR_FIELD: Partial<Record<keyof Restaurant, ErrorKey>> = {
-  name: "name",
-  instagram: "instagram",
-  cuisine: "cuisine",
-  neighborhood: "neighborhood",
-  state: "neighborhood",
-  address: "address",
-  city: "city",
-  areaCode: "areaCode",
-  workingDays: "days",
-  bakeDays: "days",
-  orderMode: "days",
-  openTime: "hours",
-  closeTime: "hours",
-  dayHours: "hours",
+  name: 'name',
+  instagram: 'instagram',
+  cuisine: 'cuisine',
+  neighborhood: 'neighborhood',
+  state: 'neighborhood',
+  address: 'address',
+  city: 'city',
+  areaCode: 'areaCode',
+  workingDays: 'days',
+  bakeDays: 'days',
+  orderMode: 'days',
+  openTime: 'hours',
+  closeTime: 'hours',
+  dayHours: 'hours',
 };
 
 const TIME_OPTIONS = TIME_SLOTS.map((t) => ({
@@ -121,37 +92,32 @@ export default function RestaurantInformation() {
   // Which day's opening or closing time is being picked, for days with their own hours.
   const [dayPick, setDayPick] = useState<{
     day: Weekday;
-    which: "open" | "close";
+    which: 'open' | 'close';
   } | null>(null);
-  const [splitHours, setSplitHours] = useState(
-    () => Object.keys(draft.dayHours ?? {}).length > 0,
-  );
+  const [splitHours, setSplitHours] = useState(() => Object.keys(draft.dayHours ?? {}).length > 0);
   const { errors, setErrors, clear } = useFieldErrors<ErrorKey>();
   // Editing a field hides its error straight away, instead of waiting for the next tap on Next.
   const update = (changes: Partial<Restaurant>) => {
     updateDraft(changes);
-    const fixed = (Object.keys(changes) as (keyof Restaurant)[]).flatMap(
-      (k) => ERROR_FOR_FIELD[k] ?? [],
-    );
+    const fixed = (Object.keys(changes) as (keyof Restaurant)[]).flatMap((k) => ERROR_FOR_FIELD[k] ?? []);
     if (fixed.length) clear(...fixed);
   };
-  const [spotPlace, setSpotPlace] = useState("");
-  const [spotWhen, setSpotWhen] = useState("");
+  const [spotPlace, setSpotPlace] = useState('');
+  const [spotWhen, setSpotWhen] = useState('');
   const scroller = useRef<ScrollViewInstance>(null);
 
   const next = () => {
     if (step === 1) {
       const e: Errors = {};
-      if (!draft.name.trim()) e.name = "Give your kitchen a name.";
-      if (!draft.cuisine) e.cuisine = "Choose a cuisine.";
-      const instagram = cleanInstagram(draft.instagram ?? "");
-      if (draft.instagram && !instagram)
-        e.instagram = "Use just your username, like @susiessweets.";
+      if (!draft.name.trim()) e.name = 'Give your kitchen a name.';
+      if (!draft.cuisine) e.cuisine = 'Choose a cuisine.';
+      const instagram = cleanInstagram(draft.instagram ?? '');
+      if (draft.instagram && !instagram) e.instagram = 'Use just your username, like @susiessweets.';
       setErrors(e);
       if (Object.keys(e).length) return;
       save({
         name: draft.name.trim(),
-        tagline: (draft.tagline ?? "").trim(),
+        tagline: (draft.tagline ?? '').trim(),
         instagram,
       });
       setStep(2);
@@ -160,29 +126,22 @@ export default function RestaurantInformation() {
     }
     const e: Errors = {};
     // Cooks in states Manna hasn't opened yet can still save; they open their kitchen once it launches there.
-    if (!draft.neighborhood.trim())
-      e.neighborhood = "Name your neighborhood or area.";
-    if (!draft.address.trim()) e.address = "Enter the pickup address.";
-    if (!draft.city.trim()) e.city = "Enter a city.";
+    if (!draft.neighborhood.trim()) e.neighborhood = 'Name your neighborhood or area.';
+    if (!draft.address.trim()) e.address = 'Enter the pickup address.';
+    if (!draft.city.trim()) e.city = 'Enter a city.';
     const zipPlace = lookupZip(draft.areaCode);
-    if (!isValidZip(draft.areaCode)) e.areaCode = "Enter a 5-digit ZIP code.";
-    else if (!zipPlace) e.areaCode = "We couldn’t find that ZIP code.";
+    if (!isValidZip(draft.areaCode)) e.areaCode = 'Enter a 5-digit ZIP code.';
+    else if (!zipPlace) e.areaCode = 'We couldn’t find that ZIP code.';
     else if (zipPlace.state !== kitchenState)
       e.areaCode = `That ZIP is in ${stateName(zipPlace.state)}. Check your state or ZIP.`;
     if (bakeDayMode) {
-      if (!(draft.bakeDays ?? []).length)
-        e.days = "Pick a day and pickup times below, then tap “Add bake day”.";
+      if (!(draft.bakeDays ?? []).length) e.days = 'Pick a day and pickup times below, then tap “Add bake day”.';
     } else {
-      if (draft.workingDays.length === 0) e.days = "Pick at least one day.";
-      if (!draft.openTime || !draft.closeTime)
-        e.hours = "Set your opening and closing times.";
-      else if (draft.openTime === draft.closeTime)
-        e.hours = "Opening and closing times can’t match.";
-      else if (
-        splitHours &&
-        draft.workingDays.some((d) => !hoursOn(draft, d))
-      ) {
-        e.hours = "Each day needs an opening and a closing time that differ.";
+      if (draft.workingDays.length === 0) e.days = 'Pick at least one day.';
+      if (!draft.openTime || !draft.closeTime) e.hours = 'Set your opening and closing times.';
+      else if (draft.openTime === draft.closeTime) e.hours = 'Opening and closing times can’t match.';
+      else if (splitHours && draft.workingDays.some((d) => !hoursOn(draft, d))) {
+        e.hours = 'Each day needs an opening and a closing time that differ.';
       }
     }
     setErrors(e);
@@ -199,7 +158,7 @@ export default function RestaurantInformation() {
     });
 
   const allSelected = draft.workingDays.length === WEEKDAYS.length;
-  const bakeDayMode = draft.orderMode === "bake-days";
+  const bakeDayMode = draft.orderMode === 'bake-days';
   const kitchenState = draft.state ?? DEFAULT_STATE;
   const stateOpen = isOpenState(kitchenState);
   // Suggestions for the public area name: neighborhoods Manna has mapped near the ZIP, and the ZIP's city.
@@ -217,23 +176,14 @@ export default function RestaurantInformation() {
 
   return (
     <Screen>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.topBar}>
-          <BackButton
-            onPress={() => (step === 2 ? setStep(1) : router.back())}
-          />
+          <BackButton onPress={() => (step === 2 ? setStep(1) : router.back())} />
           <Text style={styles.topTitle}>Kitchen details</Text>
           <View style={{ width: 44 }} />
         </View>
-        <ScrollView
-          ref={scroller}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
-          <TwoStepHeader step={step} labels={["Details", "Location & hours"]} />
+        <ScrollView ref={scroller} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <TwoStepHeader step={step} labels={['Details', 'Location & hours']} />
 
           {step === 1 ? (
             <>
@@ -242,10 +192,10 @@ export default function RestaurantInformation() {
                 <RestaurantCard
                   restaurant={{
                     ...draft,
-                    name: draft.name.trim() || "Your kitchen",
-                    cuisine: draft.cuisine || "Cuisine",
-                    chefName: draft.chefName || "you",
-                    status: "live",
+                    name: draft.name.trim() || 'Your kitchen',
+                    cuisine: draft.cuisine || 'Cuisine',
+                    chefName: draft.chefName || 'you',
+                    status: 'live',
                   }}
                   favorite={false}
                   now={new Date()}
@@ -253,9 +203,7 @@ export default function RestaurantInformation() {
                   onToggleFavorite={() => {}}
                 />
               </View>
-              <SectionTitle style={{ marginTop: spacing.sm }}>
-                Tell us about your kitchen
-              </SectionTitle>
+              <SectionTitle style={{ marginTop: spacing.sm }}>Tell us about your kitchen</SectionTitle>
               <TextField
                 label="Kitchen name"
                 placeholder="e.g. Mrs. Susie’s Kitchen"
@@ -268,7 +216,7 @@ export default function RestaurantInformation() {
                 label="Cuisine"
                 placeholder="Choose a cuisine"
                 value={draft.cuisine || null}
-                onPress={() => setSheet("cuisine")}
+                onPress={() => setSheet('cuisine')}
                 error={errors.cuisine}
               />
               <PickerField
@@ -276,12 +224,10 @@ export default function RestaurantInformation() {
                 placeholder="Vegan, Bakery, Late Night Bites…"
                 value={
                   draft.categories.length
-                    ? draft.categories
-                        .map((c) => CATEGORIES.find((x) => x.id === c)?.label)
-                        .join(", ")
+                    ? draft.categories.map((c) => CATEGORIES.find((x) => x.id === c)?.label).join(', ')
                     : null
                 }
-                onPress={() => setSheet("specialties")}
+                onPress={() => setSheet('specialties')}
               />
 
               <SectionTitle>Logo</SectionTitle>
@@ -290,19 +236,14 @@ export default function RestaurantInformation() {
               </Body>
               {draft.logoUri ? (
                 <View style={styles.logoWrap}>
-                  <Image
-                    source={photoSource(draft.logoUri, "thumb")}
-                    style={styles.logo}
-                    contentFit="cover"
-                  />
+                  <Image source={photoSource(draft.logoUri, 'thumb')} style={styles.logo} contentFit="cover" />
                   <Pressable
                     accessibilityLabel="Change logo"
                     style={styles.editBadge}
                     onPress={async () => {
                       const [uri] = await pickImages(1);
                       if (uri) update({ logoUri: uri });
-                    }}
-                  >
+                    }}>
                     <Icon name="pencil-outline" size={20} color={colors.text} />
                   </Pressable>
                 </View>
@@ -343,8 +284,7 @@ export default function RestaurantInformation() {
                         update({
                           coverUris: draft.coverUris.filter((u) => u !== uri),
                         })
-                      }
-                    >
+                      }>
                       <Icon name="close" size={18} color={colors.text} />
                     </Pressable>
                   </View>
@@ -353,36 +293,23 @@ export default function RestaurantInformation() {
 
               <SectionTitle>Your story</SectionTitle>
               <Body muted style={styles.hint}>
-                Foodies love knowing who’s cooking. Share where your recipes
-                come from.
+                Foodies love knowing who’s cooking. Share where your recipes come from.
               </Body>
               <View style={styles.storyRow}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={
-                    draft.chefPhotoUri ? "Change your photo" : "Add your photo"
-                  }
+                  accessibilityLabel={draft.chefPhotoUri ? 'Change your photo' : 'Add your photo'}
                   onPress={async () => {
                     const [uri] = await pickImages(1);
                     if (uri) update({ chefPhotoUri: uri });
-                  }}
-                >
-                  <ChefAvatar
-                    name={draft.chefName || "Chef"}
-                    photoUri={draft.chefPhotoUri}
-                    size={76}
-                  />
+                  }}>
+                  <ChefAvatar name={draft.chefName || 'Chef'} photoUri={draft.chefPhotoUri} size={76} />
                   <View style={styles.avatarBadge}>
-                    <Icon
-                      name="camera-plus-outline"
-                      size={14}
-                      color={colors.onGold}
-                    />
+                    <Icon name="camera-plus-outline" size={14} color={colors.onGold} />
                   </View>
                 </Pressable>
                 <Body muted style={{ flex: 1, fontSize: 13, lineHeight: 19 }}>
-                  A warm, well-lit photo of you in your kitchen builds trust
-                  instantly.
+                  A warm, well-lit photo of you in your kitchen builds trust instantly.
                 </Body>
               </View>
               <TextField
@@ -397,18 +324,14 @@ export default function RestaurantInformation() {
                 <View>
                   <IntroVideo
                     uri={draft.introVideoUri}
-                    chefName={draft.chefName || "you"}
+                    chefName={draft.chefName || 'you'}
                     style={styles.introPreview}
                   />
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Remove video"
-                    style={[
-                      styles.remove,
-                      { top: spacing.sm, right: spacing.sm },
-                    ]}
-                    onPress={() => update({ introVideoUri: undefined })}
-                  >
+                    style={[styles.remove, { top: spacing.sm, right: spacing.sm }]}
+                    onPress={() => update({ introVideoUri: undefined })}>
                     <Icon name="close" size={18} color={colors.text} />
                   </Pressable>
                 </View>
@@ -422,26 +345,24 @@ export default function RestaurantInformation() {
                 />
               )}
               <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
-                Say hi and show your kitchen. It plays quietly on your page
-                until someone taps for sound.
+                Say hi and show your kitchen. It plays quietly on your page until someone taps for sound.
               </Body>
               <PickerField
                 label="Typical prep time"
                 placeholder="How long does an order take?"
                 value={`About ${draft.prepMinutes} minutes`}
-                onPress={() => setSheet("prep")}
+                onPress={() => setSheet('prep')}
               />
 
               <SectionTitle>Make it yours</SectionTitle>
               <Body muted style={styles.hint}>
-                Your page keeps Manna’s layout, so customers always know where
-                everything is. These are yours.
+                Your page keeps Manna’s layout, so customers always know where everything is. These are yours.
               </Body>
               <TextField
-                label={`Tagline (${(draft.tagline ?? "").length}/${TAGLINE_MAX})`}
+                label={`Tagline (${(draft.tagline ?? '').length}/${TAGLINE_MAX})`}
                 placeholder="Small-batch sourdough, baked Saturdays"
                 maxLength={TAGLINE_MAX}
-                value={draft.tagline ?? ""}
+                value={draft.tagline ?? ''}
                 onChangeText={(tagline) => update({ tagline })}
               />
               <View style={{ gap: spacing.sm }}>
@@ -456,29 +377,17 @@ export default function RestaurantInformation() {
                         accessibilityLabel={a.label}
                         accessibilityState={{ checked: on }}
                         onPress={() => update({ accent: a.id })}
-                        style={[styles.swatch, on && { borderColor: a.color }]}
-                      >
-                        <View
-                          style={[
-                            styles.swatchFill,
-                            { backgroundColor: a.color },
-                          ]}
-                        >
-                          {on ? (
-                            <Icon name="check" size={16} color={colors.bg} />
-                          ) : null}
+                        style={[styles.swatch, on && { borderColor: a.color }]}>
+                        <View style={[styles.swatchFill, { backgroundColor: a.color }]}>
+                          {on ? <Icon name="check" size={16} color={colors.bg} /> : null}
                         </View>
                       </Pressable>
                     );
                   })}
                 </View>
                 <Body muted style={{ fontSize: 13 }}>
-                  {
-                    KITCHEN_ACCENTS.find(
-                      (a) => a.id === (draft.accent ?? DEFAULT_ACCENT),
-                    )?.label
-                  }
-                  . Used on your kitchen page and your Instagram Story card.
+                  {KITCHEN_ACCENTS.find((a) => a.id === (draft.accent ?? DEFAULT_ACCENT))?.label}. Used on your kitchen
+                  page and your Instagram Story card.
                 </Body>
               </View>
               <TextField
@@ -487,13 +396,10 @@ export default function RestaurantInformation() {
                 icon="instagram"
                 autoCapitalize="none"
                 autoCorrect={false}
-                value={draft.instagram ? `@${draft.instagram}` : ""}
+                value={draft.instagram ? `@${draft.instagram}` : ''}
                 onChangeText={(text) =>
                   update({
-                    instagram: text
-                      .replace(/^@/, "")
-                      .replace(/\s/g, "")
-                      .toLowerCase(),
+                    instagram: text.replace(/^@/, '').replace(/\s/g, '').toLowerCase(),
                   })
                 }
                 error={errors.instagram}
@@ -501,21 +407,17 @@ export default function RestaurantInformation() {
             </>
           ) : (
             <>
-              <SectionTitle style={{ marginTop: spacing.sm }}>
-                Where and when you cook
-              </SectionTitle>
+              <SectionTitle style={{ marginTop: spacing.sm }}>Where and when you cook</SectionTitle>
               <PickerField
                 label="State"
                 placeholder="Choose your state"
                 value={stateName(kitchenState)}
-                onPress={() => setSheet("state")}
+                onPress={() => setSheet('state')}
               />
               {stateOpen ? null : (
                 <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
-                  Manna isn’t open in {stateName(kitchenState)} yet; it’s in{" "}
-                  {OPEN_STATE_NAMES} for now. Save your kitchen, and you can
-                  open it as soon as Manna launches in {stateName(kitchenState)}
-                  .
+                  Manna isn’t open in {stateName(kitchenState)} yet; it’s in {OPEN_STATE_NAMES} for now. Save your
+                  kitchen, and you can open it as soon as Manna launches in {stateName(kitchenState)}.
                 </Body>
               )}
               <TextField
@@ -564,7 +466,7 @@ export default function RestaurantInformation() {
               </View>
               <TextField
                 label="Neighborhood or area"
-                placeholder={zipCity ?? "College Park"}
+                placeholder={zipCity ?? 'College Park'}
                 maxLength={40}
                 value={draft.neighborhood}
                 onChangeText={(neighborhood) => update({ neighborhood })}
@@ -583,35 +485,25 @@ export default function RestaurantInformation() {
                 </View>
               ) : null}
               <Body muted style={{ fontSize: 13 }}>
-                Customers see only your neighborhood or area. Your address is
-                shared with a customer once you accept their order.
+                Customers see only your neighborhood or area. Your address is shared with a customer once you accept
+                their order.
               </Body>
               <TextField
                 label="Pickup instructions (optional)"
                 placeholder="Cooler on the porch, ring once."
                 icon="home-heart"
                 maxLength={140}
-                value={draft.pickupInstructions ?? ""}
-                onChangeText={(pickupInstructions) =>
-                  update({ pickupInstructions })
-                }
+                value={draft.pickupInstructions ?? ''}
+                onChangeText={(pickupInstructions) => update({ pickupInstructions })}
               />
               {draft.pickupPhotoUri ? (
                 <View>
-                  <Photo
-                    uri={draft.pickupPhotoUri}
-                    size="card"
-                    style={styles.pickupPhoto}
-                  />
+                  <Photo uri={draft.pickupPhotoUri} size="card" style={styles.pickupPhoto} />
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Remove pickup spot photo"
-                    style={[
-                      styles.remove,
-                      { top: spacing.sm, right: spacing.sm },
-                    ]}
-                    onPress={() => update({ pickupPhotoUri: undefined })}
-                  >
+                    style={[styles.remove, { top: spacing.sm, right: spacing.sm }]}
+                    onPress={() => update({ pickupPhotoUri: undefined })}>
                     <Icon name="close" size={18} color={colors.text} />
                   </Pressable>
                 </View>
@@ -625,8 +517,8 @@ export default function RestaurantInformation() {
                 />
               )}
               <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
-                Your door, gate or cooler, so customers know they’re in the
-                right place. Shared with the address once you accept an order.
+                Your door, gate or cooler, so customers know they’re in the right place. Shared with the address once
+                you accept an order.
               </Body>
 
               <SectionTitle>How you take orders</SectionTitle>
@@ -634,30 +526,23 @@ export default function RestaurantInformation() {
                 {(
                   [
                     [
-                      "bake-days",
-                      "Bake days",
-                      "Recommended. Customers order ahead, you bake in one batch, and they pick up in a window.",
+                      'bake-days',
+                      'Bake days',
+                      'Recommended. Customers order ahead, you bake in one batch, and they pick up in a window.',
                     ],
-                    [
-                      "hours",
-                      "Set hours",
-                      "Customers order while you’re open and pick up when it’s ready.",
-                    ],
+                    ['hours', 'Set hours', 'Customers order while you’re open and pick up when it’s ready.'],
                   ] as const
                 ).map(([mode, title, body]) => {
-                  const on = (draft.orderMode ?? "hours") === mode;
+                  const on = (draft.orderMode ?? 'hours') === mode;
                   return (
                     <Pressable
                       key={mode}
                       accessibilityRole="radio"
                       accessibilityState={{ checked: on }}
                       onPress={() => update({ orderMode: mode })}
-                      style={[styles.mode, on && styles.modeOn]}
-                    >
+                      style={[styles.mode, on && styles.modeOn]}>
                       <Icon
-                        name={
-                          on ? "check-circle" : "checkbox-blank-circle-outline"
-                        }
+                        name={on ? 'check-circle' : 'checkbox-blank-circle-outline'}
                         size={22}
                         color={on ? colors.gold : colors.border}
                       />
@@ -684,7 +569,7 @@ export default function RestaurantInformation() {
                   <View style={styles.sectionHeader}>
                     <SectionTitle>Working days</SectionTitle>
                     <TextLink
-                      title={allSelected ? "Clear All" : "Select All"}
+                      title={allSelected ? 'Clear All' : 'Select All'}
                       onPress={() =>
                         update({
                           workingDays: allSelected ? [] : [...WEEKDAYS],
@@ -704,33 +589,22 @@ export default function RestaurantInformation() {
                               accessibilityRole="checkbox"
                               accessibilityState={{ checked: on }}
                               onPress={() => toggleDay(day)}
-                              style={styles.day}
-                            >
+                              style={styles.day}>
                               <Icon
-                                name={
-                                  on
-                                    ? "check-circle"
-                                    : "checkbox-blank-circle-outline"
-                                }
+                                name={on ? 'check-circle' : 'checkbox-blank-circle-outline'}
                                 size={26}
                                 color={on ? colors.gold : colors.border}
                               />
-                              <Text style={styles.dayText}>
-                                {capitalize(day)}
-                              </Text>
+                              <Text style={styles.dayText}>{capitalize(day)}</Text>
                             </Pressable>
                           );
                         })}
                       </View>
                     ))}
                   </View>
-                  {errors.days ? (
-                    <Text style={styles.error}>{errors.days}</Text>
-                  ) : null}
+                  {errors.days ? <Text style={styles.error}>{errors.days}</Text> : null}
 
-                  <SectionTitle>
-                    {splitHours ? "Usual hours" : "Hours"}
-                  </SectionTitle>
+                  <SectionTitle>{splitHours ? 'Usual hours' : 'Hours'}</SectionTitle>
                   <View style={styles.pair}>
                     <PickerField
                       containerStyle={{ flex: 1 }}
@@ -738,32 +612,25 @@ export default function RestaurantInformation() {
                       placeholder="Opening time"
                       icon="clock-outline"
                       value={draft.openTime ? formatTime(draft.openTime) : null}
-                      onPress={() => setSheet("open")}
+                      onPress={() => setSheet('open')}
                     />
                     <PickerField
                       containerStyle={{ flex: 1 }}
                       label="Closes"
                       placeholder="Closing time"
                       icon="clock-outline"
-                      value={
-                        draft.closeTime ? formatTime(draft.closeTime) : null
-                      }
-                      onPress={() => setSheet("close")}
+                      value={draft.closeTime ? formatTime(draft.closeTime) : null}
+                      onPress={() => setSheet('close')}
                     />
                   </View>
                   <Body muted style={styles.hint}>
-                    Closing after midnight? Pick an earlier close time, like
-                    6:00 PM to 2:00 AM.
+                    Closing after midnight? Pick an earlier close time, like 6:00 PM to 2:00 AM.
                   </Body>
 
                   <View style={styles.splitRow}>
                     <View style={{ flex: 1, gap: 2 }}>
-                      <Text style={styles.splitTitle}>
-                        Different hours on some days
-                      </Text>
-                      <Text style={styles.splitBody}>
-                        For example, shorter Saturdays or a late Friday.
-                      </Text>
+                      <Text style={styles.splitTitle}>Different hours on some days</Text>
+                      <Text style={styles.splitBody}>For example, shorter Saturdays or a late Friday.</Text>
                     </View>
                     <Toggle
                       accessibilityLabel="Different hours on some days"
@@ -775,64 +642,41 @@ export default function RestaurantInformation() {
                     />
                   </View>
                   {splitHours
-                    ? WEEKDAYS.filter((d) => draft.workingDays.includes(d)).map(
-                        (day) => {
-                          const own = draft.dayHours?.[day];
-                          const h = own ?? {
-                            open: draft.openTime,
-                            close: draft.closeTime,
-                          };
-                          return (
-                            <View key={day} style={styles.dayHoursRow}>
-                              <Text style={styles.dayHoursName}>
-                                {capitalize(day).slice(0, 3)}
-                              </Text>
-                              <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel={`${capitalize(day)} opens ${h.open ? formatTime(h.open) : "not set"}`}
-                                onPress={() =>
-                                  setDayPick({ day, which: "open" })
-                                }
-                                style={[
-                                  styles.dayHoursTime,
-                                  own && styles.dayHoursOwn,
-                                ]}
-                              >
-                                <Text style={styles.dayHoursText}>
-                                  {h.open ? formatTime(h.open) : "Opens"}
-                                </Text>
-                              </Pressable>
-                              <Text style={styles.dayHoursDash}>to</Text>
-                              <Pressable
-                                accessibilityRole="button"
-                                accessibilityLabel={`${capitalize(day)} closes ${h.close ? formatTime(h.close) : "not set"}`}
-                                onPress={() =>
-                                  setDayPick({ day, which: "close" })
-                                }
-                                style={[
-                                  styles.dayHoursTime,
-                                  own && styles.dayHoursOwn,
-                                ]}
-                              >
-                                <Text style={styles.dayHoursText}>
-                                  {h.close ? formatTime(h.close) : "Closes"}
-                                </Text>
-                              </Pressable>
-                            </View>
-                          );
-                        },
-                      )
+                    ? WEEKDAYS.filter((d) => draft.workingDays.includes(d)).map((day) => {
+                        const own = draft.dayHours?.[day];
+                        const h = own ?? {
+                          open: draft.openTime,
+                          close: draft.closeTime,
+                        };
+                        return (
+                          <View key={day} style={styles.dayHoursRow}>
+                            <Text style={styles.dayHoursName}>{capitalize(day).slice(0, 3)}</Text>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`${capitalize(day)} opens ${h.open ? formatTime(h.open) : 'not set'}`}
+                              onPress={() => setDayPick({ day, which: 'open' })}
+                              style={[styles.dayHoursTime, own && styles.dayHoursOwn]}>
+                              <Text style={styles.dayHoursText}>{h.open ? formatTime(h.open) : 'Opens'}</Text>
+                            </Pressable>
+                            <Text style={styles.dayHoursDash}>to</Text>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`${capitalize(day)} closes ${h.close ? formatTime(h.close) : 'not set'}`}
+                              onPress={() => setDayPick({ day, which: 'close' })}
+                              style={[styles.dayHoursTime, own && styles.dayHoursOwn]}>
+                              <Text style={styles.dayHoursText}>{h.close ? formatTime(h.close) : 'Closes'}</Text>
+                            </Pressable>
+                          </View>
+                        );
+                      })
                     : null}
-                  {errors.hours ? (
-                    <Text style={styles.error}>{errors.hours}</Text>
-                  ) : null}
+                  {errors.hours ? <Text style={styles.error}>{errors.hours}</Text> : null}
                 </>
               )}
 
               <SectionTitle>Find me in person (optional)</SectionTitle>
               <Body muted style={styles.hint}>
-                Sell at a market or a coffee shop pop-up? Add it so customers
-                can find you there too.
+                Sell at a market or a coffee shop pop-up? Add it so customers can find you there too.
               </Body>
               {(draft.inPerson ?? []).map((spot, i) => (
                 <View key={`${spot.place}-${i}`} style={styles.spotRow}>
@@ -846,12 +690,9 @@ export default function RestaurantInformation() {
                     hitSlop={10}
                     onPress={() =>
                       update({
-                        inPerson: (draft.inPerson ?? []).filter(
-                          (_, j) => j !== i,
-                        ),
+                        inPerson: (draft.inPerson ?? []).filter((_, j) => j !== i),
                       })
-                    }
-                  >
+                    }>
                     <Icon name="close" size={18} color={colors.textMuted} />
                   </Pressable>
                 </View>
@@ -878,13 +719,10 @@ export default function RestaurantInformation() {
                     disabled={!spotPlace.trim() || !spotWhen.trim()}
                     onPress={() => {
                       update({
-                        inPerson: [
-                          ...(draft.inPerson ?? []),
-                          { place: spotPlace.trim(), when: spotWhen.trim() },
-                        ],
+                        inPerson: [...(draft.inPerson ?? []), { place: spotPlace.trim(), when: spotWhen.trim() }],
                       });
-                      setSpotPlace("");
-                      setSpotWhen("");
+                      setSpotPlace('');
+                      setSpotWhen('');
                     }}
                   />
                 </View>
@@ -893,24 +731,20 @@ export default function RestaurantInformation() {
           )}
         </ScrollView>
         <View style={styles.footer}>
-          <GoldButton
-            title={step === 1 ? "Next" : "Save"}
-            chevron
-            onPress={next}
-          />
+          <GoldButton title={step === 1 ? 'Next' : 'Save'} chevron onPress={next} />
         </View>
       </KeyboardAvoidingView>
 
       <OptionSheet
-        visible={sheet === "cuisine"}
+        visible={sheet === 'cuisine'}
         title="Cuisine"
         options={CUISINES.map((c) => ({ value: c, label: c }))}
         selected={draft.cuisine ? [draft.cuisine] : []}
-        onSelect={([cuisine]) => update({ cuisine: cuisine ?? "" })}
+        onSelect={([cuisine]) => update({ cuisine: cuisine ?? '' })}
         onClose={() => setSheet(null)}
       />
       <OptionSheet
-        visible={sheet === "prep"}
+        visible={sheet === 'prep'}
         title="Typical prep time"
         options={PREP_OPTIONS}
         selected={[String(draft.prepMinutes)]}
@@ -918,7 +752,7 @@ export default function RestaurantInformation() {
         onClose={() => setSheet(null)}
       />
       <OptionSheet<CategoryId>
-        visible={sheet === "specialties"}
+        visible={sheet === 'specialties'}
         title="Specialties"
         multiple
         options={CATEGORIES.map((c) => ({ value: c.id, label: c.label }))}
@@ -927,7 +761,7 @@ export default function RestaurantInformation() {
         onClose={() => setSheet(null)}
       />
       <OptionSheet
-        visible={sheet === "state"}
+        visible={sheet === 'state'}
         title="State"
         options={[
           ...US_STATES.filter((st) => isOpenState(st.code)),
@@ -945,11 +779,7 @@ export default function RestaurantInformation() {
       />
       <OptionSheet
         visible={dayPick !== null}
-        title={
-          dayPick
-            ? `${capitalize(dayPick.day)} ${dayPick.which === "open" ? "opens" : "closes"}`
-            : ""
-        }
+        title={dayPick ? `${capitalize(dayPick.day)} ${dayPick.which === 'open' ? 'opens' : 'closes'}` : ''}
         options={TIME_OPTIONS}
         selected={(() => {
           if (!dayPick) return [];
@@ -957,7 +787,7 @@ export default function RestaurantInformation() {
             open: draft.openTime,
             close: draft.closeTime,
           };
-          const t = dayPick.which === "open" ? h.open : h.close;
+          const t = dayPick.which === 'open' ? h.open : h.close;
           return t ? [t] : [];
         })()}
         onSelect={([t]) => {
@@ -966,12 +796,8 @@ export default function RestaurantInformation() {
             open: draft.openTime,
             close: draft.closeTime,
           };
-          const next =
-            dayPick.which === "open"
-              ? { ...current, open: t }
-              : { ...current, close: t };
-          const same =
-            next.open === draft.openTime && next.close === draft.closeTime;
+          const next = dayPick.which === 'open' ? { ...current, open: t } : { ...current, close: t };
+          const same = next.open === draft.openTime && next.close === draft.closeTime;
           const dayHours = { ...(draft.dayHours ?? {}) };
           // A day back on the usual hours needs no entry of its own.
           if (same) delete dayHours[dayPick.day];
@@ -981,19 +807,19 @@ export default function RestaurantInformation() {
         onClose={() => setDayPick(null)}
       />
       <OptionSheet
-        visible={sheet === "open"}
+        visible={sheet === 'open'}
         title="Start Time"
         options={TIME_OPTIONS}
         selected={draft.openTime ? [draft.openTime] : []}
-        onSelect={([openTime]) => update({ openTime: openTime ?? "" })}
+        onSelect={([openTime]) => update({ openTime: openTime ?? '' })}
         onClose={() => setSheet(null)}
       />
       <OptionSheet
-        visible={sheet === "close"}
+        visible={sheet === 'close'}
         title="Close Time"
         options={TIME_OPTIONS}
         selected={draft.closeTime ? [draft.closeTime] : []}
-        onSelect={([closeTime]) => update({ closeTime: closeTime ?? "" })}
+        onSelect={([closeTime]) => update({ closeTime: closeTime ?? '' })}
         onClose={() => setSheet(null)}
       />
     </Screen>
@@ -1002,11 +828,7 @@ export default function RestaurantInformation() {
 
 function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={styles.upload}
-    >
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.upload}>
       <Icon name="image-plus" size={24} color={colors.gold} />
       <Text style={styles.uploadText}>{label}</Text>
     </Pressable>
@@ -1015,20 +837,20 @@ function UploadBox({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   areaIdeas: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
     marginTop: -spacing.xs,
   },
   splitRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     marginTop: spacing.sm,
   },
   splitTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
   splitBody: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
-  dayHoursRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  dayHoursRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   dayHoursName: {
     width: 44,
     fontFamily: fonts.semibold,
@@ -1042,8 +864,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dayHoursOwn: { borderColor: colors.gold },
   dayHoursText: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
@@ -1052,23 +874,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
   },
-  swatches: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm + 2 },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm + 2 },
   swatch: {
     padding: 3,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: 'transparent',
   },
   swatchFill: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   spotRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.md,
@@ -1077,21 +899,21 @@ const styles = StyleSheet.create({
   spotPlace: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
   spotWhen: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   preview: { gap: spacing.sm, marginTop: spacing.sm },
-  storyRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  storyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatarBadge: {
-    position: "absolute",
+    position: 'absolute',
     right: -2,
     bottom: -2,
     width: 26,
     height: 26,
     borderRadius: 13,
     backgroundColor: colors.gold,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   topBar: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -1101,7 +923,7 @@ const styles = StyleSheet.create({
   },
   topTitle: {
     flex: 1,
-    textAlign: "center",
+    textAlign: 'center',
     fontFamily: fonts.semibold,
     fontSize: 16,
     letterSpacing: -0.2,
@@ -1119,7 +941,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingTop: spacing.sm,
   },
-  logoWrap: { alignSelf: "flex-start" },
+  logoWrap: { alignSelf: 'flex-start' },
   logo: {
     width: 110,
     height: 110,
@@ -1128,7 +950,7 @@ const styles = StyleSheet.create({
     borderColor: colors.gold,
   },
   editBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: -12,
     right: -12,
     width: 38,
@@ -1137,27 +959,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1.5,
     borderColor: colors.gold,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   upload: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
     borderWidth: 1.5,
-    borderStyle: "dashed",
+    borderStyle: 'dashed',
     borderColor: colors.border,
     borderRadius: radius.md,
     minHeight: 56,
   },
   uploadText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.gold },
-  covers: { flexDirection: "row", gap: spacing.lg, paddingTop: spacing.sm },
+  covers: { flexDirection: 'row', gap: spacing.lg, paddingTop: spacing.sm },
   cover: { width: 88, height: 88, borderRadius: radius.sm },
-  pickupPhoto: { width: "100%", aspectRatio: 4 / 3, borderRadius: radius.md },
-  introPreview: { width: "62%", aspectRatio: 4 / 5 },
+  pickupPhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: radius.md },
+  introPreview: { width: '62%', aspectRatio: 4 / 5 },
   remove: {
-    position: "absolute",
+    position: 'absolute',
     top: -12,
     right: -12,
     width: 28,
@@ -1166,13 +988,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.text,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  pair: { flexDirection: "row", gap: spacing.md },
+  pair: { flexDirection: 'row', gap: spacing.md },
   mode: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1188,15 +1010,15 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  days: { flexDirection: "row" },
+  days: { flexDirection: 'row' },
   dayColumn: { flex: 1, gap: spacing.md },
   day: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     minHeight: 36,
   },

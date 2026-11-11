@@ -1,14 +1,14 @@
-import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { isOpenState, stateName } from "@/data/regions";
-import * as haptics from "@/lib/haptics";
-import { shareCookInvite } from "@/lib/share";
-import { colors, fonts, radius, spacing } from "@/theme";
+import { isOpenState, stateName } from '@/data/regions';
+import * as haptics from '@/lib/haptics';
+import { shareCookInvite } from '@/lib/share';
+import { colors, fonts, radius, spacing } from '@/theme';
 
-import { EmptyArtwork } from "./empty-state";
-import { Icon } from "./icon";
-import { GoldButton } from "./ui";
+import { EmptyArtwork } from './empty-state';
+import { Icon } from './icon';
+import { GoldButton } from './ui';
 
 /**
  * Home for someone with no kitchens in reach yet. Manna grows cook by cook,
@@ -38,18 +38,17 @@ export function NoKitchensNearby({
       <EmptyArtwork art="oven" size={112} />
       <Text style={styles.title}>No kitchens near {area} yet</Text>
       <Text style={styles.body}>
-        Manna is growing one home cook at a time.{" "}
+        Manna is growing one home cook at a time.{' '}
         {open
           ? `Cooks in ${stateName(state)} can open a kitchen today, so the first ones near you could be days away.`
-          : `We’re getting ready for ${state ? stateName(state) : "your state"}, where home-food rules are a little different.`}
+          : `We’re getting ready for ${state ? stateName(state) : 'your state'}, where home-food rules are a little different.`}
       </Text>
 
       {joined ? (
         <View style={styles.joined}>
           <Icon name="check-circle" size={20} color={colors.success} />
           <Text style={styles.joinedText}>
-            You’re on the list{zip ? ` for ${zip}` : ""}. We’ll tell you when
-            kitchens open near you.
+            You’re on the list{zip ? ` for ${zip}` : ''}. We’ll tell you when kitchens open near you.
           </Text>
         </View>
       ) : (
@@ -66,35 +65,26 @@ export function NoKitchensNearby({
       <Pressable
         accessibilityRole="button"
         onPress={() => void shareCookInvite(area)}
-        style={({ pressed }) => [styles.invite, pressed && { opacity: 0.85 }]}
-      >
+        style={({ pressed }) => [styles.invite, pressed && { opacity: 0.85 }]}>
         <View style={styles.inviteIcon}>
           <Icon name="chef-hat" size={20} color={colors.bg} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={styles.inviteTitle}>Know a great home cook?</Text>
           <Text style={styles.inviteBody}>
-            The baker whose banana bread you’d pay for, the friend with the
-            famous tamales. Invite them to open a free kitchen.
+            The baker whose banana bread you’d pay for, the friend with the famous tamales. Invite them to open a free
+            kitchen.
           </Text>
         </View>
         <Icon name="export-variant" size={18} color={colors.textMuted} />
       </Pressable>
 
       <View style={styles.links}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push("/location")}
-          hitSlop={8}
-        >
+        <Pressable accessibilityRole="button" onPress={() => router.push('/location')} hitSlop={8}>
           <Text style={styles.link}>Change your area</Text>
         </Pressable>
         <Text style={styles.dot}>·</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={onSeeOrlando}
-          hitSlop={8}
-        >
+        <Pressable accessibilityRole="button" onPress={onSeeOrlando} hitSlop={8}>
           <Text style={styles.link}>See Manna in Orlando</Text>
         </Pressable>
       </View>
@@ -104,7 +94,7 @@ export function NoKitchensNearby({
 
 const styles = StyleSheet.create({
   wrap: {
-    alignItems: "center",
+    alignItems: 'center',
     gap: spacing.md,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
@@ -114,23 +104,23 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 30,
     color: colors.ivory,
-    textAlign: "center",
+    textAlign: 'center',
   },
   body: {
     fontFamily: fonts.body,
     fontSize: 15,
     lineHeight: 22,
     color: colors.textMuted,
-    textAlign: "center",
+    textAlign: 'center',
   },
   joined: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    alignSelf: "stretch",
+    alignSelf: 'stretch',
   },
   joinedText: {
     flex: 1,
@@ -140,21 +130,21 @@ const styles = StyleSheet.create({
     color: colors.ivory,
   },
   invite: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    alignSelf: "stretch",
+    alignSelf: 'stretch',
   },
   inviteIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.gold,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inviteTitle: {
     fontFamily: fonts.semibold,
@@ -167,7 +157,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.textMuted,
   },
-  links: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  links: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   link: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold },
   dot: { color: colors.textFaint },
 });

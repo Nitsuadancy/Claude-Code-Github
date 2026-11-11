@@ -1,8 +1,8 @@
-import { DEFAULT_NEIGHBORHOOD } from "@/data/neighborhoods";
-import type { Restaurant, UserProfile } from "@/types";
+import { DEFAULT_NEIGHBORHOOD } from '@/data/neighborhoods';
+import type { Restaurant, UserProfile } from '@/types';
 
-import { centerOf, distanceKm, driveMinutes, type LatLng } from "./geo";
-import { lookupZip, placeLabel } from "./zips";
+import { centerOf, distanceKm, driveMinutes, type LatLng } from './geo';
+import { lookupZip, placeLabel } from './zips';
 
 /**
  * Where people and kitchens are, roughly. Customers set a ZIP (or a
@@ -22,9 +22,7 @@ export interface Place extends LatLng {
 }
 
 /** The customer's place: their ZIP, else their neighborhood, else the launch neighborhood. */
-export function userPlace(
-  user: Pick<UserProfile, "neighborhood" | "zip"> | null | undefined,
-): Place {
+export function userPlace(user: Pick<UserProfile, 'neighborhood' | 'zip'> | null | undefined): Place {
   const zip = lookupZip(user?.zip);
   if (zip) {
     const hood = user?.neighborhood ? centerOf(user.neighborhood) : undefined;
@@ -34,13 +32,11 @@ export function userPlace(
   }
   const name = user?.neighborhood || DEFAULT_NEIGHBORHOOD;
   const center = centerOf(name) ?? centerOf(DEFAULT_NEIGHBORHOOD)!;
-  return { ...center, label: name, state: "FL" };
+  return { ...center, label: name, state: 'FL' };
 }
 
 /** A kitchen's public place: its neighborhood's center when Manna knows it, else its ZIP's. */
-export function kitchenPlace(
-  r: Pick<Restaurant, "neighborhood" | "areaCode" | "state">,
-): Place | undefined {
+export function kitchenPlace(r: Pick<Restaurant, 'neighborhood' | 'areaCode' | 'state'>): Place | undefined {
   const hood = centerOf(r.neighborhood);
   if (hood) return { ...hood, label: r.neighborhood, state: r.state };
   const zip = lookupZip(r.areaCode);
@@ -58,9 +54,7 @@ export function distanceMiles(a: LatLng, b: LatLng): number {
 }
 
 /** Live kitchens within reach of a place, nearest first, with their distance in miles. */
-export function nearbyKitchens<
-  T extends Pick<Restaurant, "neighborhood" | "areaCode" | "state">,
->(
+export function nearbyKitchens<T extends Pick<Restaurant, 'neighborhood' | 'areaCode' | 'state'>>(
   restaurants: T[],
   from: LatLng,
   miles = NEARBY_MILES,
@@ -70,17 +64,13 @@ export function nearbyKitchens<
       const place = kitchenPlace(r);
       return place ? { r, place, miles: distanceMiles(from, place) } : null;
     })
-    .filter(
-      (x): x is { r: T; miles: number; place: Place } =>
-        !!x && x.miles <= miles,
-    )
+    .filter((x): x is { r: T; miles: number; place: Place } => !!x && x.miles <= miles)
     .sort((a, b) => a.miles - b.miles);
 }
 
 /** "In your neighborhood", "About 8 min drive" or "About 14 miles away". */
 export function driveBetween(from: Place, to: Place): string {
-  if (from.label === to.label && distanceMiles(from, to) < 1)
-    return "In your neighborhood";
+  if (from.label === to.label && distanceMiles(from, to) < 1) return 'In your neighborhood';
   const minutes = driveMinutes(from, to);
   if (minutes <= 45) return `About ${minutes} min drive`;
   return `About ${Math.round(distanceMiles(from, to))} miles away`;

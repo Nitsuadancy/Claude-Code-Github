@@ -8,8 +8,6 @@ import { DEFAULT_STATE, marketFor } from '@/data/regions';
 import { kitchenPlace } from '@/lib/location';
 import { timezoneFor } from '@/lib/timezones';
 import { lookupZip } from '@/lib/zips';
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
 import { isCategoryId } from '@/data/categories';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { WEEKDAYS } from '@/lib/hours';
@@ -37,6 +35,8 @@ import type {
   RestaurantRow,
   ReviewRow,
 } from './rows';
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Turns a storage path into something an <Image> can load, e.g. a public URL. */
 export type PhotoUrl = (path: string) => string;
