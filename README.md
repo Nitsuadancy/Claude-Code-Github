@@ -21,15 +21,17 @@ Read the full vision in [docs/BUSINESS_PLAN.md](docs/BUSINESS_PLAN.md).
 This is a **working prototype**. It started from the original UI/UX mockups and was
 redesigned around the Manna logo: black, ivory serif type and fine gold rays (see
 [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)). Every screen runs end to end on
-iPhone, Android and the web. Data is stored on the device for now,
-so there's no server yet. The prototype includes:
+iPhone, Android and the web. Out of the box it runs as a demo with data stored on
+the device. The real backend (Supabase and Stripe) is built and switches on when
+`.env` is filled in; see [docs/GO_LIVE.md](docs/GO_LIVE.md). The app includes:
 
 - Onboarding, role choice and phone sign-in. Sign-in runs in demo mode: any 6-digit code works.
 - Foodie side: categories, search, filters and sorting, restaurant pages, a cart with fees, placing orders and order status.
 - Chef side: the four-step setup (information, documents, menu, preview), publishing, accepting and advancing orders, and pausing the kitchen.
 
-Not built yet: real accounts and text-message codes, a shared backend, payments,
-delivery, push notifications, reviews and admin tools. See
+Built and waiting for accounts: text-message sign-in, shared data with live
+updates, card payments with cook payouts, Manna Pro billing and push notifications.
+Not built yet: Google and Apple sign-in, delivery and admin screens. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for the plan.
 
 ## Run it
@@ -108,6 +110,7 @@ docs/                  Business plan, roadmap, architecture, company setup
 - [Business plan](docs/BUSINESS_PLAN.md): the why
 - [Roadmap](docs/ROADMAP.md): what gets built next, in order
 - [Architecture](docs/ARCHITECTURE.md): how the app is put together and how the backend plugs in
+- [Going live](docs/GO_LIVE.md): switching on the backend, payments and push, step by step
 - [Design system](docs/DESIGN_SYSTEM.md): colors, type and components
 - [Company setup](docs/COMPANY_SETUP.md): legal, accounts and food-law checklist
 - [Contributing](CONTRIBUTING.md): how work flows from issue to release

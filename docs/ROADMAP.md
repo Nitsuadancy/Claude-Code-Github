@@ -65,24 +65,25 @@ then expand. Each phase ends with something real people can use.
 
 Without this, a chef and a customer on different phones can't see each other.
 
-- [ ] Create the backend project (recommended: Supabase, see [ARCHITECTURE.md](ARCHITECTURE.md))
-- [ ] Phone sign-in with real text-message codes (Supabase Auth + Twilio)
+- [ ] Create the Supabase, Stripe, Twilio and EAS accounts and follow [GO_LIVE.md](GO_LIVE.md)
+- [x] Phone sign-in with real text-message codes (built; needs the Supabase project and Twilio, see [GO_LIVE.md](GO_LIVE.md))
 - [ ] Google and Apple sign-in. Apple's App Store rules require Apple sign-in if Google sign-in is offered.
 - [x] Database tables for profiles, restaurants, menu items, documents and orders, with row-level security (`supabase/`, tested in CI)
 - [x] Server functions: pricing, daily limits, opening hours, order status, reviews, kitchen approval
-- [x] App-side groundwork: Supabase client (off until configured) and tested row ↔ model mappers
-- [ ] Photo and document uploads to private storage (photos saved in thumb, card and full sizes, like the demo photos)
-- [ ] Live order updates, so the chef's dashboard updates the moment an order is placed
-- [ ] Edge Function that removes the sign-in when someone deletes their account
+- [x] The app runs against the backend when `.env` is filled in: sign-in, kitchens near your ZIP, orders, chat, reviews, Pro tools, uploads (off until configured)
+- [x] Photo and document uploads to storage buckets with access rules
+- [ ] Resize photos into thumb, card and full sizes on upload, like the demo photos
+- [x] Live order updates, so the chef's dashboard updates the moment an order is placed
+- [x] Edge Function that removes the sign-in when someone deletes their account
 - [ ] Support inbox for "Need help with this order?" (the `order_issues` table is ready): email or text the team on each new request, and a simple admin view to reply and resolve
 - [ ] Link previews: a kitchen link shared in iMessage or Instagram shows its photo and name (needs the website)
 
 ## Phase 2: Getting paid
 
-- [ ] Stripe Connect (Express accounts): chefs onboard to get paid, and Stripe handles identity checks and 1099-K tax forms
-- [ ] Card, Apple Pay and Google Pay checkout
+- [x] Stripe Connect (Express accounts): chefs onboard to get paid, and Stripe handles identity checks and 1099-K tax forms (built; switch on with [GO_LIVE.md](GO_LIVE.md))
+- [x] Card and Google Pay checkout with Stripe's payment sheet; Apple Pay once the Apple merchant id exists
 - [x] Fee model: movement fee paid by the customer (10%, at least $1.50) plus a 5% kitchen fee (0% for a founding kitchen's first 3 months); tips never charged
-- [ ] Refunds and order cancellation rules
+- [x] Refunds: declined orders and orders cancelled before acceptance are refunded in full, fees included
 
 ## Phase 3: Trust and safety (required before public launch)
 
@@ -98,7 +99,7 @@ Without this, a chef and a customer on different phones can't see each other.
 
 Pickup only for launch (see Launch decisions). Delivery can come back as an option once there's demand.
 
-- [ ] Push notifications for new orders (chef), status changes (customer) and new order messages (both)
+- [x] Push notifications for new orders (chef), status changes (customer), new order messages (both), oven updates, custom orders and alerts (built; switch on with [GO_LIVE.md](GO_LIVE.md))
 - [ ] Lock-screen order status on iPhone (Live Activity). What it shows is built and tested; switching it on needs the first iPhone development build. Steps in [LIVE_ACTIVITY.md](LIVE_ACTIVITY.md)
 - [ ] Text-message fallback for chefs who turn push off
 
@@ -128,8 +129,8 @@ Available at launch. See [PRO.md](PRO.md).
 - [x] Insights: month vs last month, repeat rate, best days, busiest pickup times, best sellers, regulars
 - [x] Printable labels for every kitchen (free, since they help cooks follow the law)
 - [x] Database tables, rules and tests for all of the above
-- [ ] Stripe Billing on the web and the webhook that sets the plan (see [PRO.md](PRO.md))
-- [ ] Push notifications for alerts and custom order replies
+- [x] Stripe Billing on the web and the webhook that sets the plan (see [PRO.md](PRO.md))
+- [x] Push notifications for alerts and custom order replies
 - [ ] Gift cards (check Florida gift card rules first)
 - [ ] Custom storefront link (`manna.app/susies`) once the domain is set up
 
@@ -142,9 +143,8 @@ Available at launch. See [PRO.md](PRO.md).
 
 **How cooks pay**
 
-- [ ] Stripe Billing on the web (see [PRO.md](PRO.md)). Digital subscriptions bought inside the iPhone
-  app normally go through Apple's in-app purchase at 15–30%; check Apple's current rules on linking
-  to web checkout before building
+- [x] Stripe Billing on the web (see [PRO.md](PRO.md)). The Pro page opens Stripe Checkout in the
+  browser; confirm Apple's current guideline 3.1 on linking to web purchases before submitting
 - [x] Database: the plan on each kitchen
 - [ ] A table of sponsored slots with dates
 

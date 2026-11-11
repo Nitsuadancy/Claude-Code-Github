@@ -9,7 +9,7 @@ Everything App Store Connect asks for, ready to paste. Character limits are in b
 | Apple Developer Program ($99/year) | Austin | Needed to create the app in App Store Connect and upload builds. |
 | Domain with a privacy policy page and a support page | Austin | Apple requires both URLs. The text is ready in `src/data/legal.ts`. |
 | Contact email | Austin | Replaces `LEGAL_CONTACT` in `src/data/legal.ts` and goes in the listing. |
-| Live backend (Supabase) and payments (Stripe) | Austin + Claude | Apple rejects apps whose main flow doesn't work. Today orders are saved on the phone without charging a card. |
+| Live backend (Supabase) and payments (Stripe) | Austin | Built; needs the accounts and the steps in [GO_LIVE.md](GO_LIVE.md). Apple rejects apps whose main flow doesn't work. |
 | Reviewer demo account | Claude, once the backend is live | A phone number with a fixed code, plus a demo kitchen, so Apple can test both sides. |
 | Fresh screenshots | Claude | Recapture once payments are live, so the cart no longer shows "Payments aren't connected yet". |
 

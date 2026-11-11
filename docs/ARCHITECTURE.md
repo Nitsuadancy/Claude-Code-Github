@@ -1,56 +1,73 @@
 # Architecture
 
-## Today
+## Overview
 
 ```
 Expo (React Native) app ── one codebase for iOS, Android and web
  ├─ src/app/        screens (Expo Router: file = route)
  ├─ src/components/ shared UI
  ├─ src/lib/        pure business logic (tested)
- └─ src/state/      reducer + AsyncStorage persistence (on-device only)
+ │   └─ remote/     every call to the backend (tested with a fake client)
+ └─ src/state/      reducer + AsyncStorage, and server-sync when the backend is on
+
+supabase/
+ ├─ migrations/     database, security rules and server-side business rules (tested)
+ └─ functions/      Edge Functions: Stripe payments, refunds, payouts, Pro billing, push
 ```
 
 - **Framework:** Expo SDK 58, React Native, TypeScript (strict), Expo Router.
 - **State:** one `useReducer` store in `src/state/`. Every change is an `Action` in
   `src/state/reducer.ts`, so the rules (for example, a cart holds one kitchen, and
-  orders move placed → accepted → preparing → ready → delivered) live in one tested place.
-- **Persistence:** the whole state is saved to AsyncStorage (localStorage on the web).
-  This makes the demo work offline, but **nothing is shared between devices**.
-- **Demo data:** `src/data/sample-restaurants.ts` seeds six kitchens so the Foodie
-  side isn't empty.
+  orders move placed → accepted → preparing → ready → completed) live in one tested place.
+- **Two modes, one app.** Without backend settings in `.env`, everything is saved to
+  AsyncStorage on the phone and six sample kitchens fill the Foodie side: this is the demo.
+  With them, the same screens and actions run against Supabase.
+- **With the backend on** (`src/state/server-sync.ts`):
+  - On sign-in the app loads the person's profile, kitchen, nearby kitchens, orders, chat,
+    saved kitchens, alerts and custom requests in one `syncFromServer`.
+  - Every action still updates the screen at once; actions other people need to see are also
+    sent to the server, and a fresh load follows so the app shows the server's prices and checks.
+    If the server refuses, the person sees its message and the app reloads.
+  - Orders and chat update live through Realtime; everything else refreshes every 5 minutes and on pull-to-refresh.
+  - Placing an order, accepting a quote and publishing a kitchen wait for the server's answer.
+- **Payments** (`src/lib/payments.native.ts`, `supabase/functions/create-payment`): the server
+  starts a Stripe PaymentIntent for the order's database-calculated total and the app shows
+  Stripe's payment sheet. Manna keeps the movement and kitchen fees; the rest goes straight to
+  the cook's Stripe account. Stripe's webhook marks the order paid, and only then does the
+  kitchen see it.
+- **Push** (`src/lib/push.native.ts`, `supabase/functions/notify`): database webhooks call
+  `notify`, which decides who hears about each change and sends through Expo's push service.
 
-### What's simulated
+Turning it all on is in [GO_LIVE.md](GO_LIVE.md).
 
-| Feature | Prototype behavior | Real version |
+### Demo mode vs. backend on
+
+| Feature | Demo (no `.env`) | Backend on |
 |---|---|---|
-| Phone sign-in | Any 6-digit code is accepted | SMS one-time code via Supabase Auth + Twilio |
-| Google / Facebook / Apple sign-in | "Coming soon" message | OAuth through Supabase Auth |
-| Payments | Order is placed without charging | Stripe Connect PaymentIntent |
-| Documents / photos | Stored as local file paths | Uploaded to private cloud storage |
-| Document review | Skipped; publishing is instant | Admin approves before the kitchen goes live |
-| Order updates | Same device only | Realtime subscription |
-| Help with an order | Saved on the phone; the sheet says so | `order_issues` table, sent to Manna's support inbox |
-| Pull to refresh | Redraws with the current time | Refetches orders |
-| Order chat | Messages stay on the phone; the chat says so | `order_messages` with Realtime, plus push notifications |
-| Oven updates, pickup spot photo, intro video | Saved on the phone as local files | `order_updates` and storage buckets (`order-photos` private, `public-photos`) |
-| Drive times on the map | Estimated from neighborhood centers | Same estimate; real routing only if people ask for it |
+| Phone sign-in | Any 6-digit code is accepted | SMS code via Supabase Auth + Twilio |
+| Google / Facebook / Apple sign-in | Hidden | Not built yet |
+| Kitchens | Six sample kitchens | Live kitchens within 25 miles of the person's ZIP (`nearby_kitchens`) |
+| Payments | Order is placed without charging | Stripe payment sheet; refunds on decline or cancel (needs the Stripe key too) |
+| Cook payouts | Not shown | Stripe Connect Express, from the dashboard's payouts card |
+| Documents / photos | Local file paths | Uploaded to storage buckets (`public-photos`, private `order-photos` and `documents`) |
+| Document review | Skipped; publishing is instant | Submitted for review; an admin runs `approve_restaurant` |
+| Orders and chat | Same phone only | Shared, with Realtime updates |
+| Push notifications | None | New orders, status changes, messages, oven updates, quotes, alerts |
+| Help with an order | Saved on the phone; the sheet says so | `order_issues` table (support inbox still to build) |
+| Manna Pro billing | "Start Pro" turns it on without a charge | Stripe Checkout and billing portal on the web; the webhook sets the plan |
+| Alerts, drops, codes, custom requests | Kept on the phone | Their tables, checked by the database |
+| Drive times on the map | Estimated from ZIP centers | Same estimate |
 | Lock-screen order status | Content and timing built and tested | `expo-widgets` Live Activity in the first iPhone build ([LIVE_ACTIVITY.md](LIVE_ACTIVITY.md)) |
-| Manna Pro billing | "Start Pro" turns it on without a charge | Stripe Billing on the web, with a webhook that sets the plan ([PRO.md](PRO.md)) |
-| Alerts, drops, codes, custom requests | Kept on the phone | `kitchen_alerts`, `drops`, `discount_codes` and `custom_requests` tables, with push notifications |
 
-## Next: backend
+## Backend
 
-**Status:** the database schema, security rules and server functions are written and
-tested in [`supabase/`](../supabase/README.md). The next step is connecting the app to it.
-
-**Recommendation: [Supabase](https://supabase.com)** (Postgres, Auth, Storage,
-Realtime). It has phone OTP built in, row-level security for "chefs only see their own
-orders", live updates for the order dashboard, and a free tier that covers the beta.
-Payments go through **Stripe Connect** so chefs are paid out directly.
+[Supabase](https://supabase.com) (Postgres, Auth, Storage, Realtime, Edge Functions) and
+**Stripe Connect** for payments. The schema, security rules and server functions are in
+[`supabase/`](../supabase/README.md) and tested in CI against a real Postgres.
 
 ### Data model
 
-The TypeScript types in `src/types.ts` map one-to-one to the planned tables:
+The TypeScript types in `src/types.ts` map to these tables (through `src/lib/db/mappers.ts`):
 
 | Table | Key fields | Who can read / write |
 |---|---|---|
@@ -63,9 +80,13 @@ The TypeScript types in `src/types.ts` map one-to-one to the planned tables:
 | `discount_codes` | restaurant_id, code, kind, value, first-orders-only, max uses, end date, paused | Owner and admins only; checked inside `place_order` |
 | `custom_requests` | restaurant_id, customer_id, occasion, details, servings, needed_by, status, quote | Customer and the kitchen; quotes and acceptance through functions |
 | `kitchen_alerts` | restaurant_id, body | Owner, admins and customers who saved the kitchen; 2 a week with Pro |
-| `orders` | customer_id, restaurant_id, status, subtotal / discount / movement fee / kitchen fee / tip / total cents, drop_id, pickup_address (filled when the chef accepts), chef_note, customer_note, scheduled_for, estimated_ready_at, stripe_payment_intent | Customer and that restaurant's owner |
+| `orders` | customer_id, restaurant_id, status, subtotal / discount / movement fee / kitchen fee / tip / total cents, drop_id, pickup_address (filled when the chef accepts), chef_note, customer_note, scheduled_for, estimated_ready_at, payment_intent_id, payment_status (`unpaid`, `paid`, `refunded`, `failed`) | Customer and that restaurant's owner (with payments on, the kitchen only sees paid orders) |
 | `order_status_events` | order_id, status, at | Same as orders. This table drives the tracking timeline. |
 | `order_lines` | order_id, menu_item_id, name, price_cents, quantity (price copied at order time) | Same as orders |
+| `payment_accounts` | profile_id, stripe_customer_id, stripe_account_id, payouts_ready | The person can read their own; only the server functions write |
+| `push_tokens` | token, profile_id, platform | Only the `notify` function reads; written through `register_push_token` |
+| `app_settings` | payments_required | Admins |
+| `launched_states` | code | Admins; `approve_restaurant` checks it |
 
 Money is always stored in **cents** as integers, never floating point.
 
@@ -76,21 +97,12 @@ non-declined order lines inside the same transaction). The app's check in
 **Saved data from older app versions** is upgraded on load by `src/lib/migrate.ts`. When
 you add a field, give it a default there.
 
-### Migration path
+### Secrets
 
-The UI talks only to the store (`useStore`, `useAllRestaurants`, `useMyRestaurant`)
-and to plain functions in `src/lib/`. To add the backend:
-
-1. Add a `src/services/` layer (auth, restaurants, orders) that calls Supabase.
-2. Have reducer actions such as `placeOrder` and `setOrderStatus` call the service
-   first, then update local state with the server's response.
-3. Replace `SAMPLE_RESTAURANTS` with a query for live restaurants near the user.
-4. Keep the `src/lib/` rules (pricing, opening hours, allowed status changes). Run the
-   same checks in a database function so the server enforces them too.
-
-Secrets (Supabase anon key, Stripe publishable key) go in `.env` as
-`EXPO_PUBLIC_*` variables. **Never** put the Stripe secret key or Supabase service key
-in the app. Those belong only in server functions.
+The Supabase anon key and the Stripe publishable key go in `.env` as `EXPO_PUBLIC_*`
+variables; they're safe in the app because row-level security and the server functions
+decide what each person can do. The Stripe secret key, webhook secrets and Supabase
+service-role key are **only** Supabase function secrets ([GO_LIVE.md](GO_LIVE.md), step 4).
 
 ## Builds and releases
 

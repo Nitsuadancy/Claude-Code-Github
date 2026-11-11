@@ -40,12 +40,13 @@ The same rules are enforced in `supabase/migrations/20261105000000_init.sql` and
 - **Custom orders:** the `custom_requests` table, plus `quote_custom_request`, `decline_custom_request`, `withdraw_custom_request` and `accept_custom_quote` (which creates the order with a single `Custom: …` line).
 - **Alerts:** the `kitchen_alerts` table. Only followers can read them, and the insert policy allows 2 a week while the kitchen has Pro.
 
-## Before launch: billing
+## Billing
 
-Billing isn't connected yet. Today "Start Pro" turns Pro on without a charge, like the simulated payments. Before launch:
+Built and off until card payments are switched on ([GO_LIVE.md](GO_LIVE.md)). In the demo, "Start Pro" turns Pro on without a charge.
 
-1. **Stripe Billing:** create two prices ($19.99 monthly, $199 yearly) and a Checkout page on the Manna website.
-2. **Webhook:** set `pro_plan`, `pro_started_at`, `pro_billing_starts_at` and `pro_canceled_at` from Stripe events (`checkout.session.completed`, `customer.subscription.updated` and `customer.subscription.deleted`), using the service role. For a founding kitchen, set the trial end to the end of its free months.
-3. **In the app:** "Start Pro" opens the web checkout. On the US App Store, apps can link to web purchases. Check Apple's current guideline 3.1 before submitting. Selling Pro as an in-app purchase would cost 15–30%.
-4. **Cancel:** link to Stripe's customer portal. Pro stays on until the period ends, which `has_pro` already handles.
-5. **Tax:** ask the accountant whether Pro needs sales tax in Florida. Stripe Tax can collect it.
+1. **Stripe Billing:** two prices ($19.99 monthly, $199 yearly), set as the `STRIPE_PRICE_MONTHLY` and `STRIPE_PRICE_YEARLY` function secrets.
+2. **Start:** the Pro page calls `pro-billing`, which opens Stripe Checkout in the browser. A founding kitchen's subscription starts with a trial that ends with its 3 free months, so its first charge lands then.
+3. **Webhook:** `stripe-webhook` sets `pro_plan`, `pro_started_at`, `pro_billing_starts_at` and `pro_canceled_at` from `customer.subscription.created`, `.updated` and `.deleted`, using the service role (`proColumns` in `supabase/functions/_shared/money.ts`, tested).
+4. **Change or cancel:** once subscribed, the Pro page opens Stripe's billing portal. Pro stays on until the period ends, which `has_pro` already handles. Deleting the account cancels the subscription.
+5. **App Store:** on the US App Store, apps can link to web purchases. Check Apple's current guideline 3.1 before submitting. Selling Pro as an in-app purchase would cost 15–30%.
+6. **Tax:** ask the accountant whether Pro needs sales tax in Florida. Stripe Tax can collect it.

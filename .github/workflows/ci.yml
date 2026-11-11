@@ -46,3 +46,14 @@ jobs:
         run: supabase/tests/run.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/manna_test
+
+  functions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type check Edge Functions
+        run: deno check --no-config supabase/functions/*/index.ts

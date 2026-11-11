@@ -1,9 +1,9 @@
 # Manna database (Supabase)
 
 `migrations/20261105000000_init.sql` is Manna's complete database: tables, security
-rules and the server functions the app will call. It's tested, but the app isn't
-connected to it yet. The app still stores everything on the device (see
-`docs/ARCHITECTURE.md`).
+rules and the server functions the app calls. The app is connected and switches to it
+when `.env` is filled in; until then it runs as the on-device demo (see
+[docs/GO_LIVE.md](../docs/GO_LIVE.md)).
 
 ## What's in it
 
@@ -24,7 +24,8 @@ connected to it yet. The app still stores everything on the device (see
 - **Prices** are calculated on the server from the menu (`place_order`). A modified app can't change what it pays.
 - **Daily limits** are checked when an order is placed. Each dish is locked while it's checked, so two people can't both buy the last portion.
 - **Opening hours** apply to both "as soon as possible" and scheduled orders, including overnight hours.
-- **Order status** only moves placed → accepted → preparing → ready → delivered, or placed → declined, and only the receiving kitchen can move it.
+- **Order status** only moves placed → accepted → preparing → ready → completed, or placed → declined, and only the receiving kitchen can move it.
+- **Payments** (once `app_settings.payments_required` is on): kitchens only see paid orders, only kitchens with Stripe payouts set up can take orders, and a kitchen can't accept an unpaid order. Only the `stripe-webhook` function can mark an order paid (`mark_order_paid`).
 - **Kitchens go live** only after the Manna team approves the permit and food handler certificate (`approve_restaurant`). Chefs can't mark themselves verified or change their ratings.
 - **Privacy:** customers see only their own orders, and kitchens see only orders sent to them. Reviews show a first name and last initial.
 
@@ -39,42 +40,36 @@ connected to it yet. The app still stores everything on the device (see
    ```
 3. In the Supabase dashboard:
    - **Authentication → Providers:** turn on **Phone** and connect Twilio, which sends the sign-in codes.
-   - **Storage:** create three buckets.
+   - **Storage:** nothing to do. `20261112000000_storage.sql` creates the three buckets and their rules:
      - `public-photos` (public): kitchen, dish and chef photos, pinned-update photos and cooks' intro videos.
      - `order-photos` (private): oven-update photos and pickup spot photos. The app shows these with signed URLs, only to that order's customer and kitchen.
      - `documents` (private): permits and IDs.
-   - **Make yourself an admin:** run this in the SQL editor:
-     `update profiles set is_admin = true where email = 'you@yourcompany.com';`
+   - **Make yourself an admin:** sign in to the app once, copy your user id from Authentication → Users, and run
+     `update profiles set is_admin = true where id = '<your user id>';` in the SQL editor.
 4. Put the project URL and the **anon** key in `.env` as `EXPO_PUBLIC_SUPABASE_URL` and
    `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Never put the service-role key in the app.
 
 ## Connecting the app
 
-The groundwork is in place and does nothing until `.env` is filled in (copy `.env.example`):
+The app is connected and stays off until `.env` is filled in. **[docs/GO_LIVE.md](../docs/GO_LIVE.md)
+is the step-by-step guide**, including Stripe, the server functions and push notifications.
 
-- `src/lib/supabase.ts` creates the client from the two settings, keeps the sign-in on the
-  device, and turns storage paths into photo URLs. Without the settings, `supabase` is `null`
-  and the app keeps working on the device as it does today.
-- `src/lib/db/rows.ts` describes each table's rows; `src/lib/db/mappers.ts` turns them into
-  the app's models and back, with tests in `src/__tests__/db-mappers.test.ts`. Orders are
-  placed through `place_order()` with only dish ids and quantities, so prices always come
-  from the server.
+| Part | Where |
+|---|---|
+| Client, switched on by `.env` | `src/lib/supabase.ts` |
+| Every call the app makes | `src/lib/remote/api.ts` (tested in `src/__tests__/remote.test.ts`) |
+| Photo and document uploads | `src/lib/remote/uploads.ts` |
+| Loading, live updates and sending changes | `src/state/server-sync.ts`, `src/state/store.tsx` |
+| Rows ↔ app models | `src/lib/db/rows.ts`, `src/lib/db/mappers.ts` |
+| Card payments and push on the phone | `src/lib/payments.native.ts`, `src/lib/push.native.ts` |
+| Server functions (Stripe, refunds, payouts, Pro billing, push, account removal) | `supabase/functions/` |
 
-Still to do when the project exists:
+Prices, limits, opening hours, codes, drops and order status are always decided by the database;
+the app only shows the result.
 
-1. **Sign-in:** phone codes with `supabase.auth.signInWithOtp({ phone })` and `verifyOtp`.
-2. **Data:** load kitchens, menus, orders and reviews through the mappers, and listen to
-   order changes with Realtime so both sides update live.
-3. **Photos:** upload to the `public-photos` bucket before saving a dish or kitchen.
-4. **Account deletion:** `delete_my_account()` clears the person's data, but removing the
-   sign-in itself (`auth.users`) needs the service-role key. Add a small Edge Function that
-   calls `delete_my_account()` as the user and then `auth.admin.deleteUser()`.
-5. **Payments:** charge with Stripe when the kitchen accepts; see docs/ROADMAP.md.
-6. **Most ordered:** call `popular_menu_items()` and pass the ids to `restaurantFromRow`.
-7. **Order chat:** read and send through `order_messages` (the policies check that the chat is
-   open and nobody is blocked), subscribe to new rows with Realtime (the migration adds
-   `orders` and `order_messages` to the `supabase_realtime` publication), save read times in
-   `order_chat_reads`, and send a push notification for each new message.
+**Server functions** are Deno. They aren't part of the app's TypeScript build; check them with
+`deno check --no-config supabase/functions/*/index.ts` (CI does this on every push). Their money and notification rules live in
+`supabase/functions/_shared/money.ts` and `notifications.ts`, which the app's jest tests also cover.
 
 ## Test it locally
 
