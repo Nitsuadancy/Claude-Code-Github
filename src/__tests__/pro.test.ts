@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { cottageStatement, isComingSoon, isOpenState, onlineNotice, openStateNames, STATE_RULES } from '@/data/regions';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { ALERTS_PER_WEEK, alertsLeft, followedAlerts } from '@/lib/alerts';
 import { buildActivity } from '@/lib/activity';
@@ -8,9 +9,12 @@ import { applyCode, checkCodeDraft, discountFor } from '@/lib/discounts';
 import { checkDrop, draftFromDrop, everydayMenu, openDrops } from '@/lib/drops';
 import { kitchenInsights } from '@/lib/insights';
 import { allergenLine, labelGaps } from '@/lib/labels';
+import { nearbyKitchens, userPlace } from '@/lib/location';
 import { kitchenPayout } from '@/lib/pricing';
 import { featuredKitchens, hasPro, PRO_YEARLY_SAVINGS_DOLLARS, proStatus, startSubscription } from '@/lib/pro';
 import { tasteFeed } from '@/lib/taste';
+import { timezoneFor } from '@/lib/timezones';
+import { lookupZip } from '@/lib/zips';
 import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
 import type { CustomRequest, DiscountCode, Drop, Order, Restaurant } from '@/types';
 
@@ -280,5 +284,41 @@ describe('insights and labels', () => {
     expect(allergenLine(['dairy', 'eggs'])).toBe('Contains: Dairy, Eggs');
     expect(allergenLine([])).toBeNull();
     expect(labelGaps({ ingredients: 'Flour', netWeight: '' }, '5 Willow Way')).toEqual(['net weight']);
+  });
+});
+
+describe('states', () => {
+  it('opens Florida and keeps researched states waiting for launch', () => {
+    expect(openStateNames()).toEqual(['Florida']);
+    for (const code of ['TX', 'CA', 'NY', 'PA', 'OH', 'IL', 'GA', 'NC', 'MI']) {
+      expect(isOpenState(code)).toBe(false);
+      expect(isComingSoon(code)).toBe(true);
+    }
+    expect(isComingSoon('WY')).toBe(false);
+    for (const [code, rules] of Object.entries(STATE_RULES)) {
+      expect(rules.code).toBe(code);
+      expect(rules.source).toMatch(/^https:\/\//);
+    }
+    expect(STATE_RULES.TX.annualSalesCapCents).toBe(15_000_000);
+    expect(onlineNotice('TX')).toMatch(/PRIVATE RESIDENCE/);
+    expect(onlineNotice('IL')).toMatch(/not subject to public health inspection/);
+    expect(onlineNotice('FL')).toBeNull();
+    expect(cottageStatement('PA')).toBe('');
+  });
+
+  it('finds ZIPs anywhere and kitchens within reach', () => {
+    expect(lookupZip('78701')).toMatchObject({ city: 'Austin', state: 'TX' });
+    expect(lookupZip('00000')).toBeNull();
+    const austin = userPlace({ neighborhood: '', zip: '78701' });
+    expect(austin.label).toBe('Austin');
+    expect(nearbyKitchens([susie], austin)).toEqual([]);
+    const orlando = userPlace({ neighborhood: '', zip: '32804' });
+    expect(nearbyKitchens([susie], orlando)[0].r.id).toBe('sample_susies_sweets');
+    expect(timezoneFor('TX', -106.4)).toBe('America/Denver');
+    expect(timezoneFor('TX', -97.7)).toBe('America/Chicago');
+    let state = withKitchen(kitchen());
+    state = reducer(state, { type: 'joinAreaWaitlist', zip: '78701', at: iso(NOW) });
+    state = reducer(state, { type: 'joinAreaWaitlist', zip: '78701', at: iso(NOW) });
+    expect(state.areaWaitlist).toHaveLength(1);
   });
 });

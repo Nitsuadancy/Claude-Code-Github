@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { FormScreen } from '@/components/form-screen';
 import { RestaurantCard } from '@/components/restaurant-card';
 import { Body, GoldButton, SectionTitle, TextLink } from '@/components/ui';
-import { isOpenState, stateName } from '@/data/regions';
+import { isComingSoon, isOpenState, stateName } from '@/data/regions';
 import { resetTo } from '@/lib/navigation';
 import { LAW_ATTESTATION } from '@/lib/kitchen-kind';
 import { KITCHEN_FEE_TERMS } from '@/lib/pricing';
@@ -151,8 +151,9 @@ export default function Preview() {
 
       {isOpenState(restaurant.state) ? null : (
         <Body style={{ fontSize: 14 }}>
-          Manna isn’t open in {stateName(restaurant.state)} yet. Your kitchen is saved, and you can open it as soon as
-          Manna launches there.
+          {isComingSoon(restaurant.state)
+            ? `Manna is opening in ${stateName(restaurant.state)} soon. Your kitchen is saved, and you can open it the day ${stateName(restaurant.state)} launches. Use the time to add photos and share your page.`
+            : `Manna isn’t open in ${stateName(restaurant.state)} yet. Your kitchen is saved, and you can open it as soon as Manna launches there.`}
         </Body>
       )}
       <Body muted style={{ fontSize: 14 }}>

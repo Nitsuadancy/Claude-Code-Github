@@ -111,6 +111,13 @@ export function DishSheet({
                   <Text style={styles.allergenText}>{allergens}</Text>
                 </View>
               ) : null}
+              {item.ingredients ? (
+                <Text style={styles.ingredients}>
+                  <Text style={styles.ingredientsLabel}>Ingredients: </Text>
+                  {item.ingredients}
+                  {item.netWeight ? ` · Net wt. ${item.netWeight}` : ''}
+                </Text>
+              ) : null}
               <StockNote remaining={remaining} />
               {diet ? <DietNote item={item} profile={diet} /> : null}
             </View>
@@ -195,6 +202,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   allergenText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text, flex: 1 },
+  ingredients: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
+  ingredientsLabel: { fontFamily: fonts.semibold, color: colors.text },
   footer: {
     padding: spacing.lg,
     paddingTop: spacing.md,

@@ -35,7 +35,15 @@ import {
 } from '@/components/ui';
 import { DEFAULT_ACCENT, KITCHEN_ACCENTS } from '@/data/accents';
 import { CATEGORIES, CUISINES } from '@/data/categories';
-import { ALL_NEIGHBORHOODS, DEFAULT_STATE, isOpenState, STATE_RULES, stateName, US_STATES } from '@/data/regions';
+import {
+  ALL_NEIGHBORHOODS,
+  DEFAULT_STATE,
+  isComingSoon,
+  isOpenState,
+  openStateNames,
+  stateName,
+  US_STATES,
+} from '@/data/regions';
 import { centerOf } from '@/lib/geo';
 import { distanceMiles } from '@/lib/location';
 import { lookupZip } from '@/lib/zips';
@@ -58,7 +66,7 @@ const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
 }));
 
 const BIO_MAX = 280;
-const OPEN_STATE_NAMES = Object.keys(STATE_RULES).map(stateName).join(', ');
+const OPEN_STATE_NAMES = openStateNames().join(', ');
 type ErrorKey = 'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours';
 type Errors = Partial<Record<ErrorKey, string>>;
 
@@ -416,8 +424,9 @@ export default function RestaurantInformation() {
               />
               {stateOpen ? null : (
                 <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
-                  Manna isn’t open in {stateName(kitchenState)} yet; it’s in {OPEN_STATE_NAMES} for now. Save your
-                  kitchen, and you can open it as soon as Manna launches in {stateName(kitchenState)}.
+                  {isComingSoon(kitchenState)
+                    ? `Manna is opening in ${stateName(kitchenState)} soon. Set up your kitchen now, and you can open it the day ${stateName(kitchenState)} launches.`
+                    : `Manna isn’t open in ${stateName(kitchenState)} yet; it’s in ${OPEN_STATE_NAMES} for now. Save your kitchen, and you can open it as soon as Manna launches in ${stateName(kitchenState)}.`}
                 </Body>
               )}
               <TextField
@@ -765,10 +774,15 @@ export default function RestaurantInformation() {
         title="State"
         options={[
           ...US_STATES.filter((st) => isOpenState(st.code)),
-          ...US_STATES.filter((st) => !isOpenState(st.code)),
+          ...US_STATES.filter((st) => isComingSoon(st.code)),
+          ...US_STATES.filter((st) => !isOpenState(st.code) && !isComingSoon(st.code)),
         ].map((st) => ({
           value: st.code,
-          label: isOpenState(st.code) ? st.name : `${st.name} · coming soon`,
+          label: isOpenState(st.code)
+            ? st.name
+            : isComingSoon(st.code)
+              ? `${st.name} · opening soon`
+              : `${st.name} · coming later`,
         }))}
         selected={[kitchenState]}
         onSelect={([code]) => {

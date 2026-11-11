@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { isOpenState, stateName } from '@/data/regions';
+import { isComingSoon, isOpenState, stateName } from '@/data/regions';
 import * as haptics from '@/lib/haptics';
 import { shareCookInvite } from '@/lib/share';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -33,6 +33,7 @@ export function NoKitchensNearby({
   onSeeOrlando: () => void;
 }) {
   const open = isOpenState(state);
+  const soon = isComingSoon(state);
   return (
     <View style={styles.wrap}>
       <EmptyArtwork art="oven" size={112} />
@@ -41,7 +42,9 @@ export function NoKitchensNearby({
         Manna is growing one home cook at a time.{' '}
         {open
           ? `Cooks in ${stateName(state)} can open a kitchen today, so the first ones near you could be days away.`
-          : `We’re getting ready for ${state ? stateName(state) : 'your state'}, where home-food rules are a little different.`}
+          : soon
+            ? `Manna is opening in ${stateName(state)} soon, and cooks there can already set up their kitchens.`
+            : `We’re getting ready for ${state ? stateName(state) : 'your state'}, where home-food rules are a little different.`}
       </Text>
 
       {joined ? (

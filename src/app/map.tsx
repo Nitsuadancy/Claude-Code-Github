@@ -100,6 +100,7 @@ export default function KitchenMap() {
           </Body>
         </View>
 
+        {kitchens.length ? (
         <View style={[styles.map, { width: mapW, height: mapH }]}>
           <Svg width={mapW} height={mapH}>
             {/* A fine dot grid gives the map texture without pretending to show streets. */}
@@ -207,6 +208,12 @@ export default function KitchenMap() {
             </View>
           </View>
         </View>
+        ) : (
+          <Pressable accessibilityRole="button" onPress={() => router.push('/location')} style={styles.noneBox}>
+            <Text style={styles.noneText}>Change your area to see kitchens somewhere else.</Text>
+            <Icon name="chevron-right" size={18} color={colors.gold} />
+          </Pressable>
+        )}
 
         <View style={{ gap: spacing.sm }}>
           {kitchens.map(({ r }) => {
@@ -255,6 +262,15 @@ export default function KitchenMap() {
 const LAKE = 'rgba(96, 132, 158, 0.16)';
 
 const styles = StyleSheet.create({
+  noneBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+  },
+  noneText: { flex: 1, fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   title: {
     fontFamily: fonts.display,

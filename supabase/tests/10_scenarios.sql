@@ -480,6 +480,8 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check((select count(*) = 0 from public.area_waitlist), 'other people''s areas are private');
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check((select zip = '78701' and people = 1 from public.area_demand()), 'admins see where people wait');
+select pg_temp.check((select count(*) = 1 and bool_and(code = 'FL') from public.launched_states), 'only Florida launched');
+select pg_temp.check((select count(*) = 0 from public.kitchens_waiting_by_state()), 'no kitchens waiting yet');
 
 -- Deleting an account --------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');

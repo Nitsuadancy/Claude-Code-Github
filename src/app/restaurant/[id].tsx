@@ -22,6 +22,7 @@ import {
   Screen,
 } from '@/components/ui';
 import { accentColor } from '@/data/accents';
+import { onlineNotice } from '@/data/regions';
 import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import {
@@ -469,6 +470,7 @@ export default function RestaurantDetail() {
             )
           ) : null}
           <Text style={styles.finePrint}>
+            {onlineNotice(restaurant.state) ? `${onlineNotice(restaurant.state)} ` : ''}
             {kitchenDisclosure(restaurant)} Tell {chefFirst} about allergies in your order note.
           </Text>
         </View>

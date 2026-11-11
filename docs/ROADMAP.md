@@ -148,20 +148,17 @@ Available at launch. See [PRO.md](PRO.md).
 - [x] Database: the plan on each kitchen
 - [ ] A table of sponsored slots with dates
 
-## Opening a new state or city
+## Opening a new state
 
-Home-food law is set by each state, so Manna opens state by state and city by city. The app is
-already state-aware: every kitchen has a state, and kitchens can only open in states Manna has launched.
+Kitchens are placed by ZIP code anywhere in the US, so there's no city setup. Each state's home-food law is different, so a state opens only once its rules are confirmed. See [STATES.md](STATES.md) for the status of the 10 biggest states, the questions for a lawyer, and the launch steps.
 
-1. **New state:** check its cottage food law against official sources (what may be sold, label
-   statement, yearly sales cap, permits, online sales), then add it to `STATE_RULES` in
-   `src/data/regions.ts` with the source link. Have a food lawyer confirm. Register for its sales tax
-   as a marketplace provider if required.
-2. **New city:** add a market to `MARKETS` with its neighborhoods and time zone.
-3. **Launch:** recruit 10 founding cooks there first, then open to customers (the Orlando playbook).
-
-Not yet handled: a state that allows home-cooked meals (menu sections would differ by state) and
-automatic sales tax (Stripe Tax).
+- [x] ZIP-based locations for customers and kitchens (GeoNames data, kitchens within 25 miles)
+- [x] "No kitchens near you yet": join the list for your ZIP, invite a cook
+- [x] State rules researched for TX, CA, NY, PA, OH, IL, GA, NC and MI, with launch switches
+- [ ] A lawyer confirms each state; launch in waves
+- [ ] Cook referral reward (a fee-free month for both cooks)
+- [ ] Sales tax as a marketplace facilitator, state by state (Stripe Tax)
+- [ ] States that allow home-cooked meals (California MEHKOs, Utah and others): different menu rules
 
 ## Later ideas
 

@@ -94,7 +94,9 @@ function LabelsScreen({ restaurant }: { restaurant: Restaurant }) {
         <Text style={styles.line}>
           {restaurant.name} · {address || 'Your address'}
         </Text>
-        <Text style={styles.statement}>{cottageStatement(restaurant.state)}</Text>
+        {cottageStatement(restaurant.state) ? (
+          <Text style={styles.statement}>{cottageStatement(restaurant.state)}</Text>
+        ) : null}
       </View>
 
       {gaps.length ? (

@@ -211,6 +211,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
       body: [
         'We may update these terms and will tell you in the app before important changes take effect. These terms are governed by the laws of Florida.',
         `Questions: ${LEGAL_CONTACT}.`,
+        'ZIP code data © GeoNames (geonames.org), used under the Creative Commons Attribution 4.0 license.',
       ],
     },
   ],

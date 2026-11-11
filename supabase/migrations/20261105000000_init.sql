@@ -130,6 +130,14 @@ create table public.restaurant_addresses (
 
 -- Farmers and artisans waiting for Manna Mart. Anyone may sign up; only the
 -- Manna team can read the list.
+-- States kitchens can open in. Mirrors `launched` in STATE_RULES
+-- (src/data/regions.ts). Add a state once a lawyer has confirmed its rules.
+create table public.launched_states (
+  code text primary key check (code ~ '^[A-Z]{2}$'),
+  launched_at timestamptz not null default now()
+);
+insert into public.launched_states (code) values ('FL');
+
 -- People asking to hear when kitchens open near their ZIP. Shows the team
 -- where to recruit cooks next. Only admins read the whole list.
 create table public.area_waitlist (
@@ -649,6 +657,7 @@ alter table public.restaurants enable row level security;
 alter table public.restaurant_addresses enable row level security;
 alter table public.grower_waitlist enable row level security;
 alter table public.area_waitlist enable row level security;
+alter table public.launched_states enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.restaurant_documents enable row level security;
 alter table public.orders enable row level security;
@@ -681,6 +690,8 @@ create policy "chefs create their kitchen" on public.restaurants
                          and licensed = false);
 create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
+
+create policy "anyone sees where Manna is open" on public.launched_states for select using (true);
 
 create policy "people join the list for their area" on public.area_waitlist
   for insert with check (profile_id = auth.uid());
@@ -1156,6 +1167,11 @@ begin
   if (select law_attested_at from public.restaurants where id = p_restaurant_id) is null then
     raise exception 'The cook hasn''t confirmed they follow their food laws';
   end if;
+  if not exists (
+    select 1 from public.restaurants r join public.launched_states l on l.code = r.state where r.id = p_restaurant_id
+  ) then
+    raise exception 'Manna hasn''t launched in this kitchen''s state yet';
+  end if;
   if exists (
     -- A permit or license is optional (it earns the Licensed label). Every
     -- kitchen needs a food handler certificate and a verified ID.
@@ -1244,6 +1260,15 @@ language sql stable set search_path = public as $$
   ) k
   where d <= p_miles
   order by d;
+$$;
+
+-- Admin: kitchens set up and waiting in states that haven't launched, busiest first.
+create function public.kitchens_waiting_by_state() returns table (state text, kitchens bigint)
+language sql stable security definer set search_path = public as $$
+  select r.state, count(*) from public.restaurants r
+  where public.is_admin() and r.status in ('draft', 'pending_review')
+    and not exists (select 1 from public.launched_states l where l.code = r.state)
+  group by r.state order by count(*) desc;
 $$;
 
 -- Admin: where people are waiting for kitchens, busiest ZIPs first.
@@ -1440,6 +1465,8 @@ grant insert (restaurant_id, body) on public.kitchen_alerts to authenticated;
 grant insert (zip), delete on public.area_waitlist to authenticated;
 grant execute on function public.nearby_kitchens(numeric, numeric, numeric) to anon, authenticated;
 revoke all on function public.area_demand() from public;
+revoke all on function public.kitchens_waiting_by_state() from public;
+grant execute on function public.kitchens_waiting_by_state() to authenticated;
 grant execute on function public.area_demand() to authenticated;
 
 -- Live updates for the order screen and the chat, where Supabase Realtime is available.
