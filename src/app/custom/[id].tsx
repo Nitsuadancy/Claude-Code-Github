@@ -20,6 +20,7 @@ import { formatPickup } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { cardPaymentsOn } from '@/lib/payments';
 import { acceptQuote as acceptRemoteQuote } from '@/lib/remote/api';
+import { registerForPush } from '@/lib/push';
 import { payForOrder } from '@/lib/remote/pay';
 import { supabase } from '@/lib/supabase';
 import { useServerRefresh, useStore } from '@/state/store';
@@ -54,6 +55,7 @@ export default function CustomRequestScreen() {
         const paid = await payForOrder(supabase, serverId);
         await refreshFromServer();
         if (!paid) return;
+        void registerForPush(supabase, { ask: true });
         haptics.success();
         router.replace({ pathname: '/order/[id]', params: { id: serverId, celebrate: '1' } });
       } catch (e) {

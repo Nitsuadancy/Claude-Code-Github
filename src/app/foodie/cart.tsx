@@ -34,6 +34,7 @@ import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { placeOrder as placeRemoteOrder } from '@/lib/remote/api';
+import { registerForPush } from '@/lib/push';
 import { CHECKOUT_PAYMENT_NOTE, payForOrder } from '@/lib/remote/pay';
 import { supabase } from '@/lib/supabase';
 import { useRestaurant, useServerRefresh, useStore } from '@/state/store';
@@ -165,6 +166,8 @@ export default function Cart() {
         // Card payments on: the card sheet opens; backing out calls the order off and keeps the cart.
         if (!(await payForOrder(supabase, serverId))) return;
         await refreshFromServer();
+        // First order: ask to send "accepted" and "ready for pickup" notifications.
+        void registerForPush(supabase, { ask: true });
         dispatch({ type: 'clearCart' });
         router.push({ pathname: '/order/[id]', params: { id: serverId, celebrate: '1' } });
       } catch (e) {

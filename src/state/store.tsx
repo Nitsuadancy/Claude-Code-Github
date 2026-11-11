@@ -15,6 +15,7 @@ import { sampleAlerts } from '@/data/sample-alerts';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { followedAlerts } from '@/lib/alerts';
 import { isBackendConfigured, supabase } from '@/lib/supabase';
+import { registerForPush } from '@/lib/push';
 import { currentUserId } from '@/lib/remote/api';
 import { makeServerDispatch, pull } from './server-sync';
 import { SAMPLE_REVIEWS } from '@/data/sample-reviews';
@@ -101,7 +102,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!alive) return;
       // Signed out on the server (expired or removed): sign out here too.
       if (!id) localDispatch({ type: 'signOut' });
-      else refresh('everything');
+      else {
+        refresh('everything');
+        // Keep this phone's notifications pointed at this person (no prompt here).
+        void registerForPush(db, { ask: false });
+      }
     });
     const channel = db
       .channel('manna-activity')

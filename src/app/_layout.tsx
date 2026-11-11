@@ -7,6 +7,8 @@ import { DarkTheme, type ErrorBoundaryProps, Stack, ThemeProvider } from 'expo-r
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+
+import { usePushNavigation } from '@/lib/push';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -34,6 +36,7 @@ const navTheme = {
 
 function AppStack() {
   const { state } = useStore();
+  usePushNavigation();
   const [fontsLoaded, fontError] = useFonts({
     HankenGrotesk_400Regular,
     HankenGrotesk_500Medium,

@@ -155,6 +155,16 @@ create table public.payment_accounts (
   updated_at timestamptz not null default now()
 );
 
+-- Phones that get push notifications (Expo push tokens). Written through
+-- register_push_token(); read only by the notify function.
+create table public.push_tokens (
+  token text primary key check (token ~ '^Expo(nent)?PushToken\[[^\]]{1,200}\]$'),
+  profile_id uuid not null references public.profiles (id) on delete cascade,
+  platform text not null check (platform in ('ios', 'android')),
+  updated_at timestamptz not null default now()
+);
+create index on public.push_tokens (profile_id);
+
 -- One row of switches for the whole app.
 create table public.app_settings (
   id boolean primary key default true check (id),
@@ -714,6 +724,7 @@ alter table public.grower_waitlist enable row level security;
 alter table public.area_waitlist enable row level security;
 alter table public.launched_states enable row level security;
 alter table public.payment_accounts enable row level security;
+alter table public.push_tokens enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.restaurant_documents enable row level security;
@@ -1496,9 +1507,10 @@ begin
   if o.payment_status = 'refunded' then
     return o.status;
   end if;
-  update public.orders set payment_status = 'paid' where id = o.id;
+  -- One update, so the notify function sees "paid and accepted" as one change.
   if o.status = 'placed' and exists (select 1 from public.custom_requests c where c.order_id = o.id) then
     update public.orders set
+      payment_status = 'paid',
       status = 'accepted',
       pickup_address = coalesce(
         (select a.address from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), ''),
@@ -1510,8 +1522,28 @@ begin
     insert into public.order_status_events (order_id, status) values (o.id, 'accepted');
     return 'accepted';
   end if;
+  update public.orders set payment_status = 'paid' where id = o.id;
   return o.status;
 end;
+$$;
+
+-- This phone gets this person's notifications. A phone moves to whoever signed
+-- in on it last.
+create function public.register_push_token(p_token text, p_platform text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Sign in first' using errcode = '42501';
+  end if;
+  insert into public.push_tokens (token, profile_id, platform) values (p_token, auth.uid(), p_platform)
+  on conflict (token) do update set profile_id = excluded.profile_id, platform = excluded.platform, updated_at = now();
+end;
+$$;
+
+-- Signing out stops this phone's notifications.
+create function public.unregister_push_token(p_token text) returns void
+language sql security definer set search_path = public as $$
+  delete from public.push_tokens where token = p_token and profile_id = auth.uid();
 $$;
 
 create function public.delete_my_account() returns void
@@ -1523,6 +1555,7 @@ begin
     raise exception 'Sign in first' using errcode = '42501';
   end if;
   delete from public.favorites where customer_id = me;
+  delete from public.push_tokens where profile_id = me;
   delete from public.area_waitlist where profile_id = me;
   delete from public.custom_requests where customer_id = me and status <> 'accepted';
   update public.custom_requests set customer_name = 'Former customer', details = 'Removed with the account.'
@@ -1572,6 +1605,10 @@ grant execute on function public.approve_restaurant(uuid) to authenticated;
 grant execute on function public.popular_menu_items() to anon, authenticated;
 revoke all on function public.remove_review(uuid) from public;
 grant execute on function public.remove_review(uuid) to authenticated;
+revoke all on function public.register_push_token(text, text) from public;
+revoke all on function public.unregister_push_token(text) from public;
+grant execute on function public.register_push_token(text, text) to authenticated;
+grant execute on function public.unregister_push_token(text) to authenticated;
 revoke all on function public.delete_my_account() from public;
 grant execute on function public.delete_my_account() to authenticated;
 revoke all on function public.quote_custom_request(uuid, integer, text, timestamptz, timestamptz) from public;

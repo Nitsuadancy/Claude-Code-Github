@@ -64,7 +64,20 @@
         }
       ],
       "expo-video",
-      "@stripe/stripe-react-native"
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "",
+          "enableGooglePay": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#D4B26E"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

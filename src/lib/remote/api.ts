@@ -504,3 +504,13 @@ export async function proBillingLink(db: Db, plan: 'monthly' | 'yearly'): Promis
   const { url } = await callFunction<{ url: string }>(db, 'pro-billing', { plan });
   return url;
 }
+
+/* ---------- Push notifications ---------- */
+
+export async function registerPushToken(db: Db, token: string, platform: 'ios' | 'android'): Promise<void> {
+  unwrap(await db.rpc('register_push_token', { p_token: token, p_platform: platform }));
+}
+
+export async function unregisterPushToken(db: Db, token: string): Promise<void> {
+  unwrap(await db.rpc('unregister_push_token', { p_token: token }));
+}

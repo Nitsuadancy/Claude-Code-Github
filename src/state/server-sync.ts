@@ -16,6 +16,7 @@ import type { Dispatch } from 'react';
 import { notify } from '@/lib/alert';
 import { userPlace } from '@/lib/location';
 import { cardPaymentsOn } from '@/lib/payments';
+import { registerForPush, unregisterPush } from '@/lib/push';
 import { photoUrl, type supabase as SupabaseInstance } from '@/lib/supabase';
 import * as api from '@/lib/remote/api';
 import { signPrivatePaths, supabaseUploader } from '@/lib/remote/uploads';
@@ -177,6 +178,8 @@ async function send(db: Db, action: Action, before: AppState, dispatch: Dispatch
     }
     case 'requestCustom':
       await api.requestCustomOrder(db, action.request);
+      // So they hear when the kitchen sends a price.
+      void registerForPush(db, { ask: true });
       return 'activity';
     case 'quoteCustom':
       await api.quoteCustomOrder(db, action.requestId, action.quote);
@@ -191,9 +194,11 @@ async function send(db: Db, action: Action, before: AppState, dispatch: Dispatch
       await api.joinAreaWaitlist(db, action.zip);
       return null;
     case 'signOut':
+      await unregisterPush(db);
       await api.signOut(db);
       return null;
     case 'deleteAccount':
+      await unregisterPush(db);
       await api.deleteAccount(db);
       return null;
     default:

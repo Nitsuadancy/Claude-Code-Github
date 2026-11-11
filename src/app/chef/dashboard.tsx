@@ -1,5 +1,5 @@
 import { Redirect, router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AccountSettings } from '@/components/account-settings';
@@ -10,6 +10,8 @@ import { OrderCard } from '@/components/order-card';
 import { BakeDayCard } from '@/components/bake-day-card';
 import { FirstOrders } from '@/components/first-orders';
 import { PayoutsCard } from '@/components/payouts-card';
+import { registerForPush } from '@/lib/push';
+import { supabase } from '@/lib/supabase';
 import { Photo } from '@/components/photo';
 import { PinnedUpdate } from '@/components/pinned-update';
 import { usePullToRefresh } from '@/components/pull-to-refresh';
@@ -57,6 +59,12 @@ export default function ChefDashboard() {
   const [showAccount, setShowAccount] = useState(false);
   const reviews = useReviews(restaurant?.id);
   const refreshControl = usePullToRefresh();
+  const isLive = restaurant?.status === 'live';
+
+  // A live kitchen needs to hear about new orders: ask once for notifications.
+  useEffect(() => {
+    if (supabase && isLive) void registerForPush(supabase, { ask: true });
+  }, [isLive]);
 
   if (!restaurant || restaurant.status !== 'live') return <Redirect href="/chef/setup" />;
 

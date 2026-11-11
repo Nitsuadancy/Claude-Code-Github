@@ -541,6 +541,26 @@ reset role;
 update public.app_settings set payments_required = false;
 delete from public.payment_accounts;
 
+-- Push notifications -------------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select public.register_push_token('ExponentPushToken[abc123]', 'ios');
+select pg_temp.expect_error($$ select public.register_push_token('not a token', 'ios') $$, 'check constraint');
+select pg_temp.check((select count(*) = 0 from public.push_tokens), 'people can''t read push tokens');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select public.register_push_token('ExponentPushToken[abc123]', 'ios');
+select public.unregister_push_token('ExponentPushToken[nope]');
+reset role;
+select pg_temp.check((select profile_id = '00000000-0000-0000-0000-00000000000a' from public.push_tokens
+  where token = 'ExponentPushToken[abc123]'), 'a phone moves to whoever signed in last');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select public.unregister_push_token('ExponentPushToken[abc123]');
+reset role;
+select pg_temp.check((select count(*) = 1 from public.push_tokens), 'only the owner can switch a phone off');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select public.unregister_push_token('ExponentPushToken[abc123]');
+reset role;
+select pg_temp.check((select count(*) = 0 from public.push_tokens), 'signing out switches the phone off');
+
 -- Cook invites ------------------------------------------------------------------
 select pg_temp.check((select referral_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$' from public.restaurants where id = '10000000-0000-0000-0000-000000000001'),
   'approved kitchen has an invite code');
