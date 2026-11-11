@@ -5,7 +5,7 @@ import { FormScreen } from '@/components/form-screen';
 import { Icon } from '@/components/icon';
 import { Ticket } from '@/components/ticket';
 import { Body, GoldButton } from '@/components/ui';
-import { confirmAction } from '@/lib/alert';
+import { confirmAction, notify } from '@/lib/alert';
 import {
   canAcceptQuote,
   canQuote,
@@ -18,13 +18,16 @@ import { formatCents } from '@/lib/money';
 import { MOVEMENT_FEE_TERMS } from '@/lib/pricing';
 import { formatPickup } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
-import { useStore } from '@/state/store';
+import { acceptQuote as acceptRemoteQuote } from '@/lib/remote/api';
+import { supabase } from '@/lib/supabase';
+import { useServerRefresh, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 /** A customer's custom order request: what they asked for, and the kitchen's price once it's in. */
 export default function CustomRequestScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, dispatch } = useStore();
+  const refreshFromServer = useServerRefresh();
   const request = state.customRequests.find((r) => r.id === id);
   const me = state.user?.id;
 
@@ -40,8 +43,20 @@ export default function CustomRequestScreen() {
   const quote = request.quote;
   const totals = quote ? quoteTotals(quote) : null;
 
-  const accept = () => {
+  const accept = async () => {
     if (!quote || !totals) return;
+    if (supabase) {
+      // Backend on: the server checks the price is still open and creates the order.
+      try {
+        const serverId = await acceptRemoteQuote(supabase, request.id);
+        await refreshFromServer();
+        haptics.success();
+        router.replace({ pathname: '/order/[id]', params: { id: serverId, celebrate: '1' } });
+      } catch (e) {
+        notify('That didn’t go through', e instanceof Error ? e.message : 'Check your connection and try again.');
+      }
+      return;
+    }
     const orderId = newId('order');
     haptics.success();
     dispatch({ type: 'acceptQuote', requestId: request.id, customerId: request.customerId, orderId, at: new Date().toISOString() });
@@ -62,7 +77,7 @@ export default function CustomRequestScreen() {
       footer={
         canAcceptQuote(request, now) && totals ? (
           <View style={{ gap: spacing.sm }}>
-            <GoldButton title={`Accept and order · ${formatCents(totals.totalCents)}`} onPress={accept} />
+            <GoldButton title={`Accept and order · ${formatCents(totals.totalCents)}`} onPress={() => void accept()} />
             <Text style={styles.fine}>Payments aren’t connected yet. Accepting places the order without charging a card.</Text>
           </View>
         ) : request.status === 'accepted' && request.orderId ? (

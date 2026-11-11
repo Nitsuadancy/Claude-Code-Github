@@ -83,6 +83,20 @@ export interface AppState {
   customRequests: CustomRequest[];
   /** ZIPs this person asked to hear about when kitchens open there. */
   areaWaitlist: { zip: string; at: string }[];
+  /** Kitchens loaded from the server (nearby, saved and ordered from). Empty without a backend. */
+  serverKitchens: Restaurant[];
+}
+
+/** What a sync from the server replaces; anything left out stays as it is. */
+export interface ServerSnapshot {
+  profile?: UserProfile;
+  myKitchen?: Restaurant | null;
+  serverKitchens?: Restaurant[];
+  orders?: Order[];
+  messages?: OrderMessage[];
+  favoriteRestaurantIds?: string[];
+  alerts?: KitchenAlert[];
+  customRequests?: CustomRequest[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -114,6 +128,7 @@ export const INITIAL_STATE: AppState = {
   alerts: [],
   customRequests: [],
   areaWaitlist: [],
+  serverKitchens: [],
 };
 
 export type Action =
@@ -172,6 +187,7 @@ export type Action =
   | { type: 'resumePro'; restaurantId: string }
   | { type: 'sendAlert'; alert: KitchenAlert }
   | { type: 'joinAreaWaitlist'; zip: string; at: string }
+  | { type: 'syncFromServer'; snapshot: ServerSnapshot }
   | { type: 'saveDrop'; restaurantId: string; drop: Drop }
   | { type: 'closeDrop'; restaurantId: string; dropId: string; at: string }
   | { type: 'deleteDrop'; restaurantId: string; dropId: string }
@@ -649,6 +665,23 @@ export function reducer(state: AppState, action: Action): AppState {
         ...updateRequest(state, request.id, (r) => ({ ...r, status: 'accepted', orderId: order.id })),
         orders: [...state.orders, order],
       };
+    }
+
+    case 'syncFromServer': {
+      const s = action.snapshot;
+      const next: AppState = { ...state };
+      if (s.profile) {
+        // The server's profile wins, except a role chosen on this phone before it was saved.
+        next.user = { ...s.profile, role: s.profile.role ?? state.pendingRole ?? state.user?.role ?? null };
+      }
+      if (s.myKitchen !== undefined) next.restaurants = s.myKitchen ? [s.myKitchen] : [];
+      if (s.serverKitchens) next.serverKitchens = s.serverKitchens;
+      if (s.orders) next.orders = s.orders;
+      if (s.messages) next.messages = s.messages;
+      if (s.favoriteRestaurantIds) next.favoriteRestaurantIds = s.favoriteRestaurantIds;
+      if (s.alerts) next.alerts = s.alerts;
+      if (s.customRequests) next.customRequests = s.customRequests;
+      return next;
     }
 
     case 'joinAreaWaitlist':

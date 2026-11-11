@@ -7,11 +7,16 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
+  useState,
 } from 'react';
 
 import { sampleAlerts } from '@/data/sample-alerts';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import { followedAlerts } from '@/lib/alerts';
+import { isBackendConfigured, supabase } from '@/lib/supabase';
+import { currentUserId } from '@/lib/remote/api';
+import { makeServerDispatch, pull } from './server-sync';
 import { SAMPLE_REVIEWS } from '@/data/sample-reviews';
 import type { DietProfile } from '@/lib/diet';
 import { readKey, unreadCount } from '@/lib/order-chat';
@@ -34,10 +39,22 @@ import {
  */
 const STORAGE_KEY = 'manna/state/v1';
 
+/** Keeps the newest state where the server dispatch can read it. */
+function remember(holder: { state: AppState }, state: AppState) {
+  holder.state = state;
+}
+
 const StoreContext = createContext<{ state: AppState; dispatch: Dispatch<Action> } | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const [state, localDispatch] = useReducer(reducer, INITIAL_STATE);
+  // The latest state, for sending changes to the server after they happen.
+  const [latest] = useState(() => ({ state: INITIAL_STATE }));
+  useEffect(() => remember(latest, state), [latest, state]);
+  // With the backend on, changes also go to the server (see server-sync.ts).
+  const [dispatch] = useState<Dispatch<Action>>(() =>
+    supabase ? makeServerDispatch(supabase, localDispatch, () => latest.state) : localDispatch,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -50,10 +67,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         } catch {
           saved = null;
         }
-        dispatch({ type: 'hydrate', state: saved });
+        localDispatch({ type: 'hydrate', state: saved });
       })
       .catch(() => {
-        if (!cancelled) dispatch({ type: 'hydrate', state: null });
+        if (!cancelled) localDispatch({ type: 'hydrate', state: null });
       });
     return () => {
       cancelled = true;
@@ -70,8 +87,56 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [state]);
 
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  // Backend on: load from the server once signed in, then follow orders and chat live.
+  const signedInId = state.user?.id;
+  useEffect(() => {
+    const db = supabase;
+    if (!db || !state.hydrated || !signedInId) return;
+    let alive = true;
+    const getState = () => latest.state;
+    const refresh = (scope: 'everything' | 'activity') => {
+      if (alive) pull(db, getState, localDispatch, scope).catch(() => undefined);
+    };
+    void currentUserId(db).then((id) => {
+      if (!alive) return;
+      // Signed out on the server (expired or removed): sign out here too.
+      if (!id) localDispatch({ type: 'signOut' });
+      else refresh('everything');
+    });
+    const channel = db
+      .channel('manna-activity')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => refresh('activity'))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_messages' }, () => refresh('activity'))
+      .subscribe();
+    const { data: auth } = db.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') localDispatch({ type: 'signOut' });
+    });
+    // Kitchens and menus change less often; refresh them every few minutes.
+    const timer = setInterval(() => refresh('everything'), 5 * 60_000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      auth.subscription.unsubscribe();
+      void db.removeChannel(channel);
+    };
+  }, [state.hydrated, signedInId, latest]);
+
+  const value = useMemo(() => ({ state, dispatch }), [state, dispatch]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+}
+
+/** Reloads everything from the server now (pull to refresh). Does nothing without the backend. */
+export function useServerRefresh(): () => Promise<void> {
+  const { state } = useStore();
+  const ref = useRef(state);
+  useEffect(() => {
+    ref.current = state;
+  }, [state]);
+  const { dispatch } = useStore();
+  return async () => {
+    if (!supabase) return;
+    await pull(supabase, () => ref.current, dispatch, 'everything');
+  };
 }
 
 export function useStore() {
@@ -84,8 +149,13 @@ export function useStore() {
 export function useAllRestaurants(): Restaurant[] {
   const { state } = useStore();
   return useMemo(
-    () => [...state.restaurants, ...SAMPLE_RESTAURANTS].map((r) => withReviews(r, state.reviews)),
-    [state.restaurants, state.reviews],
+    () => {
+      // With the backend on, kitchens come from the server; without it, the demo kitchens.
+      const others = isBackendConfigured ? state.serverKitchens : SAMPLE_RESTAURANTS;
+      const mine = new Set(state.restaurants.map((r) => r.id));
+      return [...state.restaurants, ...others.filter((r) => !mine.has(r.id))].map((r) => withReviews(r, state.reviews));
+    },
+    [state.restaurants, state.serverKitchens, state.reviews],
   );
 }
 
@@ -150,6 +220,6 @@ export function useFollowedAlerts(): KitchenAlert[] {
   const { state } = useStore();
   return useMemo(() => {
     const now = new Date();
-    return followedAlerts([...state.alerts, ...sampleAlerts(now)], state.favoriteRestaurantIds, now);
+    return followedAlerts([...state.alerts, ...(isBackendConfigured ? [] : sampleAlerts(now))], state.favoriteRestaurantIds, now);
   }, [state.alerts, state.favoriteRestaurantIds]);
 }

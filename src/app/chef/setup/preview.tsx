@@ -57,9 +57,20 @@ export default function Preview() {
           <GoldButton title="Go to dashboard" chevron onPress={() => resetTo('/chef/dashboard')} />
         ) : (
           <View style={{ gap: spacing.sm }}>
+            {restaurant.underReview ? (
+              <Text style={styles.remaining}>
+                Sent to the Manna team. We check your documents, usually within a day, and your kitchen opens once
+                they’re approved.
+              </Text>
+            ) : null}
             {ready ? null : <Text style={styles.remaining}>{remaining}</Text>}
             <Text style={styles.remaining}>{OPENING_TERMS}</Text>
-            <GoldButton title="Open my kitchen" chevron disabled={!ready} onPress={publish} />
+            <GoldButton
+              title={restaurant.underReview ? 'Waiting for review' : 'Open my kitchen'}
+              chevron={!restaurant.underReview}
+              disabled={!!restaurant.underReview || !ready}
+              onPress={publish}
+            />
           </View>
         )
       }>

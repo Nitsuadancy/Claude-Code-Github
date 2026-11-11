@@ -23,12 +23,14 @@ import {
 } from '@/components/ui';
 import { resetTo } from '@/lib/navigation';
 import { digitsOnly, formatUsPhone, isValidUsPhone, newId } from '@/lib/validation';
+import { sendCode as remoteSendCode, verifyCode as remoteVerifyCode } from '@/lib/remote/api';
+import { supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
 /**
- * Phone sign-in. Until the backend is connected this runs in demo mode:
- * any 6-digit code is accepted. See docs/ARCHITECTURE.md (Auth).
+ * Phone sign-in. With the backend on, Supabase texts a real code (through
+ * Twilio) and checks it. Without it, demo mode accepts any 6 digits.
  */
 export default function Login() {
   const insets = useSafeAreaInsets();
@@ -38,22 +40,47 @@ export default function Login() {
   const [code, setCode] = useState('');
   const [stage, setStage] = useState<'phone' | 'code'>('phone');
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const e164 = `+1${digitsOnly(phone)}`;
 
-  const sendCode = () => {
+  const sendCode = async () => {
     if (!isValidUsPhone(phone)) {
       setError('Enter a 10-digit US mobile number.');
       return;
     }
     setError(null);
+    if (supabase) {
+      setBusy(true);
+      try {
+        await remoteSendCode(supabase, e164);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'We couldn’t send a code. Try again.');
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
     setStage('code');
   };
 
-  const verify = () => {
+  const verify = async () => {
     if (!/^\d{6}$/.test(code)) {
       setError('Enter the 6-digit code.');
       return;
     }
-    dispatch({ type: 'signIn', userId: newId('user'), phone: `+1${digitsOnly(phone)}` });
+    let userId = newId('user');
+    if (supabase) {
+      setBusy(true);
+      try {
+        userId = await remoteVerifyCode(supabase, e164, code);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'That code didn’t work.');
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
+    dispatch({ type: 'signIn', userId, phone: e164 });
     resetTo('/');
   };
 
@@ -99,11 +126,11 @@ export default function Login() {
                     setPhone(digitsOnly(t).slice(0, 10));
                     setError(null);
                   }}
-                  onSubmitEditing={sendCode}
+                  onSubmitEditing={() => void sendCode()}
                 />
               </View>
               {error ? <Text style={styles.error}>{error}</Text> : null}
-              <GoldButton title="Send code" chevron onPress={sendCode} />
+              <GoldButton title="Send code" chevron loading={busy} onPress={() => void sendCode()} />
 
               <Body muted style={styles.legal}>
                 By continuing you agree to Manna’s{' '}
@@ -132,14 +159,18 @@ export default function Login() {
                   setCode(digitsOnly(t));
                   setError(null);
                 }}
-                onSubmitEditing={verify}
+                onSubmitEditing={() => void verify()}
                 error={error}
                 accessibilityLabel="Verification code"
               />
-              <Body muted style={{ fontSize: 13 }}>
-                Demo mode: text messages aren’t connected yet, so any 6 digits will work.
-              </Body>
-              <GoldButton title="Verify" chevron onPress={verify} />
+              {supabase ? (
+                <TextLink title="Send a new code" onPress={() => void sendCode()} style={{ alignSelf: 'flex-start' }} />
+              ) : (
+                <Body muted style={{ fontSize: 13 }}>
+                  Demo mode: text messages aren’t connected yet, so any 6 digits will work.
+                </Body>
+              )}
+              <GoldButton title="Verify" chevron loading={busy} onPress={() => void verify()} />
               <TextLink
                 title="Use a different number"
                 onPress={() => {

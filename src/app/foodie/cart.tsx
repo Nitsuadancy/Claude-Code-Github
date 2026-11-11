@@ -33,7 +33,9 @@ import { bakeDayDate, formatBakeDay, formatCutoff, openBakeDays } from '@/lib/ba
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
-import { useRestaurant, useStore } from '@/state/store';
+import { placeOrder as placeRemoteOrder } from '@/lib/remote/api';
+import { supabase } from '@/lib/supabase';
+import { useRestaurant, useServerRefresh, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
 
@@ -48,6 +50,8 @@ export default function Cart() {
   const [note, setNote] = useState('');
   const [tipRate, setTipRate] = useState(0);
   const [bakeDayStart, setBakeDayStart] = useState<string | null>(null);
+  const [placing, setPlacing] = useState(false);
+  const refreshFromServer = useServerRefresh();
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeText, setCodeText] = useState('');
   const [applied, setApplied] = useState<string | null>(null);
@@ -112,7 +116,7 @@ export default function Cart() {
   const chefFirst = restaurant.chefName;
   const chefAtEnd = restaurant.chefName.replace(/\.$/, '');
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     const user = state.user;
     if (!user) return;
     if (state.cart.dropId && (!drop || new Date(drop.closesAt) <= new Date())) {
@@ -144,6 +148,29 @@ export default function Cart() {
       return;
     }
     const createdAt = placedAt.toISOString();
+    if (supabase) {
+      // Backend on: the server checks the kitchen, prices, limits, code and drop, and returns the order.
+      setPlacing(true);
+      try {
+        const serverId = await placeRemoteOrder(supabase, {
+          restaurantId: restaurant.id,
+          lines: totals.lines.map((l) => ({ itemId: l.itemId, quantity: l.quantity })),
+          customerNote: note,
+          scheduledFor,
+          tipCents: tip,
+          ...(drop ? { dropId: drop.id } : {}),
+          ...(codeResult?.ok && discount > 0 ? { discountCode: codeResult.code.code } : {}),
+        });
+        await refreshFromServer();
+        dispatch({ type: 'clearCart' });
+        router.push({ pathname: '/order/[id]', params: { id: serverId, celebrate: '1' } });
+      } catch (e) {
+        notify('Your order didn’t go through', e instanceof Error ? e.message : 'Check your connection and try again.');
+      } finally {
+        setPlacing(false);
+      }
+      return;
+    }
     const orderId = newId('order');
     // Payments aren't connected yet: orders are recorded as placed without charging a card.
     dispatch({
@@ -408,7 +435,8 @@ export default function Cart() {
                 ? `Schedule pickup · ${formatCents(grandTotal)}`
                 : `Place order · ${formatCents(grandTotal)}`
           }
-          onPress={placeOrder}
+          loading={placing}
+          onPress={() => void placeOrder()}
         />
         <Body muted style={styles.note}>
           Payments aren’t connected yet. Placing an order sends it to the kitchen without charging a card.

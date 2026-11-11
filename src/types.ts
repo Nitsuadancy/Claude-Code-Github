@@ -238,6 +238,8 @@ export interface Restaurant {
   referredBy?: string;
   /** Fee-free months earned from invites: no kitchen fee on orders before this time. */
   feeCreditUntil?: string;
+  /** Sent to the Manna team and waiting for approval (only when the backend is on). */
+  underReview?: boolean;
   /**
    * The Manna team approved a food permit or license (commercial kitchen,
    * food truck, catering, a home-kitchen permit). Optional: kitchens without

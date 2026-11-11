@@ -10,4 +10,5 @@ psql "$ADMIN_URL" -q -c "drop database if exists \"$DB_NAME\"" -c "create databa
 psql "$DB_URL" -q -v ON_ERROR_STOP=1 \
   -f supabase/tests/00_stub_supabase.sql \
   -f supabase/migrations/20261105000000_init.sql \
+  -f supabase/migrations/20261112000000_storage.sql \
   -f supabase/tests/10_scenarios.sql | tail -3

@@ -194,3 +194,68 @@ export interface OrderUpdateRow {
   photo_path: string | null;
   created_at: string;
 }
+
+export interface OrderMessageRow {
+  id: string;
+  order_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+}
+
+export interface DropRow {
+  id: string;
+  restaurant_id: string;
+  title: string;
+  note: string;
+  pickup_start: string;
+  pickup_end: string;
+  closes_at: string;
+  created_at: string;
+  /** Embedded with the drop. */
+  drop_items?: { menu_item_id: string }[];
+}
+
+export interface DiscountCodeRow {
+  id: string;
+  restaurant_id: string;
+  code: string;
+  kind: 'percent' | 'amount';
+  value: number;
+  new_customers_only: boolean;
+  max_uses: number | null;
+  ends_at: string | null;
+  paused: boolean;
+  created_at: string;
+}
+
+export interface CustomRequestRow {
+  id: string;
+  restaurant_id: string;
+  customer_id: string;
+  customer_name: string;
+  occasion: string;
+  details: string;
+  servings: number;
+  needed_by: string;
+  budget_cents: number | null;
+  status: 'open' | 'quoted' | 'accepted' | 'declined' | 'withdrawn';
+  quote_cents: number | null;
+  quote_note: string;
+  quote_pickup_start: string | null;
+  quote_pickup_end: string | null;
+  quoted_at: string | null;
+  decline_note: string;
+  order_id: string | null;
+  created_at: string;
+  /** Embedded so the customer sees the kitchen's name. */
+  restaurants?: { name: string } | null;
+}
+
+export interface KitchenAlertRow {
+  id: string;
+  restaurant_id: string;
+  body: string;
+  created_at: string;
+  restaurants?: { name: string } | null;
+}

@@ -15,9 +15,14 @@ import { isValidBakeDay } from '@/lib/bake-days';
 import { cleanInstagram, TAGLINE_MAX, UPDATE_MAX } from '@/lib/kitchen-style';
 import type {
   Allergen,
+  CustomRequest,
   DietaryTag,
+  DiscountCode,
+  Drop,
+  KitchenAlert,
   MenuItem,
   Order,
+  OrderMessage,
   OrderStatus,
   Restaurant,
   RestaurantDocument,
@@ -27,7 +32,12 @@ import type {
 } from '@/types';
 
 import type {
+  CustomRequestRow,
+  DiscountCodeRow,
+  DropRow,
+  KitchenAlertRow,
   MenuItemRow,
+  OrderMessageRow,
   OrderWithChildren,
   ProfileRow,
   RestaurantAddressRow,
@@ -146,6 +156,9 @@ export interface RestaurantExtras {
   popularItemIds?: ReadonlySet<string>;
   /** Signed URLs for the private order-photos bucket (the pickup spot photo). */
   privateUrl?: (path: string) => string;
+  drops?: DropRow[];
+  /** Only the owner (and admins) can read a kitchen's codes. */
+  discountCodes?: DiscountCodeRow[];
 }
 
 export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras: RestaurantExtras = {}): Restaurant {
@@ -223,8 +236,11 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     acceptingOrders: row.accepting_orders,
     menu,
     documents: (extras.documents ?? []).map(documentFromRow),
+    ...(extras.drops?.length ? { drops: extras.drops.map(dropFromRow) } : {}),
+    ...(extras.discountCodes?.length ? { discountCodes: extras.discountCodes.map(discountCodeFromRow) } : {}),
     // The app has two states; a kitchen under review or suspended isn't live.
     status: row.status === 'live' ? 'live' : 'draft',
+    ...(row.status === 'pending_review' ? { underReview: true } : {}),
   };
 }
 
@@ -234,7 +250,13 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
  */
 export function restaurantUpdate(
   r: Restaurant,
-  paths: { coverPaths: string[]; logoPath: string | null; chefPhotoPath: string | null },
+  paths: {
+    coverPaths: string[];
+    logoPath: string | null;
+    chefPhotoPath: string | null;
+    updatePhotoPath?: string | null;
+    introVideoPath?: string | null;
+  },
 ): Partial<RestaurantRow> {
   return {
     name: r.name.trim(),
@@ -267,7 +289,9 @@ export function restaurantUpdate(
     accent: r.accent ?? DEFAULT_ACCENT,
     tagline: (r.tagline ?? '').trim().slice(0, TAGLINE_MAX),
     update_text: (r.update?.text ?? '').trim().slice(0, UPDATE_MAX),
-    update_posted_at: r.update?.text.trim() ? r.update.postedAt : null,
+    update_posted_at: r.update?.text.trim() || paths.updatePhotoPath ? (r.update?.postedAt ?? null) : null,
+    ...(paths.updatePhotoPath !== undefined ? { update_photo_path: paths.updatePhotoPath } : {}),
+    ...(paths.introVideoPath !== undefined ? { intro_video_path: paths.introVideoPath } : {}),
     instagram: cleanInstagram(r.instagram ?? ''),
     order_mode: r.orderMode ?? 'hours',
     bake_days: (r.bakeDays ?? []).filter(isValidBakeDay).slice(0, 3),
@@ -376,5 +400,114 @@ export function reviewFromRow(row: ReviewRow): Review {
     tags: row.tags,
     text: row.text,
     createdAt: row.created_at,
+  };
+}
+
+/* ---------- Chat, drops, codes, custom requests, alerts ---------- */
+
+/** A chat message; its side comes from whether the customer sent it. */
+export function messageFromRow(row: OrderMessageRow, customerId: string): OrderMessage {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    senderId: row.sender_id,
+    side: row.sender_id === customerId ? 'customer' : 'kitchen',
+    text: row.body,
+    at: row.created_at,
+  };
+}
+
+export function dropFromRow(row: DropRow): Drop {
+  return {
+    id: row.id,
+    title: row.title,
+    ...(row.note ? { note: row.note } : {}),
+    itemIds: (row.drop_items ?? []).map((i) => i.menu_item_id),
+    pickupStart: row.pickup_start,
+    pickupEnd: row.pickup_end,
+    closesAt: row.closes_at,
+    createdAt: row.created_at,
+  };
+}
+
+export function dropRow(d: Drop, restaurantId: string): Omit<DropRow, 'drop_items'> {
+  return {
+    id: d.id,
+    restaurant_id: restaurantId,
+    title: d.title.trim().slice(0, 40),
+    note: (d.note ?? '').trim().slice(0, 140),
+    pickup_start: d.pickupStart,
+    pickup_end: d.pickupEnd,
+    closes_at: d.closesAt,
+    created_at: d.createdAt,
+  };
+}
+
+export function discountCodeFromRow(row: DiscountCodeRow): DiscountCode {
+  return {
+    id: row.id,
+    code: row.code,
+    kind: row.kind,
+    value: row.value,
+    newCustomersOnly: row.new_customers_only,
+    maxUses: row.max_uses,
+    endsAt: row.ends_at,
+    ...(row.paused ? { paused: true } : {}),
+    createdAt: row.created_at,
+  };
+}
+
+export function discountCodeRow(c: DiscountCode, restaurantId: string): DiscountCodeRow {
+  return {
+    id: c.id,
+    restaurant_id: restaurantId,
+    code: c.code,
+    kind: c.kind,
+    value: c.value,
+    new_customers_only: c.newCustomersOnly,
+    max_uses: c.maxUses,
+    ends_at: c.endsAt,
+    paused: !!c.paused,
+    created_at: c.createdAt,
+  };
+}
+
+export function customRequestFromRow(row: CustomRequestRow, restaurantName = ''): CustomRequest {
+  return {
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    restaurantName: row.restaurants?.name ?? restaurantName,
+    customerId: row.customer_id,
+    customerName: row.customer_name,
+    occasion: row.occasion,
+    details: row.details,
+    servings: row.servings,
+    neededBy: row.needed_by,
+    ...(row.budget_cents ? { budgetCents: row.budget_cents } : {}),
+    createdAt: row.created_at,
+    status: row.status,
+    ...(row.quote_cents && row.quote_pickup_start && row.quote_pickup_end
+      ? {
+          quote: {
+            priceCents: row.quote_cents,
+            note: row.quote_note,
+            pickupStart: row.quote_pickup_start,
+            pickupEnd: row.quote_pickup_end,
+            at: row.quoted_at ?? row.created_at,
+          },
+        }
+      : {}),
+    ...(row.decline_note ? { declineNote: row.decline_note } : {}),
+    ...(row.order_id ? { orderId: row.order_id } : {}),
+  };
+}
+
+export function alertFromRow(row: KitchenAlertRow, restaurantName = ''): KitchenAlert {
+  return {
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    restaurantName: row.restaurants?.name ?? restaurantName,
+    text: row.body,
+    at: row.created_at,
   };
 }
