@@ -483,6 +483,35 @@ select pg_temp.check((select zip = '78701' and people = 1 from public.area_deman
 select pg_temp.check((select count(*) = 1 and bool_and(code = 'FL') from public.launched_states), 'only Florida launched');
 select pg_temp.check((select count(*) = 0 from public.kitchens_waiting_by_state()), 'no kitchens waiting yet');
 
+-- Cook invites ------------------------------------------------------------------
+select pg_temp.check((select referral_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$' from public.restaurants where id = '10000000-0000-0000-0000-000000000001'),
+  'approved kitchen has an invite code');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect_error($$ update public.restaurants set fee_credit_until = now() + interval '1 year' $$, 'only the manna team');
+select pg_temp.expect_error($$ update public.restaurants set referred_by_code = 'ABCD-1234' $$, 'before your kitchen opens');
+-- Dan opens a kitchen with Ada's code.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+insert into public.restaurants (id, owner_id, name, chef_name, cuisine, timezone, referred_by_code, law_attested_at)
+  values ('10000000-0000-0000-0000-000000000002', auth.uid(), 'Dan''s Breads', 'Dan', 'Bakery', 'UTC',
+          (select referral_code from public.restaurants where id = '10000000-0000-0000-0000-000000000001'), now());
+reset role;
+insert into public.restaurant_documents (restaurant_id, kind, storage_path, file_name, review_status) values
+  ('10000000-0000-0000-0000-000000000002', 'government-id', 'docs/d-id.pdf', 'id.pdf', 'approved'),
+  ('10000000-0000-0000-0000-000000000002', 'food-handler', 'docs/d-card.pdf', 'card.pdf', 'approved');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select public.approve_restaurant('10000000-0000-0000-0000-000000000002');
+select pg_temp.check((select count(*) = 2 from public.restaurants
+  where fee_credit_until between now() + interval '27 days' and now() + interval '32 days'), 'both kitchens get a free month');
+select pg_temp.check((select public.kitchen_fee_rate(r, now()) = 0 from public.restaurants r where id = '10000000-0000-0000-0000-000000000001'), 'no fee while the month lasts');
+-- Approving again doesn't add another month.
+select public.approve_restaurant('10000000-0000-0000-0000-000000000002');
+select pg_temp.check((select fee_credit_until < now() + interval '32 days' from public.restaurants where id = '10000000-0000-0000-0000-000000000001'), 'an invite counts once');
+reset role;
+-- Back to normal for the checks below.
+update public.restaurants set fee_credit_until = null;
+delete from public.restaurant_documents where restaurant_id = '10000000-0000-0000-0000-000000000002';
+delete from public.restaurants where id = '10000000-0000-0000-0000-000000000002';
+
 -- Deleting an account --------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 insert into public.favorites (customer_id, restaurant_id) values (auth.uid(), '10000000-0000-0000-0000-000000000001');

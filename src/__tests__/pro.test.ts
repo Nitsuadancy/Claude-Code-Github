@@ -10,8 +10,10 @@ import { checkDrop, draftFromDrop, everydayMenu, openDrops } from '@/lib/drops';
 import { kitchenInsights } from '@/lib/insights';
 import { allergenLine, labelGaps } from '@/lib/labels';
 import { nearbyKitchens, userPlace } from '@/lib/location';
-import { kitchenPayout } from '@/lib/pricing';
+import { kitchenFeeRate, kitchenPayout } from '@/lib/pricing';
+import { addFeeCredit, isReferralCode, makeReferralCode, normalizeReferralCode, referralCodeOf } from '@/lib/referrals';
 import { featuredKitchens, hasPro, PRO_YEARLY_SAVINGS_DOLLARS, proStatus, startSubscription } from '@/lib/pro';
+import { DOCUMENT_TYPES } from '@/lib/setup';
 import { tasteFeed } from '@/lib/taste';
 import { timezoneFor } from '@/lib/timezones';
 import { lookupZip } from '@/lib/zips';
@@ -320,5 +322,75 @@ describe('states', () => {
     state = reducer(state, { type: 'joinAreaWaitlist', zip: '78701', at: iso(NOW) });
     state = reducer(state, { type: 'joinAreaWaitlist', zip: '78701', at: iso(NOW) });
     expect(state.areaWaitlist).toHaveLength(1);
+  });
+});
+
+const READY_DOCUMENTS = DOCUMENT_TYPES.filter((d) => d.required).map((d) => ({
+  kind: d.kind,
+  fileName: `${d.kind}.pdf`,
+  uri: `file:///${d.kind}.pdf`,
+}));
+
+describe('cook invites', () => {
+  it('makes readable codes and adds fee-free months, at most a year ahead', () => {
+    const code = makeReferralCode('Susie’s Sweets', 'r1');
+    expect(code).toMatch(/^SUSIES-[A-Z0-9]{4}$/);
+    expect(makeReferralCode('Su', 'r1')).toMatch(/^SU-/);
+    expect(makeReferralCode('7', 'r1')).toMatch(/^COOK-/);
+    expect(normalizeReferralCode(code.replace('-', '').toLowerCase())).toBe(code);
+    expect(isReferralCode(code)).toBe(true);
+    const once = addFeeCredit(undefined, NOW);
+    expect(new Date(once).getUTCMonth()).toBe((NOW.getUTCMonth() + 1) % 12);
+    let until: string | undefined;
+    for (let i = 0; i < 20; i++) until = addFeeCredit(until, NOW);
+    expect(new Date(until!).getTime()).toBeLessThanOrEqual(daysFrom(366).getTime());
+    expect(kitchenFeeRate({ founding: false, createdAt: iso(NOW), feeCreditUntil: once }, daysFrom(10))).toBe(0);
+    expect(kitchenFeeRate({ founding: false, createdAt: iso(NOW), feeCreditUntil: once }, daysFrom(40))).toBe(0.05);
+  });
+
+  it('gives both kitchens a month when an invited kitchen first opens', () => {
+    const inviter = kitchen({ id: 'k1', ownerId: 'u9', name: 'Susie’s Sweets' });
+    const code = referralCodeOf(inviter);
+    const newcomer = kitchen({
+      id: 'k2',
+      ownerId: 'u1',
+      name: 'Dan’s Breads',
+      status: 'draft',
+      referredBy: code,
+      lawAttestedAt: iso(NOW),
+      city: 'Orlando',
+      state: 'FL',
+      areaCode: '32804',
+      documents: READY_DOCUMENTS,
+    });
+    let state = withKitchen(newcomer, { restaurants: [newcomer, inviter] });
+    state = reducer(state, { type: 'publishRestaurant', restaurantId: 'k2' });
+    const opened = state.restaurants.find((r) => r.id === 'k2')!;
+    expect(opened.status).toBe('live');
+    expect(opened.feeCreditUntil).toBeDefined();
+    expect(opened.referralCode).toMatch(/^DANSBR-/);
+    expect(state.restaurants.find((r) => r.id === 'k1')!.feeCreditUntil).toBeDefined();
+    // Opening again doesn't count twice.
+    const again = reducer(state, { type: 'publishRestaurant', restaurantId: 'k2' });
+    expect(again.restaurants.find((r) => r.id === 'k1')!.feeCreditUntil).toBe(
+      state.restaurants.find((r) => r.id === 'k1')!.feeCreditUntil,
+    );
+  });
+
+  it('ignores your own code', () => {
+    const mine = kitchen({
+      id: 'k3',
+      ownerId: 'u1',
+      status: 'draft',
+      lawAttestedAt: iso(NOW),
+      city: 'Orlando',
+      state: 'FL',
+      areaCode: '32804',
+      documents: READY_DOCUMENTS,
+    });
+    const self = { ...mine, referredBy: referralCodeOf(mine) };
+    const state = reducer(withKitchen(self), { type: 'publishRestaurant', restaurantId: 'k3' });
+    expect(state.restaurants[0].status).toBe('live');
+    expect(state.restaurants[0].feeCreditUntil).toBeUndefined();
   });
 });

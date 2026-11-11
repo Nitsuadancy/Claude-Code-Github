@@ -27,16 +27,28 @@ export const FOUNDING_FEE_FREE_MONTHS = 3;
 /** "5% of food sales", for the cook's screens and the terms. */
 export const KITCHEN_FEE_TERMS = '5% of food sales';
 
-/** When a founding kitchen starts paying the kitchen fee, or null if it isn't founding. */
-export function feeFreeUntil(r: Pick<Restaurant, 'founding' | 'createdAt'>): Date | null {
-  if (!r.founding) return null;
-  const until = new Date(r.createdAt);
-  until.setUTCMonth(until.getUTCMonth() + FOUNDING_FEE_FREE_MONTHS);
+type FeeKitchen = Pick<Restaurant, 'founding' | 'createdAt' | 'feeCreditUntil'>;
+
+/**
+ * When a kitchen starts paying the kitchen fee: the later of a founding
+ * kitchen's first months and any fee-free months earned from invites, or
+ * null if neither applies.
+ */
+export function feeFreeUntil(r: FeeKitchen): Date | null {
+  let until: Date | null = null;
+  if (r.founding) {
+    until = new Date(r.createdAt);
+    until.setUTCMonth(until.getUTCMonth() + FOUNDING_FEE_FREE_MONTHS);
+  }
+  if (r.feeCreditUntil) {
+    const credit = new Date(r.feeCreditUntil);
+    if (!until || credit > until) until = credit;
+  }
   return until;
 }
 
 /** The kitchen fee rate for an order placed at `at`. */
-export function kitchenFeeRate(r: Pick<Restaurant, 'founding' | 'createdAt'>, at: Date): number {
+export function kitchenFeeRate(r: FeeKitchen, at: Date): number {
   const until = feeFreeUntil(r);
   return until && at < until ? 0 : KITCHEN_FEE_RATE;
 }
@@ -47,10 +59,11 @@ export function kitchenFee(subtotalCents: number, rate: number): number {
 }
 
 /** How the kitchen fee applies to this kitchen right now, in a line for the cook. */
-export function kitchenFeeNote(r: Pick<Restaurant, 'founding' | 'createdAt'>, now: Date): string {
+export function kitchenFeeNote(r: FeeKitchen, now: Date): string {
   const until = feeFreeUntil(r);
   if (until && now < until) {
-    return `As a founding kitchen, you pay no Manna fee until ${formatMonthDay(until.toISOString())}. After that, Manna keeps ${KITCHEN_FEE_TERMS}. Tips are always yours.`;
+    const credit = r.feeCreditUntil && until.getTime() === new Date(r.feeCreditUntil).getTime();
+    return `${credit ? 'With your invite rewards' : 'As a founding kitchen'}, you pay no Manna fee until ${formatMonthDay(until.toISOString())}. After that, Manna keeps ${KITCHEN_FEE_TERMS}. Tips are always yours.`;
   }
   return `Shown after Manna’s ${KITCHEN_FEE_TERMS}. Tips are always yours.`;
 }

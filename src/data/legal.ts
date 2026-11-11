@@ -157,6 +157,7 @@ export const TERMS_OF_SERVICE: LegalDocument = {
         '- Honor the orders you accept, and keep customers’ information private.',
         `- Opening a kitchen is free. Manna keeps a kitchen fee of ${KITCHEN_FEE_TERMS} (what the customer pays for the food on each completed order) from your payout. Tips are never charged. Founding kitchens pay no kitchen fee for their first ${FOUNDING_FEE_FREE_MONTHS} months after opening.`,
         '- Manna will tell you at least 30 days before any change to the kitchen fee. Manna Pro is optional and billed separately.',
+        '- Invites: when a cook who entered your invite code opens their kitchen and Manna approves it, you each get a month with no kitchen fee. Months stack up to a year ahead, have no cash value, and count once per new kitchen. Codes between your own kitchens or made-up accounts don’t count, and Manna may remove rewards earned that way or end the program with notice.',
       ],
     },
     {

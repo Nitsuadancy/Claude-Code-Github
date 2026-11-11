@@ -78,6 +78,9 @@ export interface RestaurantRow {
   pro_started_at: string | null;
   pro_billing_starts_at: string | null;
   pro_canceled_at: string | null;
+  referral_code: string | null;
+  referred_by_code: string | null;
+  fee_credit_until: string | null;
   created_at: string;
 }
 

@@ -156,7 +156,7 @@ Kitchens are placed by ZIP code anywhere in the US, so there's no city setup. Ea
 - [x] "No kitchens near you yet": join the list for your ZIP, invite a cook
 - [x] State rules researched for TX, CA, NY, PA, OH, IL, GA, NC and MI, with launch switches
 - [ ] A lawyer confirms each state; launch in waves
-- [ ] Cook referral reward (a fee-free month for both cooks)
+- [x] Cook invites: a code per kitchen; when an invited kitchen opens, both get a fee-free month (stacking up to 12)
 - [ ] Sales tax as a marketplace facilitator, state by state (Stripe Tax)
 - [ ] States that allow home-cooked meals (California MEHKOs, Utah and others): different menu rules
 

@@ -114,6 +114,11 @@ create table public.restaurants (
   pro_started_at timestamptz,
   pro_billing_starts_at timestamptz,
   pro_canceled_at timestamptz,
+  -- Invites: this kitchen's code for other cooks (set when it's first approved),
+  -- the code its cook entered while setting up, and fee-free time earned.
+  referral_code text unique check (referral_code is null or referral_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$'),
+  referred_by_code text check (referred_by_code is null or referred_by_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$'),
+  fee_credit_until timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -508,13 +513,21 @@ language sql immutable as $$
 $$;
 
 -- Manna's share of a kitchen's food sales: 5%, or nothing for a founding
--- kitchen's first 3 months after it went live. Mirrors kitchenFeeRate() in src/lib/pricing.ts.
+-- kitchen's first 3 months after it went live and during fee-free months
+-- earned from invites. Mirrors kitchenFeeRate() in src/lib/pricing.ts.
 create function public.kitchen_fee_rate(r public.restaurants, ts timestamptz) returns numeric
 language sql stable set search_path = public as $$
   select case
     when r.founding and ts < coalesce(r.live_since, r.created_at) + interval '3 months' then 0
+    when r.fee_credit_until is not null and ts < r.fee_credit_until then 0
     else 0.05
   end;
+$$;
+
+-- A month with no kitchen fee, on top of any already earned, at most a year ahead.
+create function public.add_fee_credit(until timestamptz) returns timestamptz
+language sql stable as $$
+  select least(greatest(coalesce(until, now()), now()) + interval '1 month', now() + interval '12 months');
 $$;
 
 -- Whether a kitchen has Manna Pro at a moment: a founding kitchen's first 3
@@ -633,8 +646,13 @@ begin
      or new.pro_started_at is distinct from old.pro_started_at
      or new.pro_billing_starts_at is distinct from old.pro_billing_starts_at
      or new.pro_canceled_at is distinct from old.pro_canceled_at
+     or new.referral_code is distinct from old.referral_code
+     or new.fee_credit_until is distinct from old.fee_credit_until
      or new.owner_id is distinct from old.owner_id then
     raise exception 'Only the Manna team can change that' using errcode = '42501';
+  end if;
+  if new.referred_by_code is distinct from old.referred_by_code and old.live_since is not null then
+    raise exception 'An invite code can only be added before your kitchen opens' using errcode = '42501';
   end if;
   if new.status is distinct from old.status
      and not (old.status = 'draft' and new.status = 'pending_review')
@@ -1160,6 +1178,9 @@ $$;
 -- Admin: approve a kitchen after checking its documents.
 create function public.approve_restaurant(p_restaurant_id uuid) returns void
 language plpgsql security definer set search_path = public as $$
+declare
+  opening public.restaurants;
+  inviter public.restaurants;
 begin
   if not public.is_admin() then
     raise exception 'Only the Manna team can approve kitchens' using errcode = '42501';
@@ -1183,8 +1204,24 @@ begin
   ) then
     raise exception 'Approve the food handler certificate and ID first';
   end if;
-  update public.restaurants set verified = true, status = 'live', live_since = coalesce(live_since, now())
+  select * into opening from public.restaurants where id = p_restaurant_id for update;
+  update public.restaurants set
+    verified = true, status = 'live', live_since = coalesce(live_since, now()),
+    referral_code = coalesce(
+      referral_code,
+      coalesce(nullif(left(regexp_replace(upper(name), '[^A-Z]', '', 'g'), 6), ''), 'COOK')
+        || '-' || upper(left(md5(id::text), 4))
+    )
     where id = p_restaurant_id;
+  -- An invite counts once, the first time the invited kitchen opens, and never between one cook's own kitchens.
+  if opening.live_since is null and opening.referred_by_code is not null then
+    select * into inviter from public.restaurants
+      where referral_code = opening.referred_by_code and owner_id <> opening.owner_id and id <> opening.id;
+    if found then
+      update public.restaurants set fee_credit_until = public.add_fee_credit(fee_credit_until)
+        where id in (opening.id, inviter.id);
+    end if;
+  end if;
   perform public.refresh_licensed(p_restaurant_id);
 end;
 $$;

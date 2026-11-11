@@ -34,6 +34,7 @@ import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { kitchenFeeNote, kitchenPayout } from '@/lib/pricing';
 import { hasPro } from '@/lib/pro';
+import { creditLine } from '@/lib/referrals';
 import { newRequests } from '@/lib/custom-orders';
 import { PRO_FEATURES } from '@/data/pro';
 import { chatState } from '@/lib/order-chat';
@@ -216,6 +217,25 @@ export default function ChefDashboard() {
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.growthTitle}>Bring your followers</Text>
               <Text style={styles.growthBody}>Make an Instagram Story with your QR code.</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={colors.textMuted} />
+          </Pressable>
+        )}
+
+        {isNew ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Invite a cook and get a month with no Manna fee"
+            onPress={() => router.push('/chef/invite')}
+            style={({ pressed }) => [styles.growth, pressed && { opacity: 0.8 }]}>
+            <View style={styles.growthIcon}>
+              <Icon name="chef-hat" size={20} color={colors.bg} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.growthTitle}>Invite a cook, get a month free</Text>
+              <Text style={styles.growthBody}>
+                {creditLine(restaurant.feeCreditUntil, now) ?? 'You both skip the Manna fee for a month when they open.'}
+              </Text>
             </View>
             <Icon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>

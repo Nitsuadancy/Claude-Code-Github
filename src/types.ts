@@ -232,6 +232,12 @@ export interface Restaurant {
   drops?: Drop[];
   /** Discount codes (a Pro tool). */
   discountCodes?: DiscountCode[];
+  /** This kitchen's invite code for other cooks, set when it opens. */
+  referralCode?: string;
+  /** The invite code the cook entered while setting up, if another cook invited them. */
+  referredBy?: string;
+  /** Fee-free months earned from invites: no kitchen fee on orders before this time. */
+  feeCreditUntil?: string;
   /**
    * The Manna team approved a food permit or license (commercial kitchen,
    * food truck, catering, a home-kitchen permit). Optional: kitchens without

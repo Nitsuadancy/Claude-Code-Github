@@ -51,8 +51,10 @@ import { capitalize, formatTime, hoursOn, TIME_SLOTS, WEEKDAYS } from '@/lib/hou
 import { INTRO_VIDEO_SECONDS, pickImages, pickIntroVideo } from '@/lib/images';
 import { photoSource } from '@/lib/photo';
 import { cleanInstagram, TAGLINE_MAX } from '@/lib/kitchen-style';
+import { isReferralCode, kitchenForCode, normalizeReferralCode } from '@/lib/referrals';
 import { digitsOnly, isValidZip } from '@/lib/validation';
 import { useFieldErrors } from '@/lib/use-field-errors';
+import { useAllRestaurants } from '@/state/store';
 import { useRestaurantDraft } from '@/state/use-restaurant-draft';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { CategoryId, Restaurant, Weekday } from '@/types';
@@ -67,13 +69,14 @@ const PREP_OPTIONS = [15, 20, 25, 30, 40, 45, 60, 75, 90].map((m) => ({
 
 const BIO_MAX = 280;
 const OPEN_STATE_NAMES = openStateNames().join(', ');
-type ErrorKey = 'name' | 'instagram' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours';
+type ErrorKey = 'name' | 'instagram' | 'invite' | 'cuisine' | 'neighborhood' | 'address' | 'city' | 'areaCode' | 'days' | 'hours';
 type Errors = Partial<Record<ErrorKey, string>>;
 
 /** Which error message each kitchen field can clear when it's edited. */
 const ERROR_FOR_FIELD: Partial<Record<keyof Restaurant, ErrorKey>> = {
   name: 'name',
   instagram: 'instagram',
+  referredBy: 'invite',
   cuisine: 'cuisine',
   neighborhood: 'neighborhood',
   state: 'neighborhood',
@@ -95,6 +98,7 @@ const TIME_OPTIONS = TIME_SLOTS.map((t) => ({
 
 export default function RestaurantInformation() {
   const { draft, update: updateDraft, save } = useRestaurantDraft();
+  const allKitchens = useAllRestaurants();
   const [step, setStep] = useState<1 | 2>(1);
   const [sheet, setSheet] = useState<Sheet>(null);
   // Which day's opening or closing time is being picked, for days with their own hours.
@@ -121,12 +125,18 @@ export default function RestaurantInformation() {
       if (!draft.cuisine) e.cuisine = 'Choose a cuisine.';
       const instagram = cleanInstagram(draft.instagram ?? '');
       if (draft.instagram && !instagram) e.instagram = 'Use just your username, like @susiessweets.';
+      // An invite code from another cook: checked against the kitchens Manna knows (the server checks again).
+      const invite = draft.referredBy ? normalizeReferralCode(draft.referredBy) : '';
+      const inviter = invite ? kitchenForCode(allKitchens, invite) : undefined;
+      if (invite && (!isReferralCode(invite) || !inviter)) e.invite = 'We couldn’t find that invite code. Check it with the cook who sent it.';
+      else if (inviter && inviter.id === draft.id) e.invite = 'That’s your own code. Share it with other cooks instead.';
       setErrors(e);
       if (Object.keys(e).length) return;
       save({
         name: draft.name.trim(),
         tagline: (draft.tagline ?? '').trim(),
         instagram,
+        referredBy: invite || undefined,
       });
       setStep(2);
       scroller.current?.scrollTo({ y: 0, animated: false });
@@ -412,6 +422,24 @@ export default function RestaurantInformation() {
                 }
                 error={errors.instagram}
               />
+              {draft.status === 'live' ? null : (
+                <TextField
+                  label="Invite code (optional)"
+                  placeholder="SUSIES-7K2Q"
+                  icon="ticket-percent"
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  value={draft.referredBy ?? ''}
+                  onChangeText={(text) => update({ referredBy: text.toUpperCase().replace(/\s/g, '') })}
+                  error={errors.invite}
+                />
+              )}
+              {draft.status === 'live' || errors.invite ? null : (
+                <Body muted style={{ fontSize: 13, marginTop: -spacing.sm }}>
+                  Did a cook invite you? Enter their code, and you’ll both get a month with no Manna fee when your
+                  kitchen opens.
+                </Body>
+              )}
             </>
           ) : (
             <>

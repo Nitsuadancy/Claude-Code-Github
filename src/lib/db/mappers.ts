@@ -207,6 +207,9 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     hasOffer: row.has_offer,
     // On Manna since it went live: new-kitchen labels and founding fee months count from here.
     createdAt: row.live_since ?? row.created_at,
+    ...(row.referral_code ? { referralCode: row.referral_code } : {}),
+    ...(row.referred_by_code ? { referredBy: row.referred_by_code } : {}),
+    ...(row.fee_credit_until ? { feeCreditUntil: row.fee_credit_until } : {}),
     ...(row.pro_plan && row.pro_started_at && row.pro_billing_starts_at
       ? {
           pro: {
@@ -251,6 +254,7 @@ export function restaurantUpdate(
     // Its area's rough center (the ZIP's, never the address), for "kitchens near you".
     ...(kitchenPlace(r) ? { area_lat: round2(kitchenPlace(r)!.lat), area_lng: round2(kitchenPlace(r)!.lng) } : {}),
     zip: r.areaCode.trim(),
+    referred_by_code: r.referredBy ?? null,
     working_days: r.workingDays,
     open_time: r.openTime || null,
     close_time: r.closeTime || null,

@@ -8,6 +8,7 @@ import { normalizePersisted } from '@/lib/migrate';
 import { hasPro, startSubscription } from '@/lib/pro';
 import { canSendAlert, cleanAlert } from '@/lib/alerts';
 import { DROP_TITLE_MAX } from '@/lib/drops';
+import { addFeeCredit, kitchenForCode, referralCodeOf } from '@/lib/referrals';
 import { checkCodeDraft, codeUses, normalizeCode } from '@/lib/discounts';
 import {
   canAcceptQuote,
@@ -278,15 +279,36 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     }
 
-    case 'publishRestaurant':
+    case 'publishRestaurant': {
+      const opening = state.restaurants.find((r) => r.id === action.restaurantId);
+      if (!opening || !isReadyToOpen(opening)) return state;
+      const now = new Date();
+      const firstOpen = opening.status !== 'live';
+      // An invite counts once, when the invited kitchen first opens, and never for the cook's own code.
+      const inviter =
+        firstOpen && opening.referredBy
+          ? kitchenForCode([...state.restaurants, ...SAMPLE_KITCHENS], opening.referredBy)
+          : undefined;
+      const validInvite = !!inviter && inviter.id !== opening.id && inviter.ownerId !== opening.ownerId;
       return {
         ...state,
-        restaurants: state.restaurants.map((r) =>
-          r.id === action.restaurantId && isReadyToOpen(r)
-            ? { ...r, status: 'live', createdAt: new Date().toISOString() }
-            : r,
-        ),
+        restaurants: state.restaurants.map((r) => {
+          if (r.id === opening.id) {
+            return {
+              ...r,
+              status: 'live',
+              createdAt: now.toISOString(),
+              referralCode: referralCodeOf(r),
+              ...(validInvite ? { feeCreditUntil: addFeeCredit(r.feeCreditUntil, now) } : {}),
+              ...(opening.referredBy && !validInvite && firstOpen ? { referredBy: undefined } : {}),
+            };
+          }
+          // The inviting kitchen's month, when it's on this device. On the server, approval credits it.
+          if (validInvite && r.id === inviter!.id) return { ...r, feeCreditUntil: addFeeCredit(r.feeCreditUntil, now) };
+          return r;
+        }),
       };
+    }
 
     case 'setAcceptingOrders':
       return {

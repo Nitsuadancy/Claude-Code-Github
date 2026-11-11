@@ -69,6 +69,9 @@ const restaurantRow: RestaurantRow = {
   pro_started_at: '2026-10-01T12:00:00Z',
   pro_billing_starts_at: '2026-10-01T12:00:00Z',
   pro_canceled_at: null,
+  referral_code: 'SUSIES-7K2Q',
+  referred_by_code: null,
+  fee_credit_until: null,
   created_at: '2026-04-03T12:00:00Z',
 };
 
