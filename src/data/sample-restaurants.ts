@@ -419,7 +419,19 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
         dailyLimit: 20,
       }),
     ],
-    drops: [demoDrop('sample_drop_susie_holiday', 'Holiday cobblers and gift loaves', ['ss_holiday_cobbler', 'ss_gift_loaves', 'ss_pound_cake'], 'Family-size cobblers for the table and pound cakes wrapped to give. Only one bake, so order early.')],
+    drops: [demoDrop('sample_drop_susie_holiday', 'Holiday cobblers and gift loaves', ['ss_holiday_cobbler', 'ss_gift_loaves', 'ss_pound_cake'], 'Family-size cobblers for the table and pound cakes wrapped to give. First order from me? Use HOLIDAY10 for 10% off.')],
+    discountCodes: [
+      {
+        id: 'sample_code_holiday',
+        code: 'HOLIDAY10',
+        kind: 'percent',
+        value: 10,
+        newCustomersOnly: true,
+        maxUses: null,
+        endsAt: null,
+        createdAt: '2026-11-01T12:00:00.000Z',
+      },
+    ],
   },
   {
     ...base,
