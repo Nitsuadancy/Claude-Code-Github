@@ -10,6 +10,7 @@ import { pickImages } from '@/lib/images';
 import { MENU_SECTIONS, moveItem } from '@/lib/menu';
 import { photoSource } from '@/lib/photo';
 import { formatCents, parsePriceToCents } from '@/lib/money';
+import { hasPro } from '@/lib/pro';
 import { isMenuComplete } from '@/lib/setup';
 import { digitsOnly, newId } from '@/lib/validation';
 import { useFieldErrors } from '@/lib/use-field-errors';
@@ -34,6 +35,7 @@ export default function MenuSetup() {
   const [allergens, setAllergens] = useState<Allergen[]>([]);
   const [limit, setLimit] = useState('');
   const [section, setSection] = useState('');
+  const [dropOnly, setDropOnly] = useState(false);
   const { errors, setErrors, clear } = useFieldErrors<'name' | 'price' | 'limit' | 'menu'>();
 
   const resetForm = () => {
@@ -46,6 +48,7 @@ export default function MenuSetup() {
     setAllergens([]);
     setLimit('');
     setSection('');
+    setDropOnly(false);
     setErrors({});
   };
 
@@ -69,6 +72,7 @@ export default function MenuSetup() {
       allergens,
       dailyLimit,
       section: section || undefined,
+      ...(dropOnly ? { dropOnly: true } : {}),
     };
     const menu = editingId ? draft.menu.map((m) => (m.id === editingId ? item : m)) : [...draft.menu, item];
     // The first dish becomes the signature until the chef picks another.
@@ -86,6 +90,7 @@ export default function MenuSetup() {
     setAllergens(item.allergens);
     setLimit(item.dailyLimit === null ? '' : String(item.dailyLimit));
     setSection(item.section ?? '');
+    setDropOnly(!!item.dropOnly);
     setErrors({});
   };
 
@@ -179,6 +184,16 @@ export default function MenuSetup() {
           <Chip key={name} label={name} selected={section === name} onPress={() => setSection(section === name ? '' : name)} />
         ))}
       </View>
+
+      {hasPro(draft, new Date()) || dropOnly ? (
+        <View style={styles.dropOnly}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.dropOnlyTitle}>Only in drops</Text>
+            <Text style={styles.dropOnlyBody}>Keep it off your everyday menu and sell it in a drop, like holiday pies.</Text>
+          </View>
+          <Toggle accessibilityLabel="Only in drops" value={dropOnly} onValueChange={setDropOnly} />
+        </View>
+      ) : null}
 
       <FieldLabel>Dietary</FieldLabel>
       <View style={styles.chips}>
@@ -288,6 +303,7 @@ export default function MenuSetup() {
               <Text style={styles.itemMeta} numberOfLines={1}>
                 <Text style={styles.itemPrice}>{formatCents(item.priceCents)}</Text>
                 {item.section ? `  ·  ${item.section}` : ''}
+                {item.dropOnly ? '  ·  Drops only' : ''}
                 {item.dailyLimit !== null ? `  ·  ${item.dailyLimit} a day` : ''}
               </Text>
             </Pressable>
@@ -314,6 +330,16 @@ export default function MenuSetup() {
 }
 
 const styles = StyleSheet.create({
+  dropOnly: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  dropOnlyTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  dropOnlyBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.textMuted },
   photo: {
     height: 180,
     borderRadius: radius.lg,

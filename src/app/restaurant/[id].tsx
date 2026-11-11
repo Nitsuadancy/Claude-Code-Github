@@ -41,6 +41,9 @@ import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { computeCartTotals } from '@/lib/pricing';
 import { groupMenu } from '@/lib/menu';
+import { everydayMenu, openDrops, upcomingDrops } from '@/lib/drops';
+import { acceptsCustomOrders } from '@/lib/custom-orders';
+import { DropCard } from '@/components/drop-card';
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { relativeDay } from '@/lib/reviews';
 import { availableSlots, formatSlot } from '@/lib/schedule';
@@ -91,7 +94,9 @@ export default function RestaurantDetail() {
   const slots = open || bakeDayKitchen ? [] : availableSlots(restaurant, now);
   // Closed kitchens still take pre-orders for their next opening.
   const canOrder = (open || slots.length > 0) && !isPreview && state.user?.role === 'foodie';
-  const inThisCart = state.cart.restaurantId === restaurant.id;
+  // Drop carts are their own order, picked up on the drop's day.
+  const inThisCart = state.cart.restaurantId === restaurant.id && !state.cart.dropId;
+  const drops = isPreview ? upcomingDrops(restaurant, now) : openDrops(restaurant, now);
   const totals = computeCartTotals(inThisCart ? state.cart : { restaurantId: null, lines: [] }, restaurant.menu);
   const qty = (itemId: string) =>
     inThisCart ? (state.cart.lines.find((l) => l.itemId === itemId)?.quantity ?? 0) : 0;
@@ -261,8 +266,11 @@ export default function RestaurantDetail() {
                   </View>
                 </View>
               ) : null}
-              {restaurant.menu.length === 0 ? <Body muted>No dishes yet.</Body> : null}
-              {groupMenu(restaurant.menu, restaurant.signatureItemId).map((group) => (
+              {drops.map((d) => (
+                <DropCard key={d.id} drop={d} restaurant={restaurant} accent={accent} now={now} />
+              ))}
+              {everydayMenu(restaurant.menu).length === 0 ? <Body muted>No dishes yet.</Body> : null}
+              {groupMenu(everydayMenu(restaurant.menu), restaurant.signatureItemId).map((group) => (
                 <View key={group.title ?? `group-${group.items[0].id}`}>
                   {group.title ? <Text style={styles.sectionTitle}>{group.title}</Text> : null}
                   {group.items.map((item) => {
@@ -350,6 +358,21 @@ export default function RestaurantDetail() {
                   })}
                 </View>
               ))}
+              {acceptsCustomOrders(restaurant, now) && !isPreview && state.user?.role === 'foodie' ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push({ pathname: '/custom/new', params: { kitchen: restaurant.id } })}
+                  style={({ pressed }) => [styles.custom, pressed && { opacity: 0.85 }]}>
+                  <Icon name="cake" size={22} color={accent} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.customTitle}>Need something special?</Text>
+                    <Text style={styles.customBody}>
+                      Ask {chefFirst} for a custom cake, a party tray or catering. You’ll get a price before you order.
+                    </Text>
+                  </View>
+                  <Icon name="chevron-right" size={18} color={colors.textMuted} />
+                </Pressable>
+              ) : null}
             </View>
           ) : null}
 
@@ -543,6 +566,17 @@ function Notice({ icon, text }: { icon: IconName; text: string }) {
 }
 
 const styles = StyleSheet.create({
+  custom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+  },
+  customTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ivory },
+  customBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
   hero: { width: '100%', height: HERO_HEIGHT },
   stickyBg: {
     position: 'absolute',

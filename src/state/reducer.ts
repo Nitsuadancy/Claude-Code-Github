@@ -5,15 +5,34 @@ import { canPostOrderUpdate, ORDER_UPDATE_MAX } from '@/lib/order-updates';
 import { chatState, cleanMessage, isBlockedBetween, kitchenParticipantId, readKey, sideFor } from '@/lib/order-chat';
 import { isReadyToOpen } from '@/lib/setup';
 import { normalizePersisted } from '@/lib/migrate';
+import { hasPro, startSubscription } from '@/lib/pro';
+import { canSendAlert, cleanAlert } from '@/lib/alerts';
+import { DROP_TITLE_MAX } from '@/lib/drops';
+import { checkCodeDraft, codeUses, normalizeCode } from '@/lib/discounts';
+import {
+  canAcceptQuote,
+  canQuote,
+  CUSTOM_DETAILS_MAX,
+  CUSTOM_NOTE_MAX,
+  MIN_QUOTE_CENTS,
+  orderFromQuote,
+} from '@/lib/custom-orders';
+import { SAMPLE_RESTAURANTS as SAMPLE_KITCHENS } from '@/data/sample-restaurants';
 import type {
   Block,
   Cart,
+  CustomQuote,
+  CustomRequest,
+  DiscountCode,
+  Drop,
+  KitchenAlert,
   GrowerApplication,
   Order,
   OrderIssueKind,
   OrderMessage,
   OrderUpdate,
   OrderStatus,
+  ProPlan,
   Restaurant,
   Review,
   Role,
@@ -57,6 +76,10 @@ export interface AppState {
   reportedMessageIds: string[];
   /** Who has blocked whom. A block stops the chat both ways. */
   blocks: Block[];
+  /** Alerts Pro kitchens sent to the people who saved them. */
+  alerts: KitchenAlert[];
+  /** Custom order requests between customers and Pro kitchens. */
+  customRequests: CustomRequest[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -85,6 +108,8 @@ export const INITIAL_STATE: AppState = {
   chatReadAt: {},
   reportedMessageIds: [],
   blocks: [],
+  alerts: [],
+  customRequests: [],
 };
 
 export type Action =
@@ -106,6 +131,8 @@ export type Action =
       itemId: string;
       /** Portions still available today; adding stops here. */
       max?: number | null;
+      /** Adding from a drop: the cart is for that drop's pickup day. */
+      dropId?: string;
     }
   | { type: 'setCartQuantity'; itemId: string; quantity: number }
   | { type: 'clearCart' }
@@ -136,6 +163,20 @@ export type Action =
   | { type: 'reportReview'; reviewId: string }
   | { type: 'markShared'; step: SharedStep }
   | { type: 'joinProWaitlist'; at: string }
+  | { type: 'startPro'; restaurantId: string; plan: ProPlan; at: string }
+  | { type: 'cancelPro'; restaurantId: string; at: string }
+  | { type: 'resumePro'; restaurantId: string }
+  | { type: 'sendAlert'; alert: KitchenAlert }
+  | { type: 'saveDrop'; restaurantId: string; drop: Drop }
+  | { type: 'closeDrop'; restaurantId: string; dropId: string; at: string }
+  | { type: 'deleteDrop'; restaurantId: string; dropId: string }
+  | { type: 'saveDiscountCode'; restaurantId: string; code: DiscountCode }
+  | { type: 'removeDiscountCode'; restaurantId: string; codeId: string }
+  | { type: 'requestCustom'; request: CustomRequest }
+  | { type: 'quoteCustom'; requestId: string; quote: CustomQuote }
+  | { type: 'declineCustom'; requestId: string; note: string; at: string }
+  | { type: 'withdrawCustom'; requestId: string; customerId: string }
+  | { type: 'acceptQuote'; requestId: string; customerId: string; orderId: string; at: string }
   | { type: 'markActivitySeen'; at: string }
   | { type: 'rememberSearch'; query: string }
   | { type: 'clearSearches' }
@@ -215,6 +256,8 @@ export function reducer(state: AppState, action: Action): AppState {
             state.orders.some((o) => o.id === m.orderId && o.customerId !== userId && !mine.has(o.restaurantId)),
         ),
         blocks: state.blocks.filter((b) => b.blockerId !== userId && b.blockedId !== userId),
+        alerts: state.alerts.filter((a) => !mine.has(a.restaurantId)),
+        customRequests: state.customRequests.filter((c) => c.customerId !== userId && !mine.has(c.restaurantId)),
       };
     }
 
@@ -250,8 +293,10 @@ export function reducer(state: AppState, action: Action): AppState {
       };
 
     case 'addToCart': {
-      // A cart holds food from one kitchen at a time; adding from another starts over.
-      const sameKitchen = state.cart.restaurantId === action.restaurantId;
+      // A cart holds food from one kitchen at a time, and from one drop or the
+      // everyday menu; adding from somewhere else starts over.
+      const sameKitchen =
+        state.cart.restaurantId === action.restaurantId && (state.cart.dropId ?? null) === (action.dropId ?? null);
       const lines = sameKitchen ? state.cart.lines : [];
       const existing = lines.find((l) => l.itemId === action.itemId);
       const max = action.max ?? Infinity;
@@ -260,6 +305,7 @@ export function reducer(state: AppState, action: Action): AppState {
         ...state,
         cart: {
           restaurantId: action.restaurantId,
+          ...(action.dropId ? { dropId: action.dropId } : {}),
           lines: existing
             ? lines.map((l) =>
                 l.itemId === action.itemId ? { ...l, quantity: l.quantity + 1 } : l,
@@ -458,6 +504,134 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'joinProWaitlist':
       return state.proInterestAt ? state : { ...state, proInterestAt: action.at };
 
+    case 'startPro':
+      return updateKitchen(state, action.restaurantId, (r) => ({
+        ...r,
+        pro: startSubscription(r, action.plan, new Date(action.at)),
+      }));
+
+    case 'cancelPro':
+      return updateKitchen(state, action.restaurantId, (r) =>
+        r.pro && !r.pro.canceledAt ? { ...r, pro: { ...r.pro, canceledAt: action.at } } : r,
+      );
+
+    case 'sendAlert': {
+      const { alert } = action;
+      const kitchen = state.restaurants.find((r) => r.id === alert.restaurantId);
+      const at = new Date(alert.at);
+      if (!kitchen || !hasPro(kitchen, at) || !canSendAlert(state.alerts, alert.restaurantId, alert.text, at)) return state;
+      return { ...state, alerts: [...state.alerts, { ...alert, text: cleanAlert(alert.text) }] };
+    }
+
+    case 'saveDrop': {
+      const kitchen = state.restaurants.find((r) => r.id === action.restaurantId);
+      if (!kitchen || !hasPro(kitchen, new Date(action.drop.createdAt))) return state;
+      const drop = { ...action.drop, title: action.drop.title.trim().slice(0, DROP_TITLE_MAX) };
+      return updateKitchen(state, action.restaurantId, (r) => {
+        const drops = r.drops ?? [];
+        return {
+          ...r,
+          drops: drops.some((d) => d.id === drop.id) ? drops.map((d) => (d.id === drop.id ? drop : d)) : [...drops, drop],
+        };
+      });
+    }
+
+    case 'closeDrop':
+      return updateKitchen(state, action.restaurantId, (r) => ({
+        ...r,
+        drops: (r.drops ?? []).map((d) =>
+          d.id === action.dropId && d.closesAt > action.at ? { ...d, closesAt: action.at } : d,
+        ),
+      }));
+
+    case 'deleteDrop':
+      // A drop with orders stays, so those orders keep their pickup details; close it instead.
+      if (state.orders.some((o) => o.dropId === action.dropId)) return state;
+      return updateKitchen(state, action.restaurantId, (r) => ({
+        ...r,
+        drops: (r.drops ?? []).filter((d) => d.id !== action.dropId),
+      }));
+
+    case 'saveDiscountCode': {
+      const kitchen = state.restaurants.find((r) => r.id === action.restaurantId);
+      const codes = kitchen?.discountCodes ?? [];
+      const code = { ...action.code, code: normalizeCode(action.code.code) };
+      if (!kitchen || !hasPro(kitchen, new Date(code.createdAt)) || checkCodeDraft(code, codes, code.id)) return state;
+      return updateKitchen(state, action.restaurantId, (r) => ({
+        ...r,
+        discountCodes: codes.some((c) => c.id === code.id) ? codes.map((c) => (c.id === code.id ? code : c)) : [...codes, code],
+      }));
+    }
+
+    case 'removeDiscountCode':
+      // A code that's been used is paused instead, so past orders keep their record.
+      return updateKitchen(state, action.restaurantId, (r) => {
+        const target = r.discountCodes?.find((c) => c.id === action.codeId);
+        if (!target) return r;
+        const used = codeUses(state.orders, r.id, target.code) > 0;
+        return {
+          ...r,
+          discountCodes: used
+            ? (r.discountCodes ?? []).map((c) => (c.id === action.codeId ? { ...c, paused: true } : c))
+            : (r.discountCodes ?? []).filter((c) => c.id !== action.codeId),
+        };
+      });
+
+    case 'requestCustom': {
+      const { request } = action;
+      if (state.customRequests.some((r) => r.id === request.id)) return state;
+      return {
+        ...state,
+        customRequests: [
+          ...state.customRequests,
+          {
+            ...request,
+            details: request.details.trim().slice(0, CUSTOM_DETAILS_MAX),
+            status: 'open',
+            quote: undefined,
+            orderId: undefined,
+          },
+        ],
+      };
+    }
+
+    case 'quoteCustom':
+      return updateRequest(state, action.requestId, (r) =>
+        canQuote(r) && action.quote.priceCents >= MIN_QUOTE_CENTS
+          ? { ...r, status: 'quoted', quote: { ...action.quote, note: action.quote.note.trim().slice(0, CUSTOM_NOTE_MAX) } }
+          : r,
+      );
+
+    case 'declineCustom':
+      return updateRequest(state, action.requestId, (r) =>
+        canQuote(r) ? { ...r, status: 'declined', declineNote: action.note.trim().slice(0, CUSTOM_NOTE_MAX) || undefined } : r,
+      );
+
+    case 'withdrawCustom':
+      return updateRequest(state, action.requestId, (r) =>
+        r.customerId === action.customerId && canQuote(r) ? { ...r, status: 'withdrawn' } : r,
+      );
+
+    case 'acceptQuote': {
+      const request = state.customRequests.find((r) => r.id === action.requestId);
+      const kitchen = state.restaurants.find((r) => r.id === request?.restaurantId)
+        ?? SAMPLE_KITCHENS.find((r) => r.id === request?.restaurantId);
+      const now = new Date(action.at);
+      if (!request || !kitchen || request.customerId !== action.customerId || !canAcceptQuote(request, now)) return state;
+      const order = orderFromQuote(request, request.quote!, kitchen, action.orderId, now);
+      return {
+        ...updateRequest(state, request.id, (r) => ({ ...r, status: 'accepted', orderId: order.id })),
+        orders: [...state.orders, order],
+      };
+    }
+
+    case 'resumePro':
+      return updateKitchen(state, action.restaurantId, (r) => {
+        if (!r.pro?.canceledAt) return r;
+        const { canceledAt: _canceled, ...pro } = r.pro;
+        return { ...r, pro };
+      });
+
     case 'markShared':
       if (state.sharedSteps.includes(action.step)) return state;
       return { ...state, sharedSteps: [...state.sharedSteps, action.step] };
@@ -483,6 +657,17 @@ export function reducer(state: AppState, action: Action): AppState {
     default:
       return state;
   }
+}
+
+/** Applies a change to one custom request. */
+function updateRequest(state: AppState, id: string, change: (r: CustomRequest) => CustomRequest): AppState {
+  return { ...state, customRequests: state.customRequests.map((r) => (r.id === id ? change(r) : r)) };
+}
+
+/** Applies a change to one kitchen stored on this device. */
+function updateKitchen(state: AppState, restaurantId: string, change: (r: Restaurant) => Restaurant): AppState {
+  if (!state.restaurants.some((r) => r.id === restaurantId)) return state;
+  return { ...state, restaurants: state.restaurants.map((r) => (r.id === restaurantId ? change(r) : r)) };
 }
 
 export function toPersisted(state: AppState): PersistedState {

@@ -5,6 +5,7 @@
 import type { MenuItem, Restaurant } from '@/types';
 
 import { isBakeDayKitchen, takingOrders } from './ordering';
+import { hasPro } from './pro';
 import { availableSlots } from './schedule';
 
 export interface TasteDish {
@@ -21,17 +22,19 @@ export function canOrderFrom(r: Restaurant, now: Date): boolean {
 /**
  * Every dish with a photo from kitchens you can order from. Each kitchen's
  * signature dish leads its own list, and kitchens take turns, so the feed
- * never shows five dishes from one cook in a row.
+ * never shows five dishes from one cook in a row. Pro kitchens (featured)
+ * go first in each turn.
  */
 export function tasteFeed(restaurants: Restaurant[], now: Date): TasteDish[] {
   const queues = restaurants
     .filter((r) => r.status !== 'draft' && canOrderFrom(r, now))
     .map((r) => {
-      const dishes = r.menu.filter((m) => m.available && m.photoUri);
+      const dishes = r.menu.filter((m) => m.available && m.photoUri && !m.dropOnly);
       dishes.sort((a, b) => Number(b.id === r.signatureItemId) - Number(a.id === r.signatureItemId));
       return dishes.map((item) => ({ restaurant: r, item }));
     })
-    .filter((q) => q.length > 0);
+    .filter((q) => q.length > 0)
+    .sort((a, b) => Number(hasPro(b[0].restaurant, now)) - Number(hasPro(a[0].restaurant, now)));
   const feed: TasteDish[] = [];
   for (let round = 0; queues.some((q) => q.length > round); round++) {
     for (const q of queues) if (q[round]) feed.push(q[round]);

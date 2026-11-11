@@ -1,56 +1,83 @@
+import type { Href } from 'expo-router';
+
 import type { IconName } from '@/components/icon';
 import type { Restaurant } from '@/types';
 
 /**
- * Manna Pro: an optional plan for cooks, planned for once kitchens are
- * selling steadily (see docs/ROADMAP.md, Phase 6). Selling and getting paid
- * come with every kitchen; Pro adds tools that help a kitchen sell more or save time.
- * Billing isn't built yet, so the app shows the plan and takes interest only.
+ * Manna Pro: the optional plan for cooks ($19.99 a month or $199 a year).
+ * Every Pro tool is built to bring in more orders or bigger ones. Billing
+ * isn't connected yet, so starting Pro is simulated, like payments.
  */
 export interface PlanFeature {
+  key: 'featured' | 'alerts' | 'drops' | 'custom' | 'codes' | 'insights' | 'labels';
   icon: IconName;
   title: string;
   body: string;
+  /** Where the cook uses it. Featured placement works on its own. */
+  route?: Href;
 }
 
 export const PRO_FEATURES: PlanFeature[] = [
   {
+    key: 'featured',
+    icon: 'sparkles',
+    title: 'Featured on Manna',
+    body: 'Your kitchen takes turns at the top of the home screen and comes first in Taste.',
+  },
+  {
+    key: 'drops',
     icon: 'calendar-clock',
-    title: 'Drops and pre-order windows',
-    body: 'Open a holiday menu with its own deadline, like “Thanksgiving pies, orders close Tuesday.”',
+    title: 'Drops',
+    body: 'Open a one-off menu with its own deadline, like “Thanksgiving pies, order by Tuesday.”',
+    route: '/chef/drops',
   },
   {
-    icon: 'bell-ring-outline',
-    title: 'Followers and alerts',
-    body: 'Customers follow your kitchen and get a notification when you open a bake day or post a drop.',
+    key: 'alerts',
+    icon: 'megaphone',
+    title: 'Alerts to your followers',
+    body: 'Tell everyone who saved your kitchen when a bake day opens or a drop goes live.',
+    route: '/chef/alerts',
   },
   {
-    icon: 'receipt-text-outline',
-    title: 'Discount codes and gift cards',
-    body: 'Thank your regulars, run a launch special, or sell gift cards for the holidays.',
+    key: 'custom',
+    icon: 'cake',
+    title: 'Custom orders',
+    body: 'Take requests for birthday cakes, party trays and catering. Send a price, and they pay in the app.',
+    route: '/chef/requests',
   },
   {
-    icon: 'history',
-    title: 'Deeper insights',
-    body: 'Your repeat customers, best sellers by day and busiest pickup times.',
+    key: 'codes',
+    icon: 'ticket-percent',
+    title: 'Discount codes',
+    body: 'Thank your regulars or run a launch special. You choose the amount, the end date and the limit.',
+    route: '/chef/codes',
   },
   {
-    icon: 'storefront-outline',
-    title: 'Your own link and branded labels',
-    body: 'A short link like manna.app/yourkitchen, plus flyer and label templates with your name on them.',
+    key: 'insights',
+    icon: 'chart-bar',
+    title: 'Insights',
+    body: 'Your regulars, best sellers, best days and busiest pickup times, month by month.',
+    route: '/chef/insights',
+  },
+  {
+    key: 'labels',
+    icon: 'printer',
+    title: 'Printable labels',
+    body: 'A label for every dish with ingredients, allergens and the wording your state asks for.',
+    route: '/chef/labels',
   },
 ];
 
 /** What every kitchen gets, with or without Pro. */
 export const FREE_FEATURES = [
-  'Your storefront, menu and photos',
+  'Your storefront, menu, photos and intro video',
   'Orders paid upfront, with payouts to your bank',
   'Bake days, daily limits and your prep list',
-  'Reviews, your pinned update and accent color',
-  'The Instagram Story card with your QR code',
+  'Order chat, oven updates and your pinned update',
+  'Reviews and the Instagram Story card with your QR code',
 ] as const;
 
-/** Founding kitchens get Pro free for their first year once it opens. */
+/** Founding kitchens get Pro free for their first months on Manna. */
 export function hasFoundingProOffer(r: Pick<Restaurant, 'founding'> | undefined): boolean {
   return !!r?.founding;
 }

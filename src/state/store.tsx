@@ -9,12 +9,14 @@ import {
   useReducer,
 } from 'react';
 
+import { sampleAlerts } from '@/data/sample-alerts';
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
+import { followedAlerts } from '@/lib/alerts';
 import { SAMPLE_REVIEWS } from '@/data/sample-reviews';
 import type { DietProfile } from '@/lib/diet';
 import { readKey, unreadCount } from '@/lib/order-chat';
 import { withReviews } from '@/lib/reviews';
-import type { OrderMessage, Restaurant, Review } from '@/types';
+import type { KitchenAlert, OrderMessage, Restaurant, Review } from '@/types';
 
 import {
   type Action,
@@ -141,4 +143,13 @@ export function useUnreadMessages(orderId: string): number {
   const visible = useVisibleMessages();
   const me = state.user?.id ?? '';
   return unreadCount(visible, orderId, me, state.chatReadAt[readKey(orderId, me)]);
+}
+
+/** Alerts from kitchens the signed-in person saved, from the last two weeks, newest first. */
+export function useFollowedAlerts(): KitchenAlert[] {
+  const { state } = useStore();
+  return useMemo(() => {
+    const now = new Date();
+    return followedAlerts([...state.alerts, ...sampleAlerts(now)], state.favoriteRestaurantIds, now);
+  }, [state.alerts, state.favoriteRestaurantIds]);
 }

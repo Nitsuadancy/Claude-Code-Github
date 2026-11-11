@@ -62,6 +62,12 @@ export interface MenuItem {
   dailyLimit: number | null;
   /** Menu section such as "Mains" or "Desserts"; empty when unfiled. */
   section?: string;
+  /** Only sold in drops, not on the everyday menu (e.g. Thanksgiving pies). */
+  dropOnly?: boolean;
+  /** Ingredients in order of weight, for the dish's label. */
+  ingredients?: string;
+  /** Net weight or volume for the label, e.g. "1 lb 4 oz (567 g)". */
+  netWeight?: string;
   /** Set by Manna from order history: one of the kitchen's most ordered dishes. */
   popular?: boolean;
 }
@@ -112,6 +118,97 @@ export interface InPersonSpot {
 
 export type RestaurantStatus = 'draft' | 'live';
 
+/** A Pro kitchen's alert to everyone who saved it: "Saturday's bake day is open". */
+export interface KitchenAlert {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  text: string;
+  at: string;
+}
+
+export type CustomRequestStatus = 'open' | 'quoted' | 'accepted' | 'declined' | 'withdrawn';
+
+/** The kitchen's price for a custom order, with when to pick it up. */
+export interface CustomQuote {
+  priceCents: number;
+  note: string;
+  pickupStart: string;
+  pickupEnd: string;
+  at: string;
+}
+
+/** A customer's request for something off-menu: a birthday cake, a party tray, catering. */
+export interface CustomRequest {
+  id: string;
+  restaurantId: string;
+  restaurantName: string;
+  customerId: string;
+  customerName: string;
+  /** What it's for, e.g. "Birthday cake". */
+  occasion: string;
+  details: string;
+  servings: number;
+  /** Local date the customer needs it, "YYYY-MM-DD". */
+  neededBy: string;
+  budgetCents?: number;
+  createdAt: string;
+  status: CustomRequestStatus;
+  quote?: CustomQuote;
+  /** Why the kitchen couldn't take it, if it said. */
+  declineNote?: string;
+  /** The order created when the customer accepted the quote. */
+  orderId?: string;
+}
+
+/**
+ * A Pro kitchen's drop: a one-off menu with its own pickup window and order
+ * deadline, like "Thanksgiving pies, order by Tuesday".
+ */
+export interface Drop {
+  id: string;
+  title: string;
+  note?: string;
+  /** Menu items in the drop. */
+  itemIds: string[];
+  pickupStart: string;
+  pickupEnd: string;
+  /** When ordering closes. */
+  closesAt: string;
+  createdAt: string;
+}
+
+/** A Pro kitchen's discount code, like WELCOME10. The kitchen pays for the discount. */
+export interface DiscountCode {
+  id: string;
+  /** Uppercase letters and numbers, e.g. "WELCOME10". */
+  code: string;
+  kind: 'percent' | 'amount';
+  /** Percent off (5 to 50), or cents off. */
+  value: number;
+  /** Only for people who haven't ordered from this kitchen before. */
+  newCustomersOnly: boolean;
+  /** How many orders can use it, or null for no limit. */
+  maxUses: number | null;
+  endsAt: string | null;
+  /** Turned off by the cook. */
+  paused?: boolean;
+  createdAt: string;
+}
+
+export type ProPlan = 'monthly' | 'yearly';
+
+/** A kitchen's Manna Pro subscription. Billing isn't connected yet. */
+export interface ProSubscription {
+  plan: ProPlan;
+  startedAt: string;
+  /** When the first paid period starts (after a founding kitchen's free months). */
+  billingStartsAt: string;
+  /** Set when the cook cancels. Pro stays on until the end of the period they paid for. */
+  canceledAt?: string;
+}
+
+
 export interface Restaurant {
   id: string;
   /** Set for restaurants created by a chef on this device; sample restaurants have none. */
@@ -127,6 +224,12 @@ export interface Restaurant {
   verified: boolean;
   /** One of the first kitchens on Manna. Set by the Manna team. */
   founding?: boolean;
+  /** Manna Pro, if the cook subscribed. Founding kitchens also get Pro for their first months. */
+  pro?: ProSubscription;
+  /** One-off menus with their own pickup day (a Pro tool). */
+  drops?: Drop[];
+  /** Discount codes (a Pro tool). */
+  discountCodes?: DiscountCode[];
   /**
    * The Manna team approved a food permit or license (commercial kitchen,
    * food truck, catering, a home-kitchen permit). Optional: kitchens without
@@ -196,6 +299,8 @@ export interface CartLine {
 export interface Cart {
   restaurantId: string | null;
   lines: CartLine[];
+  /** Set when the cart is for one of the kitchen's drops, which has its own pickup day. */
+  dropId?: string;
 }
 
 export type OrderStatus =
@@ -255,8 +360,14 @@ export interface Order {
   estimatedReadyAt: string;
   /** Pickup time the customer chose, or null for as soon as it's ready. */
   scheduledFor: string | null;
-  /** End of the pickup window, for bake-day orders. */
+  /** End of the pickup window, for bake-day and drop orders. */
   pickupBy?: string;
+  /** A discount code used on this order, and how much it took off the food. Paid by the kitchen. */
+  discountCode?: string;
+  discountCents?: number;
+  /** The drop this order came from, if any. */
+  dropId?: string;
+  dropTitle?: string;
   /** The kitchen's pickup instructions, shared once it accepts. */
   pickupInstructions?: string;
   /** The kitchen's photo of its pickup spot, shown once it accepts. */

@@ -60,7 +60,10 @@ export function OrderCard({
       {order.scheduledFor && active ? (
         <View style={styles.scheduled}>
           <Icon name="calendar-clock" size={14} color={colors.gold} />
-          <Text style={styles.scheduledText}>{formatPickup(order.scheduledFor, order.pickupBy, new Date())}</Text>
+          <Text style={styles.scheduledText}>
+            {order.dropTitle ? `${order.dropTitle} · ` : ''}
+            {formatPickup(order.scheduledFor, order.pickupBy, new Date())}
+          </Text>
         </View>
       ) : null}
       {order.customerNote && !compact ? (

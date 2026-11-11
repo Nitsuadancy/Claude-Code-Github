@@ -21,11 +21,14 @@ import {
   TextField,
 } from '@/components/ui';
 import { notify } from '@/lib/alert';
+import * as haptics from '@/lib/haptics';
 import { allergenConflicts } from '@/lib/diet';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
 import { estimateReadyAt } from '@/lib/orders';
-import { computeCartTotals, kitchenFee, kitchenFeeRate, MOVEMENT_FEE_TERMS, TIP_RATES, tipFor } from '@/lib/pricing';
+import { findDrop, formatDropDeadline, formatDropPickup } from '@/lib/drops';
+import { applyCode, describeCode, normalizeCode } from '@/lib/discounts';
+import { computeCartTotals, kitchenFee, kitchenFeeRate, movementFee, MOVEMENT_FEE_TERMS, TIP_RATES, tipFor } from '@/lib/pricing';
 import { bakeDayDate, formatBakeDay, formatCutoff, openBakeDays } from '@/lib/bake-days';
 import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
@@ -45,6 +48,10 @@ export default function Cart() {
   const [note, setNote] = useState('');
   const [tipRate, setTipRate] = useState(0);
   const [bakeDayStart, setBakeDayStart] = useState<string | null>(null);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeText, setCodeText] = useState('');
+  const [applied, setApplied] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   if (!restaurant || state.cart.lines.length === 0) {
     return (
@@ -61,7 +68,28 @@ export default function Cart() {
 
   const totals = computeCartTotals(state.cart, restaurant.menu);
   const tip = tipFor(totals.subtotalCents, tipRate);
-  const grandTotal = totals.totalCents + tip;
+  // A discount code comes off the food; the movement fee is worked out on what's left.
+  const codeResult =
+    applied && state.user
+      ? applyCode(restaurant, applied, totals.subtotalCents, state.user.id, state.orders, new Date())
+      : null;
+  const discount = codeResult?.ok ? codeResult.discountCents : 0;
+  const foodCents = totals.subtotalCents - discount;
+  const feeCents = movementFee(foodCents);
+  const grandTotal = foodCents + feeCents + tip;
+  const hasCodes = (restaurant.discountCodes ?? []).some((c) => !c.paused);
+  const tryCode = () => {
+    if (!state.user || !codeText.trim()) return;
+    const result = applyCode(restaurant, codeText, totals.subtotalCents, state.user.id, state.orders, new Date());
+    if (result.ok) {
+      haptics.success();
+      setApplied(result.code.code);
+      setCodeError(null);
+      setCodeOpen(false);
+    } else {
+      setCodeError(result.error);
+    }
+  };
   const avoid = state.user?.avoidAllergens ?? [];
   const risky = totals.lines
     .filter((line) => {
@@ -75,7 +103,9 @@ export default function Cart() {
   const mode = open ? when : 'later';
   const chosen = slot && slots.includes(slot) ? slot : (slots[0] ?? null);
   // Bake-day kitchens: the customer picks which upcoming bake day to pick up on.
-  const bakeDayKitchen = isBakeDayKitchen(restaurant);
+  // A drop cart is picked up in the drop's own window; there's nothing to choose.
+  const drop = findDrop(restaurant, state.cart.dropId);
+  const bakeDayKitchen = !drop && isBakeDayKitchen(restaurant);
   const bakeDays = bakeDayKitchen && restaurant.acceptingOrders ? openBakeDays(restaurant, now).slice(0, 4) : [];
   const bakeDay = bakeDays.find((b) => b.pickupStart === bakeDayStart) ?? bakeDays[0];
   // Mid-sentence the name keeps its initial's period ("Rosa M. bakes"); at a sentence end it drops it to avoid "M..".
@@ -85,17 +115,21 @@ export default function Cart() {
   const placeOrder = () => {
     const user = state.user;
     if (!user) return;
+    if (state.cart.dropId && (!drop || new Date(drop.closesAt) <= new Date())) {
+      notify('Drop closed', `Orders for this drop from ${restaurant.name} have closed.`);
+      return;
+    }
     if (bakeDayKitchen && !bakeDay) {
       notify('Orders closed', `${restaurant.name} isn’t taking orders for an upcoming bake day right now.`);
       return;
     }
-    if (!bakeDayKitchen && mode === 'later' && !chosen) {
+    if (!drop && !bakeDayKitchen && mode === 'later' && !chosen) {
       notify('No times available', `${restaurant.name} isn’t taking orders for the next two days.`);
       return;
     }
     const placedAt = new Date();
-    const scheduledFor = bakeDayKitchen ? bakeDay!.pickupStart : mode === 'later' ? chosen : null;
-    const pickupBy = bakeDayKitchen ? bakeDay!.pickupEnd : undefined;
+    const scheduledFor = drop ? drop.pickupStart : bakeDayKitchen ? bakeDay!.pickupStart : mode === 'later' ? chosen : null;
+    const pickupBy = drop ? drop.pickupEnd : bakeDayKitchen ? bakeDay!.pickupEnd : undefined;
     const cookDay = scheduledFor ? new Date(scheduledFor) : placedAt;
     const short = totals.lines.find((line) => {
       const item = restaurant.menu.find((m) => m.id === line.itemId);
@@ -122,8 +156,9 @@ export default function Cart() {
         restaurantName: restaurant.name,
         lines: totals.lines,
         subtotalCents: totals.subtotalCents,
-        movementFeeCents: totals.movementFeeCents,
-        kitchenFeeCents: kitchenFee(totals.subtotalCents, kitchenFeeRate(restaurant, placedAt)),
+        movementFeeCents: feeCents,
+        kitchenFeeCents: kitchenFee(foodCents, kitchenFeeRate(restaurant, placedAt)),
+        ...(codeResult?.ok && discount > 0 ? { discountCode: codeResult.code.code, discountCents: discount } : {}),
         tipCents: tip,
         totalCents: grandTotal,
         pickupAddress: [restaurant.address, restaurant.city].filter(Boolean).join(', '),
@@ -137,6 +172,7 @@ export default function Cart() {
         estimatedReadyAt: scheduledFor ?? estimateReadyAt(createdAt, restaurant.prepMinutes),
         scheduledFor,
         ...(pickupBy ? { pickupBy } : {}),
+        ...(drop ? { dropId: drop.id, dropTitle: drop.title } : {}),
       },
     });
     router.push({ pathname: '/order/[id]', params: { id: orderId, celebrate: '1' } });
@@ -214,7 +250,21 @@ export default function Cart() {
           maxLength={280}
         />
 
-        {bakeDayKitchen ? (
+        {drop ? (
+          <View style={{ gap: spacing.sm }}>
+            <FieldLabel>{drop.title}</FieldLabel>
+            <WhenOption
+              icon="calendar-clock"
+              title={formatDropPickup(drop, now)}
+              detail={formatDropDeadline(drop, now)}
+              closesAt={drop.closesAt}
+              selected
+              disabled={false}
+              onPress={() => {}}
+            />
+            <Text style={styles.tipNote}>This is a drop: everything is made fresh for this pickup window.</Text>
+          </View>
+        ) : bakeDayKitchen ? (
           <View style={{ gap: spacing.sm }}>
             <FieldLabel>Bake day</FieldLabel>
             {bakeDays.length ? (
@@ -294,10 +344,50 @@ export default function Cart() {
           <Text style={styles.tipNote}>100% of your tip goes to {chefAtEnd}.</Text>
         </View>
 
+        {hasCodes ? (
+          codeResult?.ok ? (
+            <View style={styles.codeApplied}>
+              <Icon name="ticket-percent" size={18} color={colors.success} />
+              <Text style={styles.codeAppliedText}>
+                {codeResult.code.code} · {describeCode(codeResult.code)}
+              </Text>
+              <Pressable accessibilityRole="button" onPress={() => setApplied(null)} hitSlop={8}>
+                <Text style={styles.codeRemove}>Remove</Text>
+              </Pressable>
+            </View>
+          ) : codeOpen ? (
+            <View style={{ gap: spacing.sm }}>
+              <View style={styles.codeRow}>
+                <View style={{ flex: 1 }}>
+                  <TextField
+                    value={codeText}
+                    onChangeText={(t) => {
+                      setCodeText(normalizeCode(t));
+                      setCodeError(null);
+                    }}
+                    placeholder="Discount code"
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    onSubmitEditing={tryCode}
+                    error={codeError}
+                  />
+                </View>
+                <GoldButton title="Apply" variant="outline" fullWidth={false} onPress={tryCode} />
+              </View>
+              {applied && codeResult && !codeResult.ok ? <Text style={styles.codeErr}>{codeResult.error}</Text> : null}
+            </View>
+          ) : (
+            <Pressable accessibilityRole="button" onPress={() => setCodeOpen(true)} hitSlop={6}>
+              <Text style={styles.codeLink}>Have a discount code?</Text>
+            </Pressable>
+          )
+        ) : null}
+
         <Ticket
           charges={[
             { label: 'Subtotal', cents: totals.subtotalCents },
-            { label: 'Movement fee', cents: totals.movementFeeCents },
+            ...(discount ? [{ label: `Code ${codeResult?.ok ? codeResult.code.code : ''}`, cents: -discount }] : []),
+            { label: 'Movement fee', cents: feeCents },
             ...(tip ? [{ label: `Tip for ${chefFirst}`, cents: tip }] : []),
           ]}
           totalCents={grandTotal}
@@ -310,9 +400,11 @@ export default function Cart() {
 
         <GoldButton
           title={
-            bakeDayKitchen && bakeDay
-              ? `Order for ${bakeDayDate(bakeDay, now)} · ${formatCents(grandTotal)}`
-              : mode === 'later'
+            drop
+              ? `Order for the drop · ${formatCents(grandTotal)}`
+              : bakeDayKitchen && bakeDay
+                ? `Order for ${bakeDayDate(bakeDay, now)} · ${formatCents(grandTotal)}`
+                : mode === 'later'
                 ? `Schedule pickup · ${formatCents(grandTotal)}`
                 : `Place order · ${formatCents(grandTotal)}`
           }
@@ -375,6 +467,19 @@ function WhenOption({
 
 
 const styles = StyleSheet.create({
+  codeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  codeLink: { fontFamily: fonts.semibold, fontSize: 14, color: colors.gold },
+  codeErr: { fontFamily: fonts.medium, fontSize: 13, color: colors.danger },
+  codeApplied: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+  },
+  codeAppliedText: { flex: 1, fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory },
+  codeRemove: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
   empty: { alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
   content: { padding: spacing.lg, gap: spacing.lg },
   line: {

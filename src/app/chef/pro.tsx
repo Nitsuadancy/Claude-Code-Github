@@ -1,23 +1,58 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FoundingMark } from '@/components/chef';
 import { Icon } from '@/components/icon';
 import { BackButton, Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
-import { FREE_FEATURES, hasFoundingProOffer, PRO_FEATURES } from '@/data/pro';
+import { FREE_FEATURES, PRO_FEATURES } from '@/data/pro';
+import { confirmAction } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
-import { PRO_PRICE_CENTS } from '@/lib/pricing';
+import {
+  foundingProUntil,
+  PRO_PRICE_LABEL,
+  PRO_YEARLY_SAVINGS_DOLLARS,
+  proStatus,
+  proStatusLine,
+} from '@/lib/pro';
 import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
+import type { ProPlan } from '@/types';
+
+const day = (d: Date) => d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
 
 /**
- * Manna Pro for cooks. Billing isn't connected yet, so this shows the plan
- * and lets a cook ask to hear when it opens. It never takes payment.
+ * Manna Pro for cooks: what it adds, the two plans, and starting or
+ * canceling. Billing isn't connected yet, so starting Pro turns it on
+ * without a charge. Once billing is live, Pro is paid on the Manna website.
  */
 export default function MannaPro() {
-  const { state, dispatch } = useStore();
+  const { dispatch } = useStore();
   const restaurant = useMyRestaurant();
-  const founding = hasFoundingProOffer(restaurant);
-  const onList = !!state.proInterestAt;
+  const [plan, setPlan] = useState<ProPlan>('yearly');
+  const [now] = useState(() => new Date());
+  if (!restaurant) return null;
+
+  const status = proStatus(restaurant, now);
+  const sub = restaurant.pro;
+  const subscribed = !!sub && !sub.canceledAt;
+  const foundingUntil = foundingProUntil(restaurant);
+  const inFoundingMonths = !!foundingUntil && now < foundingUntil;
+
+  const start = () => {
+    haptics.success();
+    dispatch({ type: 'startPro', restaurantId: restaurant.id, plan, at: new Date().toISOString() });
+  };
+  const cancel = () =>
+    confirmAction(
+      'Cancel Manna Pro?',
+      status.until
+        ? `Pro stays on until ${day(status.until)}, and you won’t be charged again. Your drops, codes and requests stay saved.`
+        : 'You won’t be charged again.',
+      'Cancel Pro',
+      () => dispatch({ type: 'cancelPro', restaurantId: restaurant.id, at: new Date().toISOString() }),
+      'Keep Pro',
+    );
 
   return (
     <Screen>
@@ -25,41 +60,101 @@ export default function MannaPro() {
         <BackButton />
 
         <View style={{ gap: spacing.sm }}>
-          <Eyebrow>Manna Pro · coming soon</Eyebrow>
+          <Eyebrow>Manna Pro</Eyebrow>
           <Heading size={32}>Sell more, with less work</Heading>
           <Body muted>
-            Your storefront, orders and payouts come with every kitchen. Pro is an optional plan with tools for
-            busy kitchens, for ${PRO_PRICE_CENTS / 100} a month once it opens.
+            Tools that bring in more orders and bigger ones. Your storefront, orders and payouts come with every kitchen,
+            with or without Pro.
           </Body>
         </View>
 
-        {founding ? (
-          <View style={styles.founding}>
-            <FoundingMark size={14} />
-            <Text style={styles.foundingTitle}>Pro is free for your first year</Text>
-            <Text style={styles.foundingBody}>
-              A thank-you for being one of the first kitchens on Manna. It turns on automatically when Pro opens.
-            </Text>
+        {status.active ? (
+          <View style={styles.status}>
+            {status.source === 'founding' ? <FoundingMark size={14} /> : null}
+            <Text style={styles.statusTitle}>You’re on Pro</Text>
+            <Text style={styles.statusBody}>{proStatusLine(restaurant, now)}</Text>
+            {status.ending && sub ? (
+              <GoldButton
+                title="Keep Pro"
+                variant="outline"
+                onPress={() => dispatch({ type: 'resumePro', restaurantId: restaurant.id })}
+                style={{ marginTop: spacing.sm }}
+              />
+            ) : null}
+          </View>
+        ) : sub?.canceledAt ? (
+          <View style={styles.status}>
+            <Text style={styles.statusTitle}>Your Pro plan ended</Text>
+            <Text style={styles.statusBody}>Start it again any time. Everything you set up is still saved.</Text>
           </View>
         ) : null}
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>What Pro adds</Text>
-          {PRO_FEATURES.map((f, i) => (
-            <View key={f.title} style={[styles.feature, i > 0 && styles.rule]}>
-              <View style={styles.featureIcon}>
-                <Icon name={f.icon} size={18} color={colors.gold} />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.featureTitle}>{f.title}</Text>
-                <Text style={styles.featureBody}>{f.body}</Text>
-              </View>
-            </View>
-          ))}
+          <Text style={styles.cardTitle}>{status.active ? 'Your Pro tools' : 'What Pro adds'}</Text>
+          {PRO_FEATURES.map((f, i) => {
+            const open = status.active && f.route;
+            return (
+              <Pressable
+                key={f.key}
+                disabled={!open}
+                accessibilityRole={open ? 'button' : undefined}
+                onPress={() => (f.route ? router.push(f.route) : undefined)}
+                style={({ pressed }) => [styles.feature, i > 0 && styles.rule, pressed && { opacity: 0.7 }]}>
+                <View style={styles.featureIcon}>
+                  <Icon name={f.icon} size={18} color={colors.gold} />
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.featureTitle}>{f.title}</Text>
+                  <Text style={styles.featureBody}>{f.body}</Text>
+                </View>
+                {open ? <Icon name="chevron-right" size={18} color={colors.textMuted} /> : null}
+                {status.active && f.key === 'featured' ? <Text style={styles.onTag}>On</Text> : null}
+              </Pressable>
+            );
+          })}
         </View>
 
+        {subscribed ? null : (
+          <View style={{ gap: spacing.md }}>
+            <Text style={styles.cardTitle}>
+              {inFoundingMonths && foundingUntil ? `Keep Pro after ${day(foundingUntil)}` : 'Choose your plan'}
+            </Text>
+            {inFoundingMonths && foundingUntil ? (
+              <Body muted style={{ fontSize: 14 }}>
+                Pro is free for your first 3 months as a founding kitchen. Choose a plan now and nothing is charged before{' '}
+                {day(foundingUntil)}.
+              </Body>
+            ) : null}
+            <View style={styles.plans}>
+              <PlanOption
+                selected={plan === 'monthly'}
+                onPress={() => setPlan('monthly')}
+                title="Monthly"
+                price="$19.99"
+                per="a month"
+              />
+              <PlanOption
+                selected={plan === 'yearly'}
+                onPress={() => setPlan('yearly')}
+                title="Yearly"
+                price="$199"
+                per="a year"
+                tag={`Save $${PRO_YEARLY_SAVINGS_DOLLARS}`}
+              />
+            </View>
+            <GoldButton
+              title={inFoundingMonths ? `Keep Pro · ${PRO_PRICE_LABEL[plan]}` : `Start Pro · ${PRO_PRICE_LABEL[plan]}`}
+              onPress={start}
+            />
+            <Body muted style={styles.note}>
+              Billing isn’t connected yet, so this turns Pro on without a charge. Once it is, Pro is paid on the Manna
+              website. Cancel any time: Pro stays on until the end of the period you paid for.
+            </Body>
+          </View>
+        )}
+
         <View style={{ gap: spacing.sm }}>
-          <Text style={styles.cardTitle}>Always free</Text>
+          <Text style={styles.cardTitle}>Every kitchen gets</Text>
           {FREE_FEATURES.map((line) => (
             <View key={line} style={styles.freeRow}>
               <Icon name="check" size={16} color={colors.success} />
@@ -68,34 +163,47 @@ export default function MannaPro() {
           ))}
         </View>
 
-        {onList ? (
-          <View style={styles.onList}>
-            <Icon name="check-circle" size={20} color={colors.success} />
-            <Text style={styles.onListText}>
-              You’re on the list. We’ll tell you when Pro opens{founding ? ', and your free year starts then' : ''}.
-            </Text>
-          </View>
-        ) : (
-          <GoldButton
-            title="Notify me when Pro opens"
-            icon="bell-outline"
-            onPress={() => {
-              haptics.success();
-              dispatch({ type: 'joinProWaitlist', at: new Date().toISOString() });
-            }}
-          />
-        )}
-        <Body muted style={styles.note}>
-          Pricing is announced before Pro opens. Nothing is charged until you choose to start it.
-        </Body>
+        {subscribed ? <GoldButton title="Cancel Pro" variant="ghost" onPress={cancel} /> : null}
       </ScrollView>
     </Screen>
   );
 }
 
+function PlanOption({
+  selected,
+  onPress,
+  title,
+  price,
+  per,
+  tag,
+}: {
+  selected: boolean;
+  onPress: () => void;
+  title: string;
+  price: string;
+  per: string;
+  tag?: string;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={`${title}, ${price} ${per}${tag ? `, ${tag}` : ''}`}
+      onPress={onPress}
+      style={[styles.plan, selected && styles.planOn]}>
+      <View style={styles.planHead}>
+        <Text style={[styles.planTitle, selected && { color: colors.gold }]}>{title}</Text>
+        {tag ? <Text style={styles.planTag}>{tag}</Text> : null}
+      </View>
+      <Text style={styles.planPrice}>{price}</Text>
+      <Text style={styles.planPer}>{per}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
-  founding: {
+  status: {
     borderWidth: 1.5,
     borderColor: colors.gold,
     backgroundColor: colors.goldTint,
@@ -103,11 +211,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: 4,
   },
-  foundingTitle: { fontFamily: fonts.semibold, fontSize: 18, color: colors.ivory },
-  foundingBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text },
+  statusTitle: { fontFamily: fonts.semibold, fontSize: 18, color: colors.ivory },
+  statusBody: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
   cardTitle: { fontFamily: fonts.semibold, fontSize: 17, color: colors.ivory },
-  feature: { flexDirection: 'row', gap: spacing.md, paddingVertical: spacing.sm + 2 },
+  feature: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm + 2 },
   rule: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   featureIcon: {
     width: 36,
@@ -119,16 +227,23 @@ const styles = StyleSheet.create({
   },
   featureTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
   featureBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: colors.textMuted },
-  freeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  freeText: { fontFamily: fonts.body, fontSize: 14, color: colors.text },
-  onList: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+  onTag: { fontFamily: fonts.semibold, fontSize: 12, color: colors.success },
+  plans: { flexDirection: 'row', gap: spacing.sm },
+  plan: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.lg,
     padding: spacing.md,
+    gap: 2,
   },
-  onListText: { flex: 1, fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: colors.ivory },
+  planOn: { borderColor: colors.gold, borderWidth: 1.5, backgroundColor: colors.goldTint },
+  planHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.xs },
+  planTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ivory },
+  planTag: { fontFamily: fonts.semibold, fontSize: 11, color: colors.success },
+  planPrice: { fontFamily: fonts.display, fontSize: 28, color: colors.ivory, marginTop: spacing.xs },
+  planPer: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
+  freeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  freeText: { flex: 1, fontFamily: fonts.body, fontSize: 14, color: colors.text },
   note: { fontSize: 12, textAlign: 'center' },
 });

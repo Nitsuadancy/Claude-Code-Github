@@ -18,6 +18,9 @@ import { DishResult, ForYouCard, MiniKitchenCard, OrderAgainCard, TasteEntry } f
 import { FadeIn } from '@/components/motion';
 import { OptionSheet } from '@/components/option-sheet';
 import { HeroCarousel } from '@/components/hero-carousel';
+import { DropCard } from '@/components/drop-card';
+import { openDrops } from '@/lib/drops';
+import { featuredKitchens, hasPro } from '@/lib/pro';
 import { isOpenNow, RestaurantCard } from '@/components/restaurant-card';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import {
@@ -49,7 +52,7 @@ import * as haptics from '@/lib/haptics';
 import { orderingLine } from '@/lib/ordering';
 import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
 import { tasteFeed } from '@/lib/taste';
-import { useAllRestaurants, useDietProfile, useStore, useVisibleMessages } from '@/state/store';
+import { useAllRestaurants, useDietProfile, useStore, useFollowedAlerts, useVisibleMessages } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Order, Restaurant } from '@/types';
 import { Icon } from '@/components/icon';
@@ -110,8 +113,15 @@ export default function FoodieHome() {
   }, [restaurants, filters, fitsDiet, diet]);
   const heroKitchens = useMemo(() => {
     const ranked = browseRestaurants(restaurants, DEFAULT_FILTERS, new Date());
-    const open = ranked.filter((r) => isOpenNow(r, new Date()));
-    return (open.length >= 2 ? open : ranked).slice(0, 5);
+    return featuredKitchens(ranked, new Date(), { isOpen: (r) => isOpenNow(r, new Date()) });
+  }, [restaurants]);
+  const liveDrops = useMemo(() => {
+    const at = new Date();
+    return restaurants
+      .filter((r) => r.status !== 'draft')
+      .flatMap((r) => openDrops(r, at).map((drop) => ({ drop, restaurant: r })))
+      .sort((a, b) => a.drop.closesAt.localeCompare(b.drop.closesAt))
+      .slice(0, 4);
   }, [restaurants]);
   const cuisineOptions = useMemo(
     () => allCuisineTags(restaurants).map((c) => ({ value: c, label: c })),
@@ -135,9 +145,14 @@ export default function FoodieHome() {
   );
   const userId = state.user?.id ?? '';
   const visibleMessages = useVisibleMessages();
+  const alerts = useFollowedAlerts();
   const unseen = useMemo(
-    () => unseenCount(buildActivity(state.orders, userId, visibleMessages), state.activitySeenAt),
-    [state.orders, userId, visibleMessages, state.activitySeenAt],
+    () =>
+      unseenCount(
+        buildActivity(state.orders, userId, visibleMessages, { alerts, requests: state.customRequests }),
+        state.activitySeenAt,
+      ),
+    [state.orders, userId, visibleMessages, alerts, state.customRequests, state.activitySeenAt],
   );
   const againOrders = useMemo(() => recentKitchenOrders(state.orders, userId), [state.orders, userId]);
   const favorites = useMemo(
@@ -238,7 +253,7 @@ export default function FoodieHome() {
               restaurants={heroKitchens}
               width={width}
               height={Math.round(Math.min(width * 1.32, 620))}
-              label={(r) => orderingLine(r, now, { long: true })}
+              label={(r) => (hasPro(r, now) ? `Featured · ${orderingLine(r, now)}` : orderingLine(r, now, { long: true }))}
               onOpen={open}
               overlay={masthead}
             />
@@ -362,6 +377,17 @@ export default function FoodieHome() {
             count={tasteDishes.length}
             onPress={() => router.push('/taste')}
           />
+        </FadeIn>
+      ) : null}
+
+      {!searching && liveDrops.length ? (
+        <FadeIn delay={80} style={{ gap: spacing.md }}>
+          <SectionHeader title="Drops" eyebrow="One-off menus, for a limited time" />
+          <View>
+            {liveDrops.map(({ drop, restaurant }) => (
+              <DropCard key={drop.id} drop={drop} restaurant={restaurant} now={now} showKitchen />
+            ))}
+          </View>
         </FadeIn>
       ) : null}
 

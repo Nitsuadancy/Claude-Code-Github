@@ -33,6 +33,9 @@ import { formatTime, hoursOn, isOpenAt, nextOpening, WEEKDAYS } from '@/lib/hour
 import { prepList, weeklyEarnings } from '@/lib/insights';
 import { formatCents } from '@/lib/money';
 import { kitchenFeeNote, kitchenPayout } from '@/lib/pricing';
+import { hasPro } from '@/lib/pro';
+import { newRequests } from '@/lib/custom-orders';
+import { PRO_FEATURES } from '@/data/pro';
 import { chatState } from '@/lib/order-chat';
 import { canPostOrderUpdate, ORDER_UPDATE_MAX, orderUpdates } from '@/lib/order-updates';
 import { formatClock, isActive, KITCHEN_ACTION_LABEL } from '@/lib/orders';
@@ -69,6 +72,8 @@ export default function ChefDashboard() {
   const prep = prepList(state.orders, restaurant.id);
   const week = weeklyEarnings(state.orders, restaurant.id, new Date());
   const live = restaurant.acceptingOrders && inHours;
+  const pro = hasPro(restaurant, new Date());
+  const newCustom = newRequests(state.customRequests, restaurant.id).length;
   const now = new Date();
   const todaysHours = hoursOn(restaurant, WEEKDAYS.at((now.getDay() + 6) % 7)!);
   const bakeDayKitchen = isBakeDayKitchen(restaurant);
@@ -332,17 +337,41 @@ export default function ChefDashboard() {
           </View>
         )}
 
+        <SectionHeader title="Manna Pro" />
+        {pro ? (
+          <View style={styles.list}>
+            {PRO_FEATURES.filter((f) => f.route).map((f) => (
+              <LinkRow
+                key={f.key}
+                icon={f.icon}
+                label={f.key === 'custom' && newCustom ? `${f.title} · ${newCustom} new` : f.title}
+                onPress={() => router.push(f.route!)}
+              />
+            ))}
+            <LinkRow icon="star-four-points-outline" label="Your plan" onPress={() => router.push('/chef/pro')} last />
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/chef/pro')}
+            style={({ pressed }) => [styles.growth, pressed && { opacity: 0.8 }]}>
+            <View style={styles.growthIcon}>
+              <Icon name="sparkles" size={20} color={colors.bg} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.growthTitle}>Get featured and take custom orders</Text>
+              <Text style={styles.growthBody}>Drops, alerts to your followers, discount codes and more. $19.99 a month or $199 a year.</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={colors.textMuted} />
+          </Pressable>
+        )}
+
         <SectionHeader title="Manage" />
         <View style={styles.list}>
           <LinkRow icon="book-open-variant" label="Menu" onPress={() => router.push('/chef/setup/menu')} />
           <LinkRow icon="storefront-outline" label="Kitchen details" onPress={() => router.push('/chef/setup/information')} />
           <LinkRow icon="file-document-outline" label="Documents" onPress={() => router.push('/chef/setup/documents')} />
           <LinkRow icon="export-variant" label="Share your kitchen on Instagram" onPress={() => router.push('/chef/share')} />
-          <LinkRow
-            icon="star-four-points-outline"
-            label={restaurant.founding ? 'Manna Pro · free for your first year' : 'Manna Pro · coming soon'}
-            onPress={() => router.push('/chef/pro')}
-          />
           <LinkRow
             icon="eye-outline"
             label="View my kitchen page"

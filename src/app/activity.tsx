@@ -9,7 +9,7 @@ import { BackButton, Heading, type IconName, Screen } from '@/components/ui';
 import { type ActivityItem, buildActivity } from '@/lib/activity';
 import { formatClock } from '@/lib/orders';
 import { relativeDay } from '@/lib/reviews';
-import { useStore, useVisibleMessages } from '@/state/store';
+import { useFollowedAlerts, useStore, useVisibleMessages } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
 
@@ -23,13 +23,27 @@ const ICONS: Record<ActivityItem['kind'], IconName> = {
   cancelled: 'close-circle-outline',
   note: 'message-text-outline',
   message: 'message-text-outline',
+  alert: 'megaphone',
+  quote: 'cake',
 };
 
-/** Order updates, chef notes and kitchen messages, opened from the bell on the home screen. */
+function openItem(item: ActivityItem) {
+  if (item.requestId) router.push({ pathname: '/custom/[id]', params: { id: item.requestId } });
+  else if (item.restaurantId) router.push({ pathname: '/restaurant/[id]', params: { id: item.restaurantId } });
+  else if (!item.orderId) return;
+  else if (item.kind === 'message') router.push({ pathname: '/chat/[orderId]', params: { orderId: item.orderId } });
+  else router.push({ pathname: '/order/[id]', params: { id: item.orderId } });
+}
+
+/** Order updates, kitchen notes and messages, alerts and custom-order replies, opened from the bell on the home screen. */
 export default function Activity() {
   const { state, dispatch } = useStore();
   const visible = useVisibleMessages();
-  const items = useMemo(() => buildActivity(state.orders, state.user?.id ?? '', visible), [state.orders, state.user?.id, visible]);
+  const alerts = useFollowedAlerts();
+  const items = useMemo(
+    () => buildActivity(state.orders, state.user?.id ?? '', visible, { alerts, requests: state.customRequests }),
+    [state.orders, state.user?.id, visible, alerts, state.customRequests],
+  );
   // Remember what was unseen when the screen opened, so new items stay highlighted.
   const [seenBefore] = useState(state.activitySeenAt);
 
@@ -58,11 +72,7 @@ export default function Activity() {
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={`${item.title}. ${item.body}`}
-                onPress={() =>
-                  item.kind === 'message'
-                    ? router.push({ pathname: '/chat/[orderId]', params: { orderId: item.orderId } })
-                    : router.push({ pathname: '/order/[id]', params: { id: item.orderId } })
-                }
+                onPress={() => openItem(item)}
                 style={[styles.item, fresh && styles.fresh]}>
                 {item.photoUri ? (
                   <Photo uri={item.photoUri} size="thumb" style={styles.thumb} />

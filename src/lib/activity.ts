@@ -1,12 +1,15 @@
-import type { Order, OrderMessage, OrderStatus } from '@/types';
+import type { CustomRequest, KitchenAlert, Order, OrderMessage, OrderStatus } from '@/types';
 
 import { orderUpdates } from './order-updates';
 
 export interface ActivityItem {
   id: string;
-  orderId: string;
+  /** What tapping opens: an order (or its chat), a kitchen, or a custom request. */
+  orderId?: string;
+  restaurantId?: string;
+  requestId?: string;
   at: string;
-  kind: OrderStatus | 'note' | 'message';
+  kind: OrderStatus | 'note' | 'message' | 'alert' | 'quote';
   title: string;
   body: string;
   /** A photo from the kitchen, shown as a thumbnail. */
@@ -23,8 +26,16 @@ const TITLES: Record<OrderStatus, (kitchen: string) => string> = {
   cancelled: (k) => `You cancelled your order from ${k}`,
 };
 
-/** A customer's order updates, chef notes and messages from kitchens, newest first. */
-export function buildActivity(orders: Order[], customerId: string, messages: OrderMessage[] = []): ActivityItem[] {
+/**
+ * A customer's order updates, chef notes, messages from kitchens, alerts from
+ * kitchens they saved and replies to their custom requests, newest first.
+ */
+export function buildActivity(
+  orders: Order[],
+  customerId: string,
+  messages: OrderMessage[] = [],
+  { alerts = [], requests = [] }: { alerts?: KitchenAlert[]; requests?: CustomRequest[] } = {},
+): ActivityItem[] {
   const items: ActivityItem[] = [];
   for (const order of orders) {
     if (order.customerId !== customerId) continue;
@@ -63,6 +74,38 @@ export function buildActivity(orders: Order[], customerId: string, messages: Ord
       title: `Message from ${order.restaurantName}`,
       body: m.text.length > 120 ? `${m.text.slice(0, 117)}…` : m.text,
     });
+  }
+  for (const a of alerts) {
+    items.push({
+      id: `alert:${a.id}`,
+      restaurantId: a.restaurantId,
+      at: a.at,
+      kind: 'alert',
+      title: a.restaurantName,
+      body: a.text,
+    });
+  }
+  for (const r of requests) {
+    if (r.customerId !== customerId) continue;
+    if (r.status === 'quoted' && r.quote) {
+      items.push({
+        id: `request:${r.id}:quote`,
+        requestId: r.id,
+        at: r.quote.at,
+        kind: 'quote',
+        title: `${r.restaurantName} sent a price for your ${r.occasion.toLowerCase()}`,
+        body: 'Tap to see it and order.',
+      });
+    } else if (r.status === 'declined') {
+      items.push({
+        id: `request:${r.id}:declined`,
+        requestId: r.id,
+        at: r.createdAt,
+        kind: 'declined',
+        title: `${r.restaurantName} can’t take your ${r.occasion.toLowerCase()} request`,
+        body: r.declineNote ? `“${r.declineNote}”` : 'Try another kitchen, or a different date.',
+      });
+    }
   }
   return items.sort((a, b) => b.at.localeCompare(a.at));
 }

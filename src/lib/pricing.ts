@@ -24,9 +24,6 @@ export const KITCHEN_FEE_RATE = 0.05;
 /** Founding kitchens pay no kitchen fee for their first months on Manna. */
 export const FOUNDING_FEE_FREE_MONTHS = 3;
 
-/** Manna Pro, the optional plan for cooks, once it opens. Sold on the web, not in the app. */
-export const PRO_PRICE_CENTS = 1500;
-
 /** "5% of food sales", for the cook's screens and the terms. */
 export const KITCHEN_FEE_TERMS = '5% of food sales';
 
@@ -58,9 +55,14 @@ export function kitchenFeeNote(r: Pick<Restaurant, 'founding' | 'createdAt'>, no
   return `Shown after Manna’s ${KITCHEN_FEE_TERMS}. Tips are always yours.`;
 }
 
-/** What the kitchen receives for an order: the food and the tip, less the kitchen fee. */
-export function kitchenPayout(order: Pick<Order, 'subtotalCents' | 'tipCents' | 'kitchenFeeCents'>): number {
-  return order.subtotalCents + (order.tipCents ?? 0) - (order.kitchenFeeCents ?? 0);
+/**
+ * What the kitchen receives for an order: the food (less any discount code
+ * it offered) and the tip, less the kitchen fee.
+ */
+export function kitchenPayout(
+  order: Pick<Order, 'subtotalCents' | 'tipCents' | 'kitchenFeeCents' | 'discountCents'>,
+): number {
+  return order.subtotalCents - (order.discountCents ?? 0) + (order.tipCents ?? 0) - (order.kitchenFeeCents ?? 0);
 }
 
 export interface CartTotals {

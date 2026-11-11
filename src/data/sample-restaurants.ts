@@ -1,4 +1,25 @@
-import type { MenuItem, Restaurant, Weekday } from '@/types';
+import type { Drop, MenuItem, Restaurant, Weekday } from '@/types';
+
+/**
+ * A demo drop timed from when the app starts: pickup 10 days out, 10 AM to
+ * 2 PM, with orders closing at 8 PM two days before. Keeps the demo fresh.
+ */
+function demoDrop(id: string, title: string, itemIds: string[], note: string): Drop {
+  const now = new Date();
+  const pickup = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10, 10);
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 10, 14);
+  const closes = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 8, 20);
+  return {
+    id,
+    title,
+    note,
+    itemIds,
+    pickupStart: pickup.toISOString(),
+    pickupEnd: end.toISOString(),
+    closesAt: closes.toISOString(),
+    createdAt: now.toISOString(),
+  };
+}
 
 /**
  * Demo kitchens so the Foodie side has something to browse before real chefs
@@ -44,6 +65,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     accent: 'terracotta',
     tagline: 'Italian bakes from my nonna’s recipes',
     founding: true,
+    pro: { plan: 'yearly', startedAt: '2026-11-02T12:00:00.000Z', billingStartsAt: '2026-11-02T12:00:00.000Z' },
     inPerson: [{ place: 'Saturday pop-up at Lantern Coffee, College Park', when: 'Saturdays, 8 AM – noon' }],
     coverUris: ['demo:olive-oil-cake', 'demo:biscotti', 'demo:country-loaf'],
     name: 'Cafe Parmesan',
@@ -332,6 +354,7 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
     accent: 'berry',
     tagline: 'Pound cakes and cobblers, the Macon way',
     founding: true,
+    pro: { plan: 'yearly', startedAt: '2026-10-01T12:00:00.000Z', billingStartsAt: '2026-10-01T12:00:00.000Z' },
     inPerson: [{ place: 'Bake table at Lantern Coffee, College Park', when: 'Saturdays, 8 AM – noon' }],
     coverUris: ['demo:pound-cake', 'demo:peach-cobbler'],
     name: 'Susie’s Sweets',
@@ -373,7 +396,30 @@ export const SAMPLE_RESTAURANTS: Restaurant[] = [
         dietary: ['vegetarian'],
         allergens: ['gluten', 'dairy', 'eggs'],
       }),
+      dish({
+        id: 'ss_holiday_cobbler',
+        dropOnly: true,
+        photoUri: 'demo:peach-cobbler',
+        name: 'Family-Size Peach Cobbler',
+        description: 'The big pan, for the holiday table. Feeds 10 to 12.',
+        priceCents: 3800,
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy', 'eggs'],
+        dailyLimit: 12,
+      }),
+      dish({
+        id: 'ss_gift_loaves',
+        dropOnly: true,
+        photoUri: 'demo:pound-cake',
+        name: 'Pound Cake Gift Pair',
+        description: 'Two Earl Grey loaves, wrapped with a ribbon and a card, ready to give.',
+        priceCents: 3200,
+        dietary: ['vegetarian'],
+        allergens: ['gluten', 'dairy', 'eggs'],
+        dailyLimit: 20,
+      }),
     ],
+    drops: [demoDrop('sample_drop_susie_holiday', 'Holiday cobblers and gift loaves', ['ss_holiday_cobbler', 'ss_gift_loaves', 'ss_pound_cake'], 'Family-size cobblers for the table and pound cakes wrapped to give. Only one bake, so order early.')],
   },
   {
     ...base,

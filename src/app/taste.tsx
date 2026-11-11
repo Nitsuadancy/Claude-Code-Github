@@ -11,6 +11,7 @@ import { Icon } from '@/components/icon';
 import { Pop, SpringIn } from '@/components/motion';
 import { Photo } from '@/components/photo';
 import { Screen } from '@/components/ui';
+import { hasPro } from '@/lib/pro';
 import { allergenSentence } from '@/lib/dietary';
 import { allergenConflicts } from '@/lib/diet';
 import * as haptics from '@/lib/haptics';
@@ -92,7 +93,10 @@ export default function Taste() {
             <Icon name="chevron-right" size={16} color={colors.text} />
           </Pressable>
           <View style={styles.whenRow}>
-            <Text style={styles.when}>{orderingLine(restaurant, now, { long: true })}</Text>
+            <Text style={styles.when}>
+              {hasPro(restaurant, now) ? 'Featured · ' : ''}
+              {orderingLine(restaurant, now, { long: true })}
+            </Text>
             {closesAt ? <Countdown to={closesAt} prefix="· closes in " color={colors.text} /> : null}
           </View>
           <Text style={styles.name}>{item.name}</Text>

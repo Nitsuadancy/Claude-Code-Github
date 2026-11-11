@@ -9,6 +9,9 @@ import { usePullToRefresh } from '@/components/pull-to-refresh';
 import { Stars } from '@/components/reviews';
 import { TAB_BAR_SPACE } from '@/components/tab-bar';
 import { Heading, Screen } from '@/components/ui';
+import { Icon } from '@/components/icon';
+import { REQUEST_STATUS_LABEL } from '@/lib/custom-orders';
+import { formatCents } from '@/lib/money';
 import { useStore } from '@/state/store';
 import { colors, fonts, spacing } from '@/theme';
 import type { Order } from '@/types';
@@ -20,6 +23,10 @@ export default function Orders() {
   const refreshControl = usePullToRefresh();
   const orders = state.orders.filter((o) => o.customerId === state.user?.id);
   const reviewed = new Set(state.reviews.map((r) => r.orderId));
+  // Custom requests still being worked out; accepted ones show up as orders.
+  const requests = state.customRequests
+    .filter((r) => r.customerId === state.user?.id && (r.status === 'open' || r.status === 'quoted'))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <Screen edges={['top']}>
@@ -32,6 +39,26 @@ export default function Orders() {
         ListHeaderComponent={
           <View style={styles.header}>
             <Heading>Orders</Heading>
+            {requests.map((r) => (
+              <Pressable
+                key={r.id}
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/custom/[id]', params: { id: r.id } })}
+                style={({ pressed }) => [styles.request, pressed && { opacity: 0.85 }]}>
+                <Icon name="cake" size={20} color={colors.gold} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.requestTitle}>
+                    {r.occasion} · {r.restaurantName}
+                  </Text>
+                  <Text style={[styles.requestStatus, r.status === 'quoted' && { color: colors.gold }]}>
+                    {r.status === 'quoted' && r.quote
+                      ? `Price ready: ${formatCents(r.quote.priceCents)}. Tap to order`
+                      : REQUEST_STATUS_LABEL[r.status]}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={18} color={colors.textMuted} />
+              </Pressable>
+            ))}
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
@@ -76,6 +103,19 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
+  request: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    marginTop: spacing.sm,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
+  },
+  requestTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  requestStatus: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted },
   rateText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.gold },
   empty: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xxl },
 });

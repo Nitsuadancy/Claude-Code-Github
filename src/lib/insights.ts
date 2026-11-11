@@ -132,3 +132,83 @@ export function weeklyEarnings(orders: Order[], restaurantId: string, now: Date)
   }
   return days;
 }
+
+/* ---------- Pro insights ---------- */
+
+export interface KitchenInsights {
+  /** Completed orders and what the kitchen received, this calendar month and last. */
+  month: { payoutCents: number; orders: number; avgOrderCents: number };
+  lastMonth: { payoutCents: number; orders: number };
+  /** Customers with 2 or more completed orders, most orders first (top 5). */
+  regulars: { name: string; orders: number; lastAt: string }[];
+  /** Share of customers in the last 90 days who ordered more than once (0 to 1). */
+  repeatRate: number;
+  /** Dishes by portions sold in the last 30 days (top 5). */
+  bestSellers: { name: string; quantity: number }[];
+  /** Take-home by weekday over the last 90 days, Monday first. */
+  weekdays: { label: string; cents: number }[];
+  /** Pickups by hour of day over the last 90 days, only hours with pickups, earliest first. */
+  pickupHours: { hour: number; count: number }[];
+}
+
+const DAY_MS = 86_400_000;
+const MONDAY_FIRST = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export function kitchenInsights(orders: Order[], restaurantId: string, now: Date): KitchenInsights {
+  const done = orders.filter((o) => o.restaurantId === restaurantId && o.status === 'completed');
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const inMonth = done.filter((o) => new Date(o.createdAt) >= monthStart);
+  const inLast = done.filter((o) => new Date(o.createdAt) >= lastStart && new Date(o.createdAt) < monthStart);
+  const sum = (list: Order[]) => list.reduce((t, o) => t + kitchenPayout(o), 0);
+  const recent = (days: number) => done.filter((o) => now.getTime() - new Date(o.createdAt).getTime() <= days * DAY_MS);
+
+  const byCustomer = new Map<string, { name: string; orders: number; lastAt: string }>();
+  for (const o of done) {
+    const c = byCustomer.get(o.customerId) ?? { name: o.customerName || 'Customer', orders: 0, lastAt: o.createdAt };
+    c.orders += 1;
+    if (o.createdAt > c.lastAt) c.lastAt = o.createdAt;
+    byCustomer.set(o.customerId, c);
+  }
+  const regulars = [...byCustomer.values()]
+    .filter((c) => c.orders >= 2)
+    .sort((a, b) => b.orders - a.orders || b.lastAt.localeCompare(a.lastAt))
+    .slice(0, 5);
+
+  const last90 = recent(90);
+  const counts90 = new Map<string, number>();
+  for (const o of last90) counts90.set(o.customerId, (counts90.get(o.customerId) ?? 0) + 1);
+  const repeatRate = counts90.size ? [...counts90.values()].filter((n) => n > 1).length / counts90.size : 0;
+
+  const sold = new Map<string, number>();
+  for (const o of recent(30)) for (const l of o.lines) sold.set(l.name, (sold.get(l.name) ?? 0) + l.quantity);
+  const bestSellers = [...sold.entries()]
+    .map(([name, quantity]) => ({ name, quantity }))
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5);
+
+  const weekdays = MONDAY_FIRST.map((label) => ({ label, cents: 0 }));
+  const hours = new Map<number, number>();
+  for (const o of last90) {
+    const placed = new Date(o.createdAt);
+    weekdays[(placed.getDay() + 6) % 7].cents += kitchenPayout(o);
+    const pickup = new Date(o.scheduledFor ?? o.estimatedReadyAt);
+    hours.set(pickup.getHours(), (hours.get(pickup.getHours()) ?? 0) + 1);
+  }
+
+  return {
+    month: { payoutCents: sum(inMonth), orders: inMonth.length, avgOrderCents: inMonth.length ? Math.round(sum(inMonth) / inMonth.length) : 0 },
+    lastMonth: { payoutCents: sum(inLast), orders: inLast.length },
+    regulars,
+    repeatRate,
+    bestSellers,
+    weekdays,
+    pickupHours: [...hours.entries()].map(([hour, count]) => ({ hour, count })).sort((a, b) => a.hour - b.hour),
+  };
+}
+
+/** "9 AM", "12 PM", "3 PM" */
+export function hourLabel(hour: number): string {
+  const h = hour % 12 || 12;
+  return `${h} ${hour < 12 ? 'AM' : 'PM'}`;
+}

@@ -240,6 +240,7 @@ export default function OrderTracking() {
             items={order.lines.map((l) => ({ label: `${l.quantity} × ${l.name}`, cents: l.priceCents * l.quantity }))}
             charges={[
               { label: 'Subtotal', cents: order.subtotalCents },
+              ...(order.discountCents ? [{ label: `Code ${order.discountCode ?? ''}`.trim(), cents: -order.discountCents }] : []),
               { label: 'Movement fee', cents: order.movementFeeCents },
               ...(order.deliveryFeeCents ? [{ label: 'Delivery', cents: order.deliveryFeeCents }] : []),
               ...(order.tipCents ? [{ label: `Tip for ${chefName}`, cents: order.tipCents }] : []),
