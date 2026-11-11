@@ -1,9 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { Alert } from 'react-native';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
 
 import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import {
@@ -20,6 +17,12 @@ import { contentTypeOf, ensureUploaded, extensionOf, storagePathFromUrl, type Up
 import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
 import { makeServerDispatch } from '@/state/server-sync';
 import type { Restaurant } from '@/types';
+
+// Jest hoists this above the imports; the sync code reaches phone storage through the Supabase client.
+jest.mock('@react-native-async-storage/async-storage', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
 
 /**
  * A stand-in for the Supabase client: it records every call and answers from
