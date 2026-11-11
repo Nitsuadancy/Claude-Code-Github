@@ -17,7 +17,7 @@ import {
   type Db,
 } from '@/lib/remote/api';
 import { contentTypeOf, ensureUploaded, extensionOf, storagePathFromUrl, type Uploader } from '@/lib/remote/uploads';
-import { INITIAL_STATE, reducer } from '@/state/reducer';
+import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
 import { makeServerDispatch } from '@/state/server-sync';
 import type { Restaurant } from '@/types';
 
@@ -253,7 +253,11 @@ describe('server sync', () => {
   it('shows changes at once, sends them, and waits for the server on publishing', async () => {
     const { db, calls } = fakeDb(() => ({ data: null }));
     const local: string[] = [];
-    let state = { ...INITIAL_STATE, hydrated: true, user: { id: 'u1', name: 'A', email: '', phone: '', role: 'foodie' as const, neighborhood: '' } };
+    let state: AppState = {
+      ...INITIAL_STATE,
+      hydrated: true,
+      user: { id: 'u1', name: 'A', email: '', phone: '', role: 'foodie', neighborhood: '' },
+    };
     const send = makeServerDispatch(db as never, (a) => {
       local.push(a.type);
       state = reducer(state, a);
@@ -272,7 +276,7 @@ describe('server sync', () => {
       shown.push(`${title}: ${message}`);
     });
     const { db } = fakeDb(() => ({ error: { message: 'Can’t move an order from placed to ready' } }));
-    let state = { ...INITIAL_STATE, hydrated: true };
+    let state: AppState = { ...INITIAL_STATE, hydrated: true };
     const send = makeServerDispatch(db as never, (a) => {
       state = reducer(state, a);
     }, () => state);
