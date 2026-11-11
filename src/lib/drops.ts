@@ -1,6 +1,6 @@
 import type { Drop, MenuItem, Restaurant } from '@/types';
 
-import { CUTOFF_TIME, localDateKey } from './bake-days';
+import { CUTOFF_TIME, localDateKey, timeRange } from './bake-days';
 import { toMinutes } from './hours';
 import { dayLabel } from './schedule';
 
@@ -54,6 +54,16 @@ const date = (iso: string, now: Date) => {
 /** "Pickup Wed, Nov 25 · 10:00 AM – 2:00 PM" */
 export function formatDropPickup(d: Drop, now: Date): string {
   return `Pickup ${date(d.pickupStart, now)} · ${clock(d.pickupStart)} – ${clock(d.pickupEnd)}`;
+}
+
+const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+/** "Sat, Nov 21 · 10 AM–2 PM", short enough for a card. */
+export function formatDropPickupShort(d: Drop, now: Date): string {
+  return `${date(d.pickupStart, now)} · ${timeRange(hhmm(d.pickupStart), hhmm(d.pickupEnd))}`;
 }
 
 /** "Order by Tue, 8:00 PM" */

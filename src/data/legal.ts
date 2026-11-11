@@ -1,4 +1,5 @@
 import { FOUNDING_FEE_FREE_MONTHS, KITCHEN_FEE_TERMS, MOVEMENT_FEE_TERMS } from '@/lib/pricing';
+import { FOUNDING_PRO_FREE_MONTHS, PRO_PRICE_LABEL } from '@/lib/pro';
 
 /**
  * Manna's privacy policy and terms of service, shown in the app.
@@ -37,10 +38,12 @@ export const PRIVACY_POLICY: LegalDocument = {
       body: [
         '- Account details: your mobile number, name and email.',
         '- Preferences: your neighborhood, and the diets and allergens you choose to tell us about.',
-        '- Orders: what you order, from which kitchen, pickup times, notes to the chef, tips, your reviews and any reviews you report.',
+        '- Orders: what you order, from which kitchen, pickup times, notes to the chef, tips, discount codes you use, your reviews and any reviews you report.',
+        '- Custom order requests: what you ask a kitchen for, the date, how many people and your budget, and the kitchen’s price.',
+        '- Kitchens you save, so kitchens on Manna Pro can send you alerts.',
         '- Help requests: what you tell our support team when you ask for help with an order. The kitchen does not see them.',
         '- Order messages: what you and the kitchen write to each other in an order’s chat, and when you read them. Your phone number is never shared.',
-        '- For kitchens: your kitchen details, menu, photos and intro video, pickup address and pickup spot photo, opening hours, photo updates you send on orders, and the documents you upload for verification, such as a food handler certificate and ID.',
+        '- For kitchens: your kitchen details, menu, photos and intro video, pickup address and pickup spot photo, opening hours, photo updates you send on orders, and the documents you upload for verification, such as a food handler certificate and ID. On Manna Pro, also your plan, drops, discount codes, alerts and label details.',
         '- Payments: handled by our payment provider. Manna does not store full card numbers.',
         '- Device information: app version, device type and crash reports, so we can fix problems.',
         '- If you add a pickup to your calendar, the event is saved in your phone’s calendar, not sent to Manna. On iPhone, Manna asks only to add events and cannot read your calendar.',
@@ -59,7 +62,8 @@ export const PRIVACY_POLICY: LegalDocument = {
     {
       heading: 'Who sees what',
       body: [
-        '- The kitchen you order from sees your name, your order, your notes and your pickup time.',
+        '- The kitchen you order from sees your name, your order, your notes and your pickup time. A kitchen you send a custom order request to sees what you wrote in it.',
+        '- Kitchens on Manna Pro see summaries of their own orders, such as how often a customer has ordered. They don’t see other kitchens’ orders.',
         '- Customers see a kitchen’s name, story, menu, neighborhood and reviews. A kitchen’s street address is shared only with a customer whose order the kitchen has accepted.',
         '- Reviews show your first name and last initial.',
         '- Service providers that run Manna for us, such as hosting, payments, text messages and notifications, process information only to provide their service.',
@@ -126,6 +130,10 @@ export const TERMS_OF_SERVICE: LegalDocument = {
         '- Orders are for pickup at the time you choose. The kitchen shares its pickup address once it accepts your order.',
         '- If a kitchen declines your order or cancels a bake day, you are not charged, or you get a full refund.',
         '- You can cancel an order until the kitchen accepts it.',
+        '- Kitchens marked “Featured” are on Manna Pro, a paid plan for kitchens, and take turns in featured spots.',
+        '- Discount codes are offered by kitchens. They can have limits and end dates, only work at that kitchen, and have no cash value.',
+        '- For a custom order, the kitchen sends a price and a pickup time first. Nothing is charged until you accept.',
+        '- When you save a kitchen on Manna Pro, it can send you up to 2 alerts a week. Unsave it to stop.',
         '- Pick up in your pickup window, or within 2 hours of your order being ready. Food that is not picked up within 30 minutes after that is still paid to the kitchen, because it was made for you.',
         `- If something is wrong with your order, tell us within 24 hours at ${LEGAL_CONTACT} and we will work it out with the kitchen.`,
       ],
@@ -144,11 +152,22 @@ export const TERMS_OF_SERVICE: LegalDocument = {
         '- Only upload permits and licenses that are real, current and yours. Tell us if one expires or is revoked.',
         '- We strongly recommend product liability insurance.',
         '- You agree to cover Manna’s costs, including reasonable legal fees, for claims arising from your food, your kitchen or your breach of these terms.',
-        '- List accurate ingredients, allergens, prices and photos of your own food.',
+        '- List accurate ingredients, allergens, prices and photos of your own food. Manna’s printable labels are a starting point: you’re responsible for making sure your labels meet your state’s and county’s rules.',
         '- Post only photos and videos you took or have the right to share, and don’t show other people without their permission. Your pickup spot photo is shared only with customers whose orders you accept.',
         '- Honor the orders you accept, and keep customers’ information private.',
-        `- Opening a kitchen is free. Manna keeps a kitchen fee of ${KITCHEN_FEE_TERMS} (the food subtotal of each completed order) from your payout. Tips are never charged. Founding kitchens pay no kitchen fee for their first ${FOUNDING_FEE_FREE_MONTHS} months after opening.`,
+        `- Opening a kitchen is free. Manna keeps a kitchen fee of ${KITCHEN_FEE_TERMS} (what the customer pays for the food on each completed order) from your payout. Tips are never charged. Founding kitchens pay no kitchen fee for their first ${FOUNDING_FEE_FREE_MONTHS} months after opening.`,
         '- Manna will tell you at least 30 days before any change to the kitchen fee. Manna Pro is optional and billed separately.',
+      ],
+    },
+    {
+      heading: 'Manna Pro',
+      body: [
+        `- Manna Pro is an optional plan for kitchens: ${PRO_PRICE_LABEL.monthly} or ${PRO_PRICE_LABEL.yearly}, plus any tax. Founding kitchens get it free for their first ${FOUNDING_PRO_FREE_MONTHS} months on Manna.`,
+        '- Pro renews automatically until you cancel. You can cancel any time, and Pro stays on until the end of the period you paid for. Partial periods aren’t refunded unless the law requires it. We’ll tell you at least 30 days before any change to Pro’s price.',
+        '- Featured spots are shared between Pro kitchens and marked “Featured”. They don’t guarantee orders.',
+        '- Discount codes you create are paid for by you: they come off your food price, and fees are worked out on what the customer pays.',
+        '- The price you send for a custom order is your offer. Once the customer accepts it, it’s an order like any other.',
+        '- Alerts go only to people who saved your kitchen, up to 2 a week, and must be about your kitchen and its food.',
       ],
     },
     {

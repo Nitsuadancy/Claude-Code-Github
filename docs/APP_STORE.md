@@ -37,6 +37,8 @@ FOR FOOD LOVERS
 • Meet the cook behind every dish and read their story
 • See ingredients and allergens before you order, and filter by diet
 • Order ahead for a cook's bake day, or pick up as soon as it's ready
+• Drops: limited menus for holidays and special bakes, with their own pickup day
+• Ask a cook for a birthday cake, party tray or catering, and see the price before you order
 • Follow your order from oven to pickup, then tap "I'm here" when you arrive
 • Message the cook about your order once it's accepted: a swap, running late, which door
 • Pay upfront in the app. No ordering through Instagram DMs, no Venmo requests, no guessing
@@ -52,6 +54,8 @@ FOR HOME COOKS
 • Message customers about an order: offer a swap, share timing, sort out pickup
 • A ready-to-post Instagram Story with your QR code, so your followers can order in one tap
 • Free to join. Founding kitchens get their storefront set up and photographed for free
+• Printable labels with your ingredients, allergens and the wording your state asks for
+• Manna Pro (optional): get featured, run drops, send alerts to your followers, take custom orders, create discount codes and see insights
 
 SAFE AND HONEST
 • Every kitchen's documents are checked before it gets a Verified badge
@@ -120,6 +124,9 @@ pickup; there is no delivery.
 
 Food is a physical good picked up outside the app, so payments go through
 Stripe rather than in-app purchase (guideline 3.1.5(a)).
+Manna Pro is a subscription for cooks, bought on the Manna website. In the US
+storefront the app links to that web checkout (guideline 3.1.1(a) as it
+applies to US apps).
 
 Demo customer: <phone>, code <code>. Order from any kitchen and follow the
 order on the Orders tab.
@@ -144,6 +151,7 @@ only when tapped.
 - [x] **5.1.1 Permission strings.** Photo library (choose photos), photo saving (Story card) and calendar (add a pickup) are explained in `app.json`. Calendar access is write-only on iOS 17 and later, so Manna can't read anyone's calendar, and it's only asked for when someone taps "Add to calendar". Android asks for no calendar permission.
 - [x] **Export compliance.** `usesNonExemptEncryption: false` is set, so there's no question at upload.
 - [ ] **2.1 App completeness.** Needs a live backend and payments.
+- [ ] **3.1.1 Manna Pro.** Pro unlocks features in the app, so before submitting, confirm Apple's current US rules for linking to web checkout (or offer it as an in-app purchase too). "Start Pro" must open real checkout, not turn Pro on for free. See [PRO.md](PRO.md).
 - [ ] **5.1.1 Privacy policy.** Needs a public URL and an attorney's review.
 
 ## Screenshots

@@ -136,3 +136,12 @@ export const REQUEST_STATUS_LABEL: Record<CustomRequest['status'], string> = {
   declined: 'Declined',
   withdrawn: 'Withdrawn',
 };
+
+/** The same statuses, from the kitchen's side. */
+export const KITCHEN_REQUEST_LABEL: Record<CustomRequest['status'], string> = {
+  open: 'New request',
+  quoted: 'Price sent · waiting on the customer',
+  accepted: 'Ordered',
+  declined: 'You declined',
+  withdrawn: 'Withdrawn by the customer',
+};

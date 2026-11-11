@@ -35,6 +35,8 @@ Expo (React Native) app ── one codebase for iOS, Android and web
 | Oven updates, pickup spot photo, intro video | Saved on the phone as local files | `order_updates` and storage buckets (`order-photos` private, `public-photos`) |
 | Drive times on the map | Estimated from neighborhood centers | Same estimate; real routing only if people ask for it |
 | Lock-screen order status | Content and timing built and tested | `expo-widgets` Live Activity in the first iPhone build ([LIVE_ACTIVITY.md](LIVE_ACTIVITY.md)) |
+| Manna Pro billing | "Start Pro" turns it on without a charge | Stripe Billing on the web, with a webhook that sets the plan ([PRO.md](PRO.md)) |
+| Alerts, drops, codes, custom requests | Kept on the phone | `kitchen_alerts`, `drops`, `discount_codes` and `custom_requests` tables, with push notifications |
 
 ## Next: backend
 
@@ -53,11 +55,15 @@ The TypeScript types in `src/types.ts` map one-to-one to the planned tables:
 | Table | Key fields | Who can read / write |
 |---|---|---|
 | `profiles` | id (= auth user), name, email, phone, role, neighborhood | Owner |
-| `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, chef_bio, chef_photo_path, signature_item_id, prep_minutes, verified, founding, live_since, in_person (spots), neighborhood, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes; only admins set `verified` and `founding` |
+| `restaurants` | owner_id, name, cuisine, categories[], logo/cover paths, chef_bio, chef_photo_path, signature_item_id, prep_minutes, verified, founding, live_since, pro plan fields, in_person (spots), neighborhood, city, zip, working_days[], open/close time, status (`draft`, `pending_review`, `live`), accepting_orders | Public reads `live` rows; owner writes; only admins set `verified` and `founding` |
 | `menu_items` | restaurant_id, name, description, price_cents, available, photo_path, dietary[], allergens[], daily_limit | Public reads; owner writes |
 | `restaurant_documents` | restaurant_id, kind, storage_path, review_status | Owner + admins only |
 | `restaurant_addresses` | restaurant_id, address | Owner and admins only. Copied onto an order when the chef accepts it |
-| `orders` | customer_id, restaurant_id, status, subtotal / movement fee / kitchen fee / tip / total cents, pickup_address (filled when the chef accepts), chef_note, customer_note, scheduled_for, estimated_ready_at, stripe_payment_intent | Customer and that restaurant's owner |
+| `drops`, `drop_items` | restaurant_id, title, pickup window, closes_at; the dishes in each drop | Public reads for live kitchens; owner writes (new ones need Pro) |
+| `discount_codes` | restaurant_id, code, kind, value, first-orders-only, max uses, end date, paused | Owner and admins only; checked inside `place_order` |
+| `custom_requests` | restaurant_id, customer_id, occasion, details, servings, needed_by, status, quote | Customer and the kitchen; quotes and acceptance through functions |
+| `kitchen_alerts` | restaurant_id, body | Owner, admins and customers who saved the kitchen; 2 a week with Pro |
+| `orders` | customer_id, restaurant_id, status, subtotal / discount / movement fee / kitchen fee / tip / total cents, drop_id, pickup_address (filled when the chef accepts), chef_note, customer_note, scheduled_for, estimated_ready_at, stripe_payment_intent | Customer and that restaurant's owner |
 | `order_status_events` | order_id, status, at | Same as orders. This table drives the tracking timeline. |
 | `order_lines` | order_id, menu_item_id, name, price_cents, quantity (price copied at order time) | Same as orders |
 

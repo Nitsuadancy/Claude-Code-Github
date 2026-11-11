@@ -13,7 +13,7 @@ import {
   formatNeededBy,
   MIN_QUOTE_CENTS,
   quoteWindow,
-  REQUEST_STATUS_LABEL,
+  KITCHEN_REQUEST_LABEL,
 } from '@/lib/custom-orders';
 import * as haptics from '@/lib/haptics';
 import { formatTime, TIME_SLOTS } from '@/lib/hours';
@@ -99,7 +99,7 @@ function RequestDetail({ request, restaurant }: { request: CustomRequest; restau
         ) : undefined
       }>
       <View style={{ gap: 4 }}>
-        <Text style={styles.status}>{REQUEST_STATUS_LABEL[request.status]}</Text>
+        <Text style={styles.status}>{KITCHEN_REQUEST_LABEL[request.status]}</Text>
         <Text style={styles.title}>{request.occasion}</Text>
         <Text style={styles.meta}>
           From {request.customerName || 'a customer'} · for {request.servings} {request.servings === 1 ? 'person' : 'people'} ·

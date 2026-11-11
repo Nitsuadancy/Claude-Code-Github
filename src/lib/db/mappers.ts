@@ -90,6 +90,9 @@ export function menuItemFromRow(row: MenuItemRow, photoUrl: PhotoUrl, popular = 
     allergens: allergens(row.allergens),
     dailyLimit: row.daily_limit,
     section: row.section ?? '',
+    ...(row.drop_only ? { dropOnly: true } : {}),
+    ...(row.ingredients ? { ingredients: row.ingredients } : {}),
+    ...(row.net_weight ? { netWeight: row.net_weight } : {}),
     ...(popular ? { popular: true } : {}),
   };
 }
@@ -117,6 +120,9 @@ export function menuItemRow(
     daily_limit: item.dailyLimit,
     section: item.section?.trim() || null,
     position,
+    drop_only: !!item.dropOnly,
+    ingredients: (item.ingredients ?? '').trim().slice(0, 400),
+    net_weight: (item.netWeight ?? '').trim().slice(0, 40),
   };
 }
 
@@ -194,6 +200,16 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     hasOffer: row.has_offer,
     // On Manna since it went live: new-kitchen labels and founding fee months count from here.
     createdAt: row.live_since ?? row.created_at,
+    ...(row.pro_plan && row.pro_started_at && row.pro_billing_starts_at
+      ? {
+          pro: {
+            plan: row.pro_plan,
+            startedAt: row.pro_started_at,
+            billingStartsAt: row.pro_billing_starts_at,
+            ...(row.pro_canceled_at ? { canceledAt: row.pro_canceled_at } : {}),
+          },
+        }
+      : {}),
     acceptingOrders: row.accepting_orders,
     menu,
     documents: (extras.documents ?? []).map(documentFromRow),
@@ -262,7 +278,7 @@ export function orderFromRow(row: OrderWithChildren, privateUrl?: (path: string)
     restaurantId: row.restaurant_id,
     restaurantName: row.restaurant_name,
     lines: row.order_lines.map((l) => ({
-      itemId: l.menu_item_id,
+      itemId: l.menu_item_id ?? `custom:${row.id}`,
       name: l.name,
       priceCents: l.price_cents,
       quantity: l.quantity,
@@ -270,6 +286,8 @@ export function orderFromRow(row: OrderWithChildren, privateUrl?: (path: string)
     subtotalCents: row.subtotal_cents,
     movementFeeCents: row.movement_fee_cents,
     kitchenFeeCents: row.kitchen_fee_cents,
+    ...(row.discount_cents ? { discountCents: row.discount_cents, discountCode: row.discount_code ?? undefined } : {}),
+    ...(row.drop_id ? { dropId: row.drop_id } : {}),
     tipCents: row.tip_cents,
     totalCents: row.total_cents,
     pickupAddress: row.pickup_address,
@@ -319,6 +337,8 @@ export function placeOrderArgs(order: {
   customerNote: string;
   scheduledFor: string | null;
   tipCents: number;
+  dropId?: string;
+  discountCode?: string;
 }) {
   return {
     p_restaurant_id: order.restaurantId,
@@ -326,6 +346,8 @@ export function placeOrderArgs(order: {
     p_customer_note: order.customerNote.trim().slice(0, 280),
     p_scheduled_for: order.scheduledFor,
     p_tip_cents: order.tipCents,
+    p_drop_id: order.dropId ?? null,
+    p_discount_code: order.discountCode ?? null,
   };
 }
 

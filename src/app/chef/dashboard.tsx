@@ -371,6 +371,7 @@ export default function ChefDashboard() {
           <LinkRow icon="book-open-variant" label="Menu" onPress={() => router.push('/chef/setup/menu')} />
           <LinkRow icon="storefront-outline" label="Kitchen details" onPress={() => router.push('/chef/setup/information')} />
           <LinkRow icon="file-document-outline" label="Documents" onPress={() => router.push('/chef/setup/documents')} />
+          <LinkRow icon="printer" label="Printable labels" onPress={() => router.push('/chef/labels')} />
           <LinkRow icon="export-variant" label="Share your kitchen on Instagram" onPress={() => router.push('/chef/share')} />
           <LinkRow
             icon="eye-outline"

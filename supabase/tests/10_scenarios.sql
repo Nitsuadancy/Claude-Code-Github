@@ -378,6 +378,92 @@ select pg_temp.check((select public.kitchen_open_at(r, '2026-11-07 13:00+00') fr
 select pg_temp.check((select not public.kitchen_open_at(r, '2026-11-07 15:00+00') from public.restaurants r), 'Sat 3pm closed');
 update public.restaurants set day_hours = '{}';
 
+-- Manna Pro --------------------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect_error($$ update public.restaurants set pro_plan = 'monthly', pro_billing_starts_at = now() $$,
+  'only the manna team');
+select pg_temp.expect_error(
+  $$ insert into public.drops (restaurant_id, title, pickup_start, pickup_end, closes_at)
+     values ('10000000-0000-0000-0000-000000000001', 'Pies', now() + interval '5 days', now() + interval '5 days 4 hours', now() + interval '3 days') $$,
+  'row-level security');
+select pg_temp.expect_error($$ insert into public.kitchen_alerts (restaurant_id, body) values ('10000000-0000-0000-0000-000000000001', 'Hello') $$,
+  'row-level security');
+reset role;
+update public.restaurants set pro_plan = 'monthly', pro_started_at = now(), pro_billing_starts_at = now() where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.check((select public.has_pro(r, now()) from public.restaurants r), 'kitchen on Pro');
+-- A plan canceled now runs to the end of the month it was paid for.
+update public.restaurants set pro_canceled_at = now() where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.check((select public.has_pro(r, now() + interval '20 days') and not public.has_pro(r, now() + interval '40 days')
+  from public.restaurants r), 'canceled plan runs to the end of its month');
+update public.restaurants set pro_canceled_at = null where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+insert into public.menu_items (id, restaurant_id, name, price_cents, drop_only)
+  values ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', 'Pumpkin Pie', 2500, true);
+insert into public.drops (id, restaurant_id, title, pickup_start, pickup_end, closes_at)
+  values ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'Pies', now() + interval '5 days',
+          now() + interval '5 days 4 hours', now() + interval '3 days');
+insert into public.drop_items (drop_id, menu_item_id)
+  values ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000003');
+insert into public.kitchen_alerts (restaurant_id, body) values ('10000000-0000-0000-0000-000000000001', 'Pie orders are open');
+insert into public.kitchen_alerts (restaurant_id, body) values ('10000000-0000-0000-0000-000000000001', 'Last call for pies');
+select pg_temp.expect_error($$ insert into public.kitchen_alerts (restaurant_id, body) values ('10000000-0000-0000-0000-000000000001', 'One more') $$,
+  'row-level security');
+insert into public.discount_codes (restaurant_id, code, kind, value) values ('10000000-0000-0000-0000-000000000001', 'WELCOME10', 'percent', 10);
+-- Open every day again, so only the drop rules decide below.
+update public.restaurants set working_days = array['monday','tuesday','wednesday','thursday','friday','saturday','sunday'],
+  open_time = '00:00', close_time = '23:59';
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select count(*) = 0 from public.discount_codes), 'customers can''t read codes');
+select pg_temp.check((select count(*) = 0 from public.kitchen_alerts), 'alerts only reach followers');
+insert into public.favorites (customer_id, restaurant_id) values (auth.uid(), '10000000-0000-0000-0000-000000000001');
+select pg_temp.check((select count(*) = 2 from public.kitchen_alerts), 'followers see alerts');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001', '[{"menu_item_id":"20000000-0000-0000-0000-000000000003","quantity":1}]') $$,
+  'only sold in a drop');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001', '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]',
+       '', null, 0, '30000000-0000-0000-0000-000000000001') $$,
+  'isn''t part of this drop');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001', '[{"menu_item_id":"20000000-0000-0000-0000-000000000003","quantity":1}]',
+       '', null, 0, '30000000-0000-0000-0000-000000000001', 'NOPE') $$,
+  'doesn''t work here');
+create temp table drop_order as
+  select public.place_order('10000000-0000-0000-0000-000000000001', '[{"menu_item_id":"20000000-0000-0000-0000-000000000003","quantity":2}]',
+    '', null, 0, '30000000-0000-0000-0000-000000000001', 'welcome10') as id;
+select pg_temp.check((
+  select subtotal_cents = 5000 and discount_code = 'WELCOME10' and discount_cents = 500 and movement_fee_cents = 450
+     and kitchen_fee_cents = 225 and total_cents = 4950 and drop_id = '30000000-0000-0000-0000-000000000001'
+     and scheduled_for = (select pickup_start from public.drops where id = '30000000-0000-0000-0000-000000000001')
+  from public.orders where id = (select id from drop_order)), 'drop order with a code: fees on what the customer pays');
+
+-- Custom orders
+select pg_temp.expect_error(
+  $$ insert into public.custom_requests (restaurant_id, occasion, details, servings, needed_by)
+     values ('10000000-0000-0000-0000-000000000001', 'Birthday cake', 'Chocolate, two layers please', 20, current_date + 1) $$,
+  'row-level security');
+insert into public.custom_requests (restaurant_id, customer_name, occasion, details, servings, needed_by)
+  values ('10000000-0000-0000-0000-000000000001', 'Dan', 'Birthday cake', 'Chocolate, two layers please', 20, current_date + 6);
+select pg_temp.expect_error($$ select public.accept_custom_quote((select id from public.custom_requests)) $$,
+  'can''t be accepted');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select public.quote_custom_request((select id from public.custom_requests), 9000, 'Happy to!',
+  now() + interval '6 days', now() + interval '6 days 2 hours');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+create temp table custom_order as select public.accept_custom_quote((select id from public.custom_requests)) as id;
+select pg_temp.check((
+  select status = 'accepted' and subtotal_cents = 9000 and movement_fee_cents = 900 and kitchen_fee_cents = 450
+     and total_cents = 9900 and pickup_address = '12 Elm St, Orlando'
+  from public.orders where id = (select id from custom_order)), 'accepted quote becomes an accepted order');
+select pg_temp.check((select name = 'Custom: Birthday cake' and menu_item_id is null from public.order_lines
+  where order_id = (select id from custom_order)), 'custom order line');
+select pg_temp.expect_error($$ select public.accept_custom_quote((select id from public.custom_requests)) $$,
+  'can''t be accepted');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect_error($$ delete from public.drops where id = '30000000-0000-0000-0000-000000000001' $$,
+  'foreign key');
+
 -- Deleting an account --------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 insert into public.favorites (customer_id, restaurant_id) values (auth.uid(), '10000000-0000-0000-0000-000000000001');

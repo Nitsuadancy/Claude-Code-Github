@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { dropItems, formatDropDeadline, formatDropPickup } from '@/lib/drops';
+import { dropItems, formatDropPickup, formatDropPickupShort } from '@/lib/drops';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { Drop, Restaurant } from '@/types';
 
@@ -40,10 +40,10 @@ export function DropCard({
           {drop.title}
         </Text>
         <Text style={styles.meta} numberOfLines={1}>
-          {formatDropPickup(drop, now)}
+          Pickup {formatDropPickupShort(drop, now)}
         </Text>
         {open ? (
-          <Countdown to={drop.closesAt} prefix={`${formatDropDeadline(drop, now)} · `} style={{ fontSize: 12 }} />
+          <Countdown to={drop.closesAt} prefix="Orders close in " style={{ fontSize: 12 }} />
         ) : (
           <Text style={styles.meta}>Orders closed</Text>
         )}

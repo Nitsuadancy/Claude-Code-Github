@@ -113,22 +113,25 @@ Pickup only for launch (see Launch decisions). Delivery can come back as an opti
 
 ## Phase 6: Paid plans and promotion for cooks
 
-Start once cooks are making money on Manna, roughly 30–50 active kitchens with most getting repeat
-orders. Every kitchen keeps its storefront, orders, payouts, reviews and the Instagram Story card
+Every kitchen keeps its storefront, orders, payouts, reviews, labels and the Instagram Story card
 without a plan. Paid features help cooks sell more or save time.
 
-**Manna Pro** ($15 a month; free for a year for founding kitchens). Sell it on the Manna website, not
-as an in-app purchase: Apple takes 15–30% of digital subscriptions bought in the app, but nothing from
-the food payments.
+**Manna Pro** ($19.99 a month or $199 a year; founding kitchens get their first 3 months free).
+Available at launch. See [PRO.md](PRO.md).
 
-- [x] In-app Manna Pro page: what Pro adds, what stays free, the founding free year and a Notify me button (no billing yet)
-
-- [ ] Drops and pre-order windows ("Thanksgiving pies, orders close Tuesday")
-- [ ] Followers: customers follow a kitchen and get a notification when it posts a drop
-- [ ] Discount codes and gift cards. The "Offer" tag on kitchen cards and the Offers filter are hidden until a kitchen can say what its offer is; bring them back with this.
-- [ ] Deeper insights: repeat customers, best sellers by day, busiest pickup times
-- [ ] Custom storefront link (`manna.app/susies`), flyer and branded label templates. A basic
-  Florida-compliant product label stays free.
+- [x] Pro page with the two plans, start, cancel and resume (billing simulated until Stripe is connected)
+- [x] Featured on Manna: Pro kitchens rotate at the top of home and come first in Taste, marked "Featured"
+- [x] Drops with their own pickup window and deadline, and dishes sold only in drops
+- [x] Alerts to followers, 2 a week, in Activity
+- [x] Custom order requests, quotes and accepting a quote as an order
+- [x] Discount codes (percent or dollars, first orders only, end date, use limit)
+- [x] Insights: month vs last month, repeat rate, best days, busiest pickup times, best sellers, regulars
+- [x] Printable labels for every kitchen (free, since they help cooks follow the law)
+- [x] Database tables, rules and tests for all of the above
+- [ ] Stripe Billing on the web and the webhook that sets the plan (see [PRO.md](PRO.md))
+- [ ] Push notifications for alerts and custom order replies
+- [ ] Gift cards (check Florida gift card rules first)
+- [ ] Custom storefront link (`manna.app/susies`) once the domain is set up
 
 **Promoted spots**
 
@@ -139,10 +142,11 @@ the food payments.
 
 **How cooks pay**
 
-- [ ] Stripe Billing on the web. Digital subscriptions bought inside the iPhone app normally go
-  through Apple's in-app purchase at 15–30%; check Apple's current rules on linking to web checkout
-  before building
-- [ ] Database: a plan and renewal date on each kitchen, and a table of sponsored slots with dates
+- [ ] Stripe Billing on the web (see [PRO.md](PRO.md)). Digital subscriptions bought inside the iPhone
+  app normally go through Apple's in-app purchase at 15–30%; check Apple's current rules on linking
+  to web checkout before building
+- [x] Database: the plan on each kitchen
+- [ ] A table of sponsored slots with dates
 
 ## Opening a new state or city
 
@@ -162,5 +166,4 @@ automatic sales tax (Stripe Tax).
 ## Later ideas
 
 - Weekly subscriptions from a favorite chef
-- Catering and large orders
 - Web dashboard for chefs

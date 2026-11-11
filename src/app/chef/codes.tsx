@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FormScreen } from '@/components/form-screen';
 import { ProLocked, useProKitchen } from '@/components/pro-gate';
@@ -171,12 +171,14 @@ function CodesScreen({ restaurant }: { restaurant: Restaurant }) {
               <Text style={[styles.codeStatus, { color: on ? colors.success : colors.textMuted }]}>{status}</Text>
             </View>
             {c.paused || on ? (
-              <GoldButton
-                title={c.paused ? 'Restart' : 'Stop'}
-                variant="outline"
-                fullWidth={false}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={c.paused ? `Restart ${c.code}` : `Stop ${c.code}`}
                 onPress={() => manage(c)}
-              />
+                hitSlop={8}
+                style={({ pressed }) => [styles.manage, pressed && { opacity: 0.7 }]}>
+                <Text style={styles.manageText}>{c.paused ? 'Restart' : 'Stop'}</Text>
+              </Pressable>
             ) : null}
           </View>
         );
@@ -209,4 +211,12 @@ const styles = StyleSheet.create({
   codeText: { fontFamily: fonts.monoMedium, fontSize: 17, letterSpacing: 1, color: colors.ivory },
   codeMeta: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted },
   codeStatus: { fontFamily: fonts.semibold, fontSize: 12 },
+  manage: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  manageText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ivory },
 });

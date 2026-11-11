@@ -69,6 +69,10 @@ export interface RestaurantRow {
   rating_count: number;
   /** When the Manna team first approved the kitchen. */
   live_since: string | null;
+  pro_plan: 'monthly' | 'yearly' | null;
+  pro_started_at: string | null;
+  pro_billing_starts_at: string | null;
+  pro_canceled_at: string | null;
   created_at: string;
 }
 
@@ -93,6 +97,9 @@ export interface MenuItemRow {
   daily_limit: number | null;
   section: string | null;
   position: number;
+  drop_only: boolean;
+  ingredients: string;
+  net_weight: string;
   created_at: string;
 }
 
@@ -119,6 +126,9 @@ export interface OrderRow {
   movement_fee_cents: number;
   kitchen_fee_cents: number;
   tip_cents: number;
+  discount_code: string | null;
+  discount_cents: number;
+  drop_id: string | null;
   total_cents: number;
   pickup_address: string;
   pickup_instructions: string;
@@ -134,7 +144,8 @@ export interface OrderRow {
 
 export interface OrderLineRow {
   order_id: string;
-  menu_item_id: string;
+  /** Null for a custom order's single line. */
+  menu_item_id: string | null;
   name: string;
   price_cents: number;
   quantity: number;

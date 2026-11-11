@@ -9,7 +9,7 @@ import type { Restaurant } from '@/types';
  * isn't connected yet, so starting Pro is simulated, like payments.
  */
 export interface PlanFeature {
-  key: 'featured' | 'alerts' | 'drops' | 'custom' | 'codes' | 'insights' | 'labels';
+  key: 'featured' | 'alerts' | 'drops' | 'custom' | 'codes' | 'insights';
   icon: IconName;
   title: string;
   body: string;
@@ -59,13 +59,6 @@ export const PRO_FEATURES: PlanFeature[] = [
     body: 'Your regulars, best sellers, best days and busiest pickup times, month by month.',
     route: '/chef/insights',
   },
-  {
-    key: 'labels',
-    icon: 'printer',
-    title: 'Printable labels',
-    body: 'A label for every dish with ingredients, allergens and the wording your state asks for.',
-    route: '/chef/labels',
-  },
 ];
 
 /** What every kitchen gets, with or without Pro. */
@@ -74,6 +67,7 @@ export const FREE_FEATURES = [
   'Orders paid upfront, with payouts to your bank',
   'Bake days, daily limits and your prep list',
   'Order chat, oven updates and your pinned update',
+  'Printable labels with the wording your state asks for',
   'Reviews and the Instagram Story card with your QR code',
 ] as const;
 

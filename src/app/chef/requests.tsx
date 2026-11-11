@@ -5,7 +5,7 @@ import { FormScreen } from '@/components/form-screen';
 import { Icon } from '@/components/icon';
 import { ProLocked, useProKitchen } from '@/components/pro-gate';
 import { Body, SectionTitle } from '@/components/ui';
-import { formatNeededBy, REQUEST_STATUS_LABEL } from '@/lib/custom-orders';
+import { formatNeededBy, KITCHEN_REQUEST_LABEL } from '@/lib/custom-orders';
 import { formatCents } from '@/lib/money';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -70,7 +70,7 @@ function RequestRow({ request }: { request: CustomRequest }) {
         <Text style={[styles.status, request.status === 'open' && { color: colors.gold }]}>
           {request.status === 'quoted' && request.quote
             ? `Price sent · ${formatCents(request.quote.priceCents)}`
-            : REQUEST_STATUS_LABEL[request.status]}
+            : KITCHEN_REQUEST_LABEL[request.status]}
         </Text>
         <Text style={styles.title}>
           {request.occasion} for {request.servings}

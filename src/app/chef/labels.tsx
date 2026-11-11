@@ -4,23 +4,26 @@ import { StyleSheet, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 import { FormScreen } from '@/components/form-screen';
-import { ProLocked, useProKitchen } from '@/components/pro-gate';
 import { Body, Chip, FieldLabel, GoldButton, TextField } from '@/components/ui';
 import { cottageStatement } from '@/data/regions';
 import { notify } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import { allergenLine, INGREDIENTS_MAX, labelGaps, NET_WEIGHT_MAX } from '@/lib/labels';
 import { storedKitchen } from '@/state/reducer';
-import { useStore } from '@/state/store';
+import { useMyRestaurant, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { MenuItem, Restaurant } from '@/types';
 
-const PITCH =
-  'Make a label for every dish with its ingredients, allergens, net weight and the statement your state asks for. Save it as an image to print.';
-
+/** Every kitchen gets labels: they help cooks follow their state's labeling rules. */
 export default function Labels() {
-  const { restaurant, pro } = useProKitchen();
-  if (!restaurant || !pro) return <ProLocked title="Labels" icon="printer" pitch={PITCH} />;
+  const restaurant = useMyRestaurant();
+  if (!restaurant) {
+    return (
+      <FormScreen title="Labels">
+        <Body muted>Open your kitchen first.</Body>
+      </FormScreen>
+    );
+  }
   return <LabelsScreen restaurant={restaurant} />;
 }
 

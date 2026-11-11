@@ -102,6 +102,12 @@ create table public.restaurants (
   -- When the Manna team first approved the kitchen. A founding kitchen's
   -- fee-free months count from here.
   live_since timestamptz,
+  -- Manna Pro ($19.99 a month or $199 a year). Set by billing, or by the Manna
+  -- team until billing is connected; never by the cook. See has_pro().
+  pro_plan text check (pro_plan in ('monthly', 'yearly')),
+  pro_started_at timestamptz,
+  pro_billing_starts_at timestamptz,
+  pro_canceled_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -140,9 +146,78 @@ create table public.menu_items (
   daily_limit integer check (daily_limit is null or daily_limit > 0),
   section text,
   position integer not null default 0,
+  -- Sold only in drops, not on the everyday menu.
+  drop_only boolean not null default false,
+  -- For printable labels: ingredients heaviest first, and net weight.
+  ingredients text not null default '' check (char_length(ingredients) <= 400),
+  net_weight text not null default '' check (char_length(net_weight) <= 40),
   created_at timestamptz not null default now()
 );
 create index on public.menu_items (restaurant_id);
+
+-- A Pro kitchen's drop: a one-off menu with its own pickup window and order
+-- deadline ("Thanksgiving pies, order by Tuesday").
+create table public.drops (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references public.restaurants (id) on delete cascade,
+  title text not null check (char_length(title) between 1 and 40),
+  note text not null default '' check (char_length(note) <= 140),
+  pickup_start timestamptz not null,
+  pickup_end timestamptz not null,
+  closes_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  check (pickup_start < pickup_end and closes_at <= pickup_start)
+);
+create index on public.drops (restaurant_id, pickup_start);
+
+create table public.drop_items (
+  drop_id uuid not null references public.drops (id) on delete cascade,
+  menu_item_id uuid not null references public.menu_items (id) on delete cascade,
+  primary key (drop_id, menu_item_id)
+);
+
+-- A Pro kitchen's discount codes. Only the kitchen can read them; customers
+-- type a code at checkout and place_order() checks it.
+create table public.discount_codes (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references public.restaurants (id) on delete cascade,
+  code text not null check (code ~ '^[A-Z0-9]{3,15}$'),
+  kind text not null check (kind in ('percent', 'amount')),
+  value integer not null,
+  new_customers_only boolean not null default false,
+  max_uses integer check (max_uses is null or max_uses > 0),
+  ends_at timestamptz,
+  paused boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique (restaurant_id, code),
+  check ((kind = 'percent' and value between 5 and 50) or (kind = 'amount' and value between 100 and 5000))
+);
+
+-- A customer's request for something off-menu from a Pro kitchen: a birthday
+-- cake, a party tray, catering. The kitchen answers with a price and a pickup
+-- window; the customer accepts it as an order (accept_custom_quote).
+create table public.custom_requests (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references public.restaurants (id) on delete cascade,
+  customer_id uuid not null default auth.uid() references public.profiles (id),
+  customer_name text not null default '',
+  occasion text not null check (char_length(occasion) between 1 and 40),
+  details text not null check (char_length(details) between 10 and 500),
+  servings integer not null check (servings between 1 and 300),
+  needed_by date not null,
+  budget_cents integer check (budget_cents is null or budget_cents > 0),
+  status text not null default 'open' check (status in ('open', 'quoted', 'accepted', 'declined', 'withdrawn')),
+  quote_cents integer check (quote_cents is null or quote_cents >= 1000),
+  quote_note text not null default '' check (char_length(quote_note) <= 280),
+  quote_pickup_start timestamptz,
+  quote_pickup_end timestamptz,
+  quoted_at timestamptz,
+  decline_note text not null default '' check (char_length(decline_note) <= 280),
+  order_id uuid,
+  created_at timestamptz not null default now()
+);
+create index on public.custom_requests (restaurant_id, created_at desc);
+create index on public.custom_requests (customer_id, created_at desc);
 
 alter table public.restaurants
   add constraint restaurants_signature_fk
@@ -178,6 +253,12 @@ create table public.orders (
   -- taken from the kitchen's payout. Tips are never charged.
   kitchen_fee_cents integer not null default 0 check (kitchen_fee_cents >= 0 and kitchen_fee_cents <= subtotal_cents),
   tip_cents integer not null default 0 check (tip_cents >= 0),
+  -- A Pro kitchen's discount code, paid for by the kitchen: it comes off the
+  -- food, and both fees are worked out on what's left.
+  discount_code text,
+  discount_cents integer not null default 0 check (discount_cents >= 0 and discount_cents <= subtotal_cents),
+  -- The drop this order is from, if any. A drop with orders can't be deleted.
+  drop_id uuid references public.drops (id),
   total_cents integer not null,
   -- Filled in when the chef accepts; empty until then.
   pickup_address text not null default '',
@@ -192,18 +273,23 @@ create table public.orders (
   scheduled_for timestamptz,
   estimated_ready_at timestamptz not null,
   created_at timestamptz not null default now(),
-  check (total_cents = subtotal_cents + movement_fee_cents + tip_cents)
+  check (total_cents = subtotal_cents - discount_cents + movement_fee_cents + tip_cents)
 );
+
+alter table public.custom_requests
+  add constraint custom_requests_order_fk foreign key (order_id) references public.orders (id);
 create index on public.orders (customer_id, created_at desc);
 create index on public.orders (restaurant_id, created_at desc);
 
 create table public.order_lines (
+  id bigserial primary key,
   order_id uuid not null references public.orders (id) on delete cascade,
-  menu_item_id uuid not null references public.menu_items (id),
+  -- Null for a custom order's single line ("Custom: Birthday cake").
+  menu_item_id uuid references public.menu_items (id),
   name text not null,
   price_cents integer not null check (price_cents > 0),
   quantity integer not null check (quantity between 1 and 50),
-  primary key (order_id, menu_item_id)
+  unique (order_id, menu_item_id)
 );
 
 create table public.order_status_events (
@@ -233,6 +319,16 @@ create table public.favorites (
   created_at timestamptz not null default now(),
   primary key (customer_id, restaurant_id)
 );
+
+-- A Pro kitchen's alert to everyone who saved it ("Saturday's bake day is
+-- open"). Up to 2 a week. Push notifications read from here once they exist.
+create table public.kitchen_alerts (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references public.restaurants (id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 140),
+  created_at timestamptz not null default now()
+);
+create index on public.kitchen_alerts (restaurant_id, created_at desc);
 
 -- Reviews people flag as abusive, false or not about a real order. The team
 -- checks each one within 24 hours (App Store guideline 1.2).
@@ -396,6 +492,46 @@ language sql stable set search_path = public as $$
   end;
 $$;
 
+-- Whether a kitchen has Manna Pro at a moment: a founding kitchen's first 3
+-- months, or a plan that hasn't been canceled, or a canceled plan running out
+-- the period it was canceled in. Mirrors proStatus() in src/lib/pro.ts.
+create function public.has_pro(r public.restaurants, ts timestamptz) returns boolean
+language plpgsql stable set search_path = public as $$
+declare
+  step interval;
+  period_end timestamptz;
+begin
+  if r.founding and ts < coalesce(r.live_since, r.created_at) + interval '3 months' then
+    return true;
+  end if;
+  if r.pro_plan is null or r.pro_billing_starts_at is null then
+    return false;
+  end if;
+  if r.pro_canceled_at is null then
+    return true;
+  end if;
+  step := case r.pro_plan when 'yearly' then interval '1 year' else interval '1 month' end;
+  period_end := r.pro_billing_starts_at;
+  while period_end <= r.pro_canceled_at loop
+    period_end := period_end + step;
+  end loop;
+  return ts < period_end;
+end;
+$$;
+
+-- How many alerts a kitchen sent in the last 7 days. For the alerts policy,
+-- which can't count its own table directly.
+create function public.alerts_this_week(rid uuid) returns integer
+language sql stable security definer set search_path = public as $$
+  select count(*)::integer from public.kitchen_alerts where restaurant_id = rid and created_at > now() - interval '7 days';
+$$;
+
+-- has_pro() for a kitchen by id, right now. For policies.
+create function public.kitchen_has_pro(rid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select public.has_pro(r, now()) from public.restaurants r where r.id = rid), false);
+$$;
+
 create function public.kitchen_open_at(r public.restaurants, ts timestamptz) returns boolean
 language plpgsql stable as $$
 declare
@@ -468,6 +604,10 @@ begin
      or new.rating_sum is distinct from old.rating_sum
      or new.rating_count is distinct from old.rating_count
      or new.live_since is distinct from old.live_since
+     or new.pro_plan is distinct from old.pro_plan
+     or new.pro_started_at is distinct from old.pro_started_at
+     or new.pro_billing_starts_at is distinct from old.pro_billing_starts_at
+     or new.pro_canceled_at is distinct from old.pro_canceled_at
      or new.owner_id is distinct from old.owner_id then
     raise exception 'Only the Manna team can change that' using errcode = '42501';
   end if;
@@ -505,6 +645,11 @@ alter table public.order_updates enable row level security;
 alter table public.order_chat_reads enable row level security;
 alter table public.user_blocks enable row level security;
 alter table public.message_reports enable row level security;
+alter table public.drops enable row level security;
+alter table public.drop_items enable row level security;
+alter table public.discount_codes enable row level security;
+alter table public.custom_requests enable row level security;
+alter table public.kitchen_alerts enable row level security;
 
 create policy "own profile" on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
@@ -610,6 +755,65 @@ create policy "both sides message while the chat is open" on public.order_messag
   );
 create policy "admins remove reported messages" on public.order_messages
   for delete using (public.is_admin());
+-- Manna Pro ------------------------------------------------------------------
+create policy "drops of visible kitchens" on public.drops
+  for select using (
+    public.owns_restaurant(restaurant_id) or public.is_admin()
+    or exists (select 1 from public.restaurants r where r.id = restaurant_id and r.status = 'live')
+  );
+create policy "Pro kitchens make drops" on public.drops
+  for insert with check (public.owns_restaurant(restaurant_id) and public.kitchen_has_pro(restaurant_id));
+create policy "kitchens edit their drops" on public.drops
+  for update using (public.owns_restaurant(restaurant_id)) with check (public.owns_restaurant(restaurant_id));
+create policy "kitchens delete their drops" on public.drops
+  for delete using (public.owns_restaurant(restaurant_id));
+create policy "drop items follow drops" on public.drop_items
+  for select using (exists (select 1 from public.drops d where d.id = drop_id));
+create policy "kitchens choose their drop items" on public.drop_items
+  for all using (
+    exists (select 1 from public.drops d where d.id = drop_id and public.owns_restaurant(d.restaurant_id))
+  ) with check (
+    exists (
+      select 1 from public.drops d join public.menu_items m on m.restaurant_id = d.restaurant_id
+      where d.id = drop_id and m.id = menu_item_id and public.owns_restaurant(d.restaurant_id)
+    )
+  );
+
+create policy "kitchens and admins read their codes" on public.discount_codes
+  for select using (public.owns_restaurant(restaurant_id) or public.is_admin());
+create policy "Pro kitchens make codes" on public.discount_codes
+  for insert with check (public.owns_restaurant(restaurant_id) and public.kitchen_has_pro(restaurant_id));
+create policy "kitchens pause their codes" on public.discount_codes
+  for update using (public.owns_restaurant(restaurant_id)) with check (public.owns_restaurant(restaurant_id));
+create policy "kitchens delete unused codes" on public.discount_codes
+  for delete using (
+    public.owns_restaurant(restaurant_id)
+    and not exists (select 1 from public.orders o where o.restaurant_id = discount_codes.restaurant_id and o.discount_code = discount_codes.code)
+  );
+
+create policy "both sides read custom requests" on public.custom_requests
+  for select using (customer_id = auth.uid() or public.owns_restaurant(restaurant_id) or public.is_admin());
+create policy "customers ask Pro kitchens for custom orders" on public.custom_requests
+  for insert with check (
+    customer_id = auth.uid()
+    and status = 'open'
+    and needed_by between current_date + 3 and current_date + 60
+    and public.kitchen_has_pro(restaurant_id)
+    and exists (select 1 from public.restaurants r where r.id = restaurant_id and r.status = 'live' and r.owner_id <> auth.uid())
+  );
+
+create policy "kitchens, followers and admins read alerts" on public.kitchen_alerts
+  for select using (
+    public.owns_restaurant(restaurant_id) or public.is_admin()
+    or exists (select 1 from public.favorites f where f.restaurant_id = kitchen_alerts.restaurant_id and f.customer_id = auth.uid())
+  );
+create policy "Pro kitchens send two alerts a week" on public.kitchen_alerts
+  for insert with check (
+    public.owns_restaurant(restaurant_id)
+    and public.kitchen_has_pro(restaurant_id)
+    and public.alerts_this_week(restaurant_id) < 2
+  );
+
 create policy "own chat read times" on public.order_chat_reads
   for all using (user_id = auth.uid()) with check (user_id = auth.uid() and public.in_order_chat(order_id));
 create policy "own blocks" on public.user_blocks
@@ -628,16 +832,26 @@ create policy "reporters and admins read message reports" on public.message_repo
 
 -- Places an order. Prices come from the menu, never from the app.
 -- p_lines: [{"menu_item_id": "...", "quantity": 2}, ...]
+-- p_drop_id: order from one of the kitchen's drops (its own pickup window).
+-- p_discount_code: a Pro kitchen's code, checked here.
 create function public.place_order(
   p_restaurant_id uuid,
   p_lines jsonb,
   p_customer_note text default '',
   p_scheduled_for timestamptz default null,
-  p_tip_cents integer default 0
+  p_tip_cents integer default 0,
+  p_drop_id uuid default null,
+  p_discount_code text default null
 ) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare
   r public.restaurants;
+  d public.drops;
+  dc public.discount_codes;
+  v_scheduled timestamptz := p_scheduled_for;
+  discount integer := 0;
+  food integer;
+  kitchen_fee integer;
   line jsonb;
   item public.menu_items;
   qty integer;
@@ -660,7 +874,16 @@ begin
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
     raise exception 'Your cart is empty';
   end if;
-  if r.order_mode = 'bake-days' then
+  if p_drop_id is not null then
+    -- A drop has its own pickup window and deadline, whatever the kitchen's usual hours.
+    select * into d from public.drops where id = p_drop_id and restaurant_id = r.id;
+    if not found or now() >= d.closes_at then
+      raise exception 'Orders for this drop have closed';
+    end if;
+    v_scheduled := d.pickup_start;
+    ready_at := d.pickup_start;
+    window_end := d.pickup_end;
+  elsif r.order_mode = 'bake-days' then
     if p_scheduled_for is null then
       raise exception 'Pick a bake day';
     end if;
@@ -683,7 +906,7 @@ begin
     end if;
     ready_at := p_scheduled_for;
   end if;
-  cook_day := (coalesce(p_scheduled_for, now()) at time zone r.timezone)::date;
+  cook_day := (coalesce(v_scheduled, now()) at time zone r.timezone)::date;
 
   insert into public.orders (
     customer_id, restaurant_id, customer_name, restaurant_name, subtotal_cents, movement_fee_cents,
@@ -692,8 +915,11 @@ begin
     -- Placeholder totals; the real ones are written once every line is priced.
     auth.uid(), r.id, public.public_name((select name from public.profiles where id = auth.uid())), r.name,
     1, 0, 0, 1,
-    left(coalesce(p_customer_note, ''), 280), p_scheduled_for, ready_at, window_end
+    left(coalesce(p_customer_note, ''), 280), v_scheduled, ready_at, window_end
   ) returning id into new_id;
+  if p_drop_id is not null then
+    update public.orders set drop_id = p_drop_id where id = new_id;
+  end if;
 
   for line in select * from jsonb_array_elements(p_lines) loop
     qty := (line ->> 'quantity')::integer;
@@ -703,6 +929,13 @@ begin
       for update;
     if not found or not item.available then
       raise exception 'A dish in your cart is no longer available';
+    end if;
+    if p_drop_id is null and item.drop_only then
+      raise exception '% is only sold in a drop', item.name;
+    end if;
+    if p_drop_id is not null
+       and not exists (select 1 from public.drop_items di where di.drop_id = p_drop_id and di.menu_item_id = item.id) then
+      raise exception '% isn''t part of this drop', item.name;
     end if;
     if qty is null or qty < 1 or qty > 50 then
       raise exception 'Invalid quantity for %', item.name;
@@ -727,15 +960,46 @@ begin
   if p_tip_cents < 0 or p_tip_cents > subtotal then
     raise exception 'Tip must be between $0 and the food subtotal';
   end if;
-  -- 10% of the food, at least $1.50. Mirrors movementFee() in src/lib/pricing.ts.
-  movement_fee := greatest(round(subtotal * 0.10), 150);
+  if nullif(trim(p_discount_code), '') is not null then
+    -- Mirrors applyCode() in src/lib/discounts.ts.
+    select * into dc from public.discount_codes
+      where restaurant_id = r.id and code = upper(regexp_replace(p_discount_code, '[^A-Za-z0-9]', '', 'g'));
+    if not found or dc.paused or (dc.ends_at is not null and now() >= dc.ends_at) then
+      raise exception 'That code doesn''t work here';
+    end if;
+    if dc.max_uses is not null and (
+      select count(*) from public.orders o
+      where o.restaurant_id = r.id and o.discount_code = dc.code and o.id <> new_id
+        and o.status not in ('declined', 'cancelled')
+    ) >= dc.max_uses then
+      raise exception 'That code isn''t available anymore';
+    end if;
+    if dc.new_customers_only and exists (
+      select 1 from public.orders o
+      where o.restaurant_id = r.id and o.customer_id = auth.uid() and o.id <> new_id
+        and o.status not in ('declined', 'cancelled')
+    ) then
+      raise exception 'That code is for a first order from this kitchen';
+    end if;
+    discount := least(
+      case dc.kind when 'percent' then round(subtotal * dc.value / 100.0)::integer else dc.value end,
+      subtotal
+    );
+  end if;
+  food := subtotal - discount;
+  -- 10% of the food, at least $1.50, on what the customer pays for the food.
+  -- Mirrors movementFee() in src/lib/pricing.ts.
+  movement_fee := case when food <= 0 then 0 else greatest(round(food * 0.10), 150) end;
+  kitchen_fee := round(food * public.kitchen_fee_rate(r, now()));
 
   update public.orders set
     subtotal_cents = subtotal,
+    discount_code = case when discount > 0 then dc.code end,
+    discount_cents = discount,
     movement_fee_cents = movement_fee,
-    kitchen_fee_cents = round(subtotal * public.kitchen_fee_rate(r, now())),
+    kitchen_fee_cents = kitchen_fee,
     tip_cents = p_tip_cents,
-    total_cents = subtotal + movement_fee + p_tip_cents
+    total_cents = food + movement_fee + p_tip_cents
   where id = new_id;
 
   insert into public.order_status_events (order_id, status) values (new_id, 'placed');
@@ -937,6 +1201,101 @@ $$;
 -- removed; order and review records stay for the kitchens' bookkeeping,
 -- without the person's details. Removing the sign-in itself (auth.users)
 -- needs the service role, so an Edge Function calls this and then deletes it.
+-- Custom orders -------------------------------------------------------------
+-- The kitchen answers a request with a price and a pickup window on the day
+-- the customer asked for. It can send a new price until the customer decides.
+create function public.quote_custom_request(
+  p_request_id uuid,
+  p_price_cents integer,
+  p_note text,
+  p_pickup_start timestamptz,
+  p_pickup_end timestamptz
+) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  q public.custom_requests;
+begin
+  select * into q from public.custom_requests where id = p_request_id for update;
+  if not found or not public.owns_restaurant(q.restaurant_id) then
+    raise exception 'Request not found' using errcode = '42501';
+  end if;
+  if q.status not in ('open', 'quoted') then
+    raise exception 'This request has already been answered';
+  end if;
+  if p_price_cents is null or p_price_cents < 1000 then
+    raise exception 'Price must be at least $10';
+  end if;
+  if p_pickup_start <= now() or p_pickup_end <= p_pickup_start then
+    raise exception 'Pick a pickup window that hasn''t passed';
+  end if;
+  update public.custom_requests set
+    status = 'quoted', quote_cents = p_price_cents, quote_note = left(coalesce(p_note, ''), 280),
+    quote_pickup_start = p_pickup_start, quote_pickup_end = p_pickup_end, quoted_at = now()
+  where id = q.id;
+end;
+$$;
+
+create function public.decline_custom_request(p_request_id uuid, p_note text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.custom_requests set status = 'declined', decline_note = left(coalesce(p_note, ''), 280)
+    where id = p_request_id and public.owns_restaurant(restaurant_id) and status in ('open', 'quoted');
+  if not found then
+    raise exception 'Request not found' using errcode = '42501';
+  end if;
+end;
+$$;
+
+create function public.withdraw_custom_request(p_request_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  update public.custom_requests set status = 'withdrawn'
+    where id = p_request_id and customer_id = auth.uid() and status in ('open', 'quoted');
+  if not found then
+    raise exception 'Request not found' using errcode = '42501';
+  end if;
+end;
+$$;
+
+-- The customer accepts the kitchen's price. The kitchen already said yes, so
+-- the order starts accepted, with the pickup address shared.
+create function public.accept_custom_quote(p_request_id uuid) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  q public.custom_requests;
+  r public.restaurants;
+  fee integer;
+  new_id uuid;
+begin
+  select * into q from public.custom_requests where id = p_request_id for update;
+  if not found or q.customer_id <> auth.uid() then
+    raise exception 'Request not found' using errcode = '42501';
+  end if;
+  if q.status <> 'quoted' or q.quote_pickup_start <= now() then
+    raise exception 'This price can''t be accepted anymore';
+  end if;
+  select * into r from public.restaurants where id = q.restaurant_id;
+  fee := greatest(round(q.quote_cents * 0.10), 150);
+  insert into public.orders (
+    customer_id, restaurant_id, status, customer_name, restaurant_name, subtotal_cents, movement_fee_cents,
+    kitchen_fee_cents, tip_cents, total_cents, customer_note, scheduled_for, estimated_ready_at, pickup_by,
+    pickup_address, pickup_instructions, pickup_photo_path
+  ) values (
+    q.customer_id, r.id, 'accepted', q.customer_name, r.name, q.quote_cents, fee,
+    round(q.quote_cents * public.kitchen_fee_rate(r, now())), 0, q.quote_cents + fee, left(q.details, 280),
+    q.quote_pickup_start, q.quote_pickup_start, q.quote_pickup_end,
+    coalesce((select a.address from public.restaurant_addresses a where a.restaurant_id = r.id), ''),
+    coalesce((select a.instructions from public.restaurant_addresses a where a.restaurant_id = r.id), ''),
+    coalesce((select a.photo_path from public.restaurant_addresses a where a.restaurant_id = r.id), '')
+  ) returning id into new_id;
+  insert into public.order_lines (order_id, menu_item_id, name, price_cents, quantity)
+    values (new_id, null, 'Custom: ' || q.occasion, q.quote_cents, 1);
+  insert into public.order_status_events (order_id, status) values (new_id, 'placed'), (new_id, 'accepted');
+  update public.custom_requests set status = 'accepted', order_id = new_id where id = q.id;
+  return new_id;
+end;
+$$;
+
 create function public.delete_my_account() returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -946,6 +1305,12 @@ begin
     raise exception 'Sign in first' using errcode = '42501';
   end if;
   delete from public.favorites where customer_id = me;
+  delete from public.custom_requests where customer_id = me and status <> 'accepted';
+  update public.custom_requests set customer_name = 'Former customer', details = 'Removed with the account.'
+    where customer_id = me;
+  delete from public.kitchen_alerts a using public.restaurants r where a.restaurant_id = r.id and r.owner_id = me;
+  update public.discount_codes c set paused = true from public.restaurants r
+    where c.restaurant_id = r.id and r.owner_id = me;
   delete from public.review_reports where reporter_id = me;
   delete from public.order_issues where customer_id = me;
   delete from public.order_messages where sender_id = me;
@@ -969,7 +1334,7 @@ begin
 end;
 $$;
 
-revoke all on function public.place_order(uuid, jsonb, text, timestamptz, integer) from public;
+revoke all on function public.place_order(uuid, jsonb, text, timestamptz, integer, uuid, text) from public;
 revoke all on function public.set_order_status(uuid, public.order_status) from public;
 revoke all on function public.set_chef_note(uuid, text) from public;
 revoke all on function public.cancel_order(uuid) from public;
@@ -980,7 +1345,7 @@ revoke all on function public.add_review(uuid, integer, text[], text) from publi
 revoke all on function public.approve_restaurant(uuid) from public;
 revoke all on function public.refresh_licensed(uuid) from public;
 grant execute on function public.refresh_licensed(uuid) to authenticated;
-grant execute on function public.place_order(uuid, jsonb, text, timestamptz, integer) to authenticated;
+grant execute on function public.place_order(uuid, jsonb, text, timestamptz, integer, uuid, text) to authenticated;
 grant execute on function public.set_order_status(uuid, public.order_status) to authenticated;
 grant execute on function public.set_chef_note(uuid, text) to authenticated;
 grant execute on function public.add_review(uuid, integer, text[], text) to authenticated;
@@ -990,6 +1355,14 @@ revoke all on function public.remove_review(uuid) from public;
 grant execute on function public.remove_review(uuid) to authenticated;
 revoke all on function public.delete_my_account() from public;
 grant execute on function public.delete_my_account() to authenticated;
+revoke all on function public.quote_custom_request(uuid, integer, text, timestamptz, timestamptz) from public;
+revoke all on function public.decline_custom_request(uuid, text) from public;
+revoke all on function public.withdraw_custom_request(uuid) from public;
+revoke all on function public.accept_custom_quote(uuid) from public;
+grant execute on function public.quote_custom_request(uuid, integer, text, timestamptz, timestamptz) to authenticated;
+grant execute on function public.decline_custom_request(uuid, text) to authenticated;
+grant execute on function public.withdraw_custom_request(uuid) to authenticated;
+grant execute on function public.accept_custom_quote(uuid) to authenticated;
 
 grant usage on schema public to anon, authenticated;
 grant select on all tables in schema public to anon, authenticated;
@@ -1006,6 +1379,12 @@ grant insert (order_id, body, photo_path) on public.order_updates to authenticat
 grant insert (order_id, read_at), update (read_at) on public.order_chat_reads to authenticated;
 grant insert (blocked_id), delete on public.user_blocks to authenticated;
 grant insert (message_id) on public.message_reports to authenticated;
+grant insert, update, delete on public.drops, public.drop_items, public.discount_codes to authenticated;
+-- Customers never read a kitchen's codes; signed-out visitors never need them.
+revoke select on public.discount_codes from anon;
+grant insert (restaurant_id, customer_name, occasion, details, servings, needed_by, budget_cents)
+  on public.custom_requests to authenticated;
+grant insert (restaurant_id, body) on public.kitchen_alerts to authenticated;
 
 -- Live updates for the order screen and the chat, where Supabase Realtime is available.
 do $$

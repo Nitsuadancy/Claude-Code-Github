@@ -176,3 +176,10 @@ relearn the app. Cooks make their page their own with a few controlled choices:
   gold dots per kitchen (hollow when it opens later), an ivory dot for you. Neighborhoods
   only, never addresses.
 
+
+## Pro pieces
+
+- **Featured label:** a Pro kitchen in a featured spot always says so. The hero line reads "Featured · …", and Taste shows "Featured · …" above the dish name. Never feature a kitchen without the label.
+- **Drop card** (`src/components/drop-card.tsx`): the kitchen's accent color as the border, a dish photo, the drop name, a short pickup line ("Sat, Nov 21 · 10 AM–2 PM") and a live "Orders close in" countdown. It's used on the kitchen page and in the home Drops row.
+- **Pro lock** (`src/components/pro-gate.tsx`): a Pro tool opened without Pro shows one icon, one sentence on what the tool does, and "See Manna Pro". It never shows a fake preview of the tool.
+- **Insights charts:** one series of thin bars in the app's gold, with the peak in full gold and the rest at 55% opacity. Rounded tops, and labels and values in text colors. Each chart has a written summary of every value for screen readers.
