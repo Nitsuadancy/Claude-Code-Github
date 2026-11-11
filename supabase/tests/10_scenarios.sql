@@ -483,6 +483,64 @@ select pg_temp.check((select zip = '78701' and people = 1 from public.area_deman
 select pg_temp.check((select count(*) = 1 and bool_and(code = 'FL') from public.launched_states), 'only Florida launched');
 select pg_temp.check((select count(*) = 0 from public.kitchens_waiting_by_state()), 'no kitchens waiting yet');
 
+-- Payments ------------------------------------------------------------------------
+reset role;
+update public.app_settings set payments_required = true;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+select pg_temp.expect_error(
+  $$ select public.place_order('10000000-0000-0000-0000-000000000001', '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]') $$,
+  'can''t take payments yet');
+select pg_temp.expect_error($$ insert into public.payment_accounts (profile_id, payouts_ready) values (auth.uid(), true) $$,
+  'permission denied');
+reset role;
+insert into public.payment_accounts (profile_id, stripe_account_id, payouts_ready)
+  values ('00000000-0000-0000-0000-00000000000a', 'acct_test', true);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+create temp table paid_order as
+  select public.place_order('10000000-0000-0000-0000-000000000001', '[{"menu_item_id":"20000000-0000-0000-0000-000000000002","quantity":1}]') as id;
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select count(*) = 0 from public.orders where id = (select id from paid_order)), 'kitchen doesn''t see unpaid orders');
+reset role;
+update public.orders set payment_status = 'paid', payment_intent_id = 'pi_test' where id = (select id from paid_order);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select count(*) = 1 from public.orders where id = (select id from paid_order)), 'kitchen sees paid orders');
+select public.set_order_status((select id from paid_order), 'accepted');
+reset role;
+update public.orders set payment_status = 'unpaid' where id = (select id from paid_order);
+update public.orders set status = 'placed' where id = (select id from paid_order);
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect_error($$ select public.set_order_status((select id from paid_order), 'accepted') $$,
+  'waiting for the customer''s payment');
+-- A custom order waits for its payment, then is accepted with the address.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+insert into public.custom_requests (restaurant_id, customer_name, occasion, details, servings, needed_by)
+  values ('10000000-0000-0000-0000-000000000001', 'Dan', 'Retirement pies', 'Six key lime pies please', 30, current_date + 6);
+create temp table paid_request as select id from public.custom_requests where occasion = 'Retirement pies';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select public.quote_custom_request((select id from paid_request), 12000, 'Sure',
+  now() + interval '6 days', now() + interval '6 days 2 hours');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+create temp table paid_custom as select public.accept_custom_quote((select id from paid_request)) as id;
+select pg_temp.check((select status = 'placed' and pickup_address = '' and payment_status = 'unpaid'
+  from public.orders where id = (select id from paid_custom)), 'paid-first custom order waits, address hidden');
+select pg_temp.expect_error($$ select public.mark_order_paid((select id from paid_custom)) $$, 'permission denied');
+select public.cancel_order((select id from paid_custom));
+select pg_temp.check((select status = 'quoted' and order_id is null from public.custom_requests where id = (select id from paid_request)),
+  'a cancelled unpaid custom order reopens the price');
+drop table paid_custom;
+create temp table paid_custom as select public.accept_custom_quote((select id from paid_request)) as id;
+reset role;
+grant select on paid_custom, paid_order to service_role;
+set role service_role;
+select pg_temp.check(public.mark_order_paid((select id from paid_custom)) = 'accepted', 'payment accepts a priced custom order');
+select pg_temp.check(public.mark_order_paid((select id from paid_order)) = 'placed', 'payment leaves a regular order for the kitchen');
+reset role;
+select pg_temp.check((select status = 'accepted' and payment_status = 'paid' and pickup_address = '12 Elm St, Orlando'
+  from public.orders where id = (select id from paid_custom)), 'paid custom order gets the address');
+reset role;
+update public.app_settings set payments_required = false;
+delete from public.payment_accounts;
+
 -- Cook invites ------------------------------------------------------------------
 select pg_temp.check((select referral_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$' from public.restaurants where id = '10000000-0000-0000-0000-000000000001'),
   'approved kitchen has an invite code');

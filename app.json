@@ -63,7 +63,8 @@
           "remindersPermission": false
         }
       ],
-      "expo-video"
+      "expo-video",
+      "@stripe/stripe-react-native"
     ],
     "experiments": {
       "typedRoutes": true,

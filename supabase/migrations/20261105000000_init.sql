@@ -143,6 +143,26 @@ create table public.launched_states (
 );
 insert into public.launched_states (code) values ('FL');
 
+-- Stripe ids for people and kitchens: a customer record for paying, and a
+-- connected account for a cook's payouts. Written only by the payment
+-- functions; people can read their own.
+create table public.payment_accounts (
+  profile_id uuid primary key references public.profiles (id) on delete cascade,
+  stripe_customer_id text unique,
+  stripe_account_id text unique,
+  -- Stripe says the cook's account can take charges and pay out.
+  payouts_ready boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+-- One row of switches for the whole app.
+create table public.app_settings (
+  id boolean primary key default true check (id),
+  -- Once Stripe is set up: orders must be paid before a kitchen can accept them.
+  payments_required boolean not null default false
+);
+insert into public.app_settings default values;
+
 -- People asking to hear when kitchens open near their ZIP. Shows the team
 -- where to recruit cooks next. Only admins read the whole list.
 create table public.area_waitlist (
@@ -289,6 +309,9 @@ create table public.orders (
   discount_cents integer not null default 0 check (discount_cents >= 0 and discount_cents <= subtotal_cents),
   -- The drop this order is from, if any. A drop with orders can't be deleted.
   drop_id uuid references public.drops (id),
+  -- Stripe. Set only by the payment functions (they use the service key).
+  payment_intent_id text unique,
+  payment_status text not null default 'unpaid' check (payment_status in ('unpaid', 'paid', 'refunded', 'failed')),
   total_cents integer not null,
   -- Filled in when the chef accepts; empty until then.
   pickup_address text not null default '',
@@ -570,6 +593,20 @@ language sql stable security definer set search_path = public as $$
   select coalesce((select public.has_pro(r, now()) from public.restaurants r where r.id = rid), false);
 $$;
 
+create function public.payments_required() returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select payments_required from public.app_settings), false);
+$$;
+
+-- Whether a kitchen's cook has finished Stripe's payout setup.
+create function public.kitchen_takes_payments(rid uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((
+    select a.payouts_ready from public.restaurants r join public.payment_accounts a on a.profile_id = r.owner_id
+    where r.id = rid
+  ), false);
+$$;
+
 create function public.kitchen_open_at(r public.restaurants, ts timestamptz) returns boolean
 language plpgsql stable as $$
 declare
@@ -676,6 +713,8 @@ alter table public.restaurant_addresses enable row level security;
 alter table public.grower_waitlist enable row level security;
 alter table public.area_waitlist enable row level security;
 alter table public.launched_states enable row level security;
+alter table public.payment_accounts enable row level security;
+alter table public.app_settings enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.restaurant_documents enable row level security;
 alter table public.orders enable row level security;
@@ -710,6 +749,9 @@ create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
 
 create policy "anyone sees where Manna is open" on public.launched_states for select using (true);
+create policy "anyone reads the app settings" on public.app_settings for select using (true);
+create policy "people read their own payment account" on public.payment_accounts
+  for select using (profile_id = auth.uid() or public.is_admin());
 
 create policy "people join the list for their area" on public.area_waitlist
   for insert with check (profile_id = auth.uid());
@@ -744,7 +786,12 @@ create policy "admins review documents" on public.restaurant_documents
 
 -- Orders are created and changed only through the functions below.
 create policy "customers and kitchens read orders" on public.orders
-  for select using (customer_id = auth.uid() or public.owns_restaurant(restaurant_id) or public.is_admin());
+  for select using (
+    customer_id = auth.uid()
+    or public.is_admin()
+    -- With payments on, a kitchen sees an order once it's paid.
+    or (public.owns_restaurant(restaurant_id) and (not public.payments_required() or payment_status <> 'unpaid'))
+  );
 create policy "order lines follow orders" on public.order_lines
   for select using (exists (
     select 1 from public.orders o
@@ -925,6 +972,9 @@ begin
   if not found or r.status <> 'live' or not r.accepting_orders then
     raise exception 'This kitchen isn''t taking orders right now';
   end if;
+  if public.payments_required() and not public.kitchen_takes_payments(r.id) then
+    raise exception 'This kitchen can''t take payments yet';
+  end if;
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
     raise exception 'Your cart is empty';
   end if;
@@ -1000,6 +1050,8 @@ begin
         join public.orders o on o.id = ol.order_id
         where ol.menu_item_id = item.id
           and o.status not in ('declined', 'cancelled')
+          -- An order left unpaid for 30 minutes stops holding portions.
+          and not (o.payment_status = 'unpaid' and public.payments_required() and o.created_at < now() - interval '30 minutes')
           and o.id <> new_id
           and (coalesce(o.scheduled_for, o.created_at) at time zone r.timezone)::date = cook_day;
       if committed + qty > item.daily_limit then
@@ -1083,6 +1135,9 @@ begin
   if not allowed then
     raise exception 'Can''t move an order from % to %', o.status, p_status;
   end if;
+  if p_status = 'accepted' and public.payments_required() and o.payment_status <> 'paid' then
+    raise exception 'Waiting for the customer''s payment';
+  end if;
   update public.orders set status = p_status where id = o.id;
   if p_status = 'accepted' then
     update public.orders set
@@ -1098,8 +1153,8 @@ begin
 end;
 $$;
 
--- A customer calls off their order before the kitchen accepts it. Nothing
--- has been charged yet, because payment is taken when the kitchen accepts.
+-- A customer calls off their order before the kitchen accepts it. If the card
+-- was charged, the app then asks refund-payment to return it in full.
 create function public.cancel_order(p_order_id uuid) returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -1114,6 +1169,8 @@ begin
   end if;
   update public.orders set status = 'cancelled' where id = o.id;
   insert into public.order_status_events (order_id, status) values (o.id, 'cancelled');
+  -- A custom order whose payment didn't go through: the kitchen's price is open again.
+  update public.custom_requests set status = 'quoted', order_id = null where order_id = o.id and status = 'accepted';
 end;
 $$;
 
@@ -1371,7 +1428,9 @@ end;
 $$;
 
 -- The customer accepts the kitchen's price. The kitchen already said yes, so
--- the order starts accepted, with the pickup address shared.
+-- the order starts accepted, with the pickup address shared. When payments
+-- are on, it starts placed instead and mark_order_paid() accepts it once the
+-- card goes through.
 create function public.accept_custom_quote(p_request_id uuid) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare
@@ -1379,6 +1438,7 @@ declare
   r public.restaurants;
   fee integer;
   new_id uuid;
+  pay_first boolean := public.payments_required();
 begin
   select * into q from public.custom_requests where id = p_request_id for update;
   if not found or q.customer_id <> auth.uid() then
@@ -1388,24 +1448,69 @@ begin
     raise exception 'This price can''t be accepted anymore';
   end if;
   select * into r from public.restaurants where id = q.restaurant_id;
+  if pay_first and not public.kitchen_takes_payments(r.id) then
+    raise exception 'This kitchen can''t take payments yet';
+  end if;
   fee := greatest(round(q.quote_cents * 0.10), 150);
   insert into public.orders (
     customer_id, restaurant_id, status, customer_name, restaurant_name, subtotal_cents, movement_fee_cents,
     kitchen_fee_cents, tip_cents, total_cents, customer_note, scheduled_for, estimated_ready_at, pickup_by,
     pickup_address, pickup_instructions, pickup_photo_path
   ) values (
-    q.customer_id, r.id, 'accepted', q.customer_name, r.name, q.quote_cents, fee,
+    q.customer_id, r.id, case when pay_first then 'placed' else 'accepted' end::public.order_status,
+    q.customer_name, r.name, q.quote_cents, fee,
     round(q.quote_cents * public.kitchen_fee_rate(r, now())), 0, q.quote_cents + fee, left(q.details, 280),
     q.quote_pickup_start, q.quote_pickup_start, q.quote_pickup_end,
-    coalesce((select a.address from public.restaurant_addresses a where a.restaurant_id = r.id), ''),
-    coalesce((select a.instructions from public.restaurant_addresses a where a.restaurant_id = r.id), ''),
-    coalesce((select a.photo_path from public.restaurant_addresses a where a.restaurant_id = r.id), '')
+    case when pay_first then '' else
+      coalesce((select a.address from public.restaurant_addresses a where a.restaurant_id = r.id), '') end,
+    case when pay_first then '' else
+      coalesce((select a.instructions from public.restaurant_addresses a where a.restaurant_id = r.id), '') end,
+    case when pay_first then '' else
+      coalesce((select a.photo_path from public.restaurant_addresses a where a.restaurant_id = r.id), '') end
   ) returning id into new_id;
   insert into public.order_lines (order_id, menu_item_id, name, price_cents, quantity)
     values (new_id, null, 'Custom: ' || q.occasion, q.quote_cents, 1);
-  insert into public.order_status_events (order_id, status) values (new_id, 'placed'), (new_id, 'accepted');
+  insert into public.order_status_events (order_id, status) values (new_id, 'placed');
+  if not pay_first then
+    insert into public.order_status_events (order_id, status) values (new_id, 'accepted');
+  end if;
   update public.custom_requests set status = 'accepted', order_id = new_id where id = q.id;
   return new_id;
+end;
+$$;
+
+-- Stripe confirmed an order's payment (called by the stripe-webhook function,
+-- never by the app). The order now shows up for the kitchen. A custom order
+-- the kitchen already priced is accepted at once and gets the pickup address.
+-- Returns the order's status, so the webhook can refund one that was
+-- cancelled while the payment was going through.
+create function public.mark_order_paid(p_order_id uuid) returns public.order_status
+language plpgsql security definer set search_path = public as $$
+declare
+  o public.orders;
+begin
+  select * into o from public.orders where id = p_order_id for update;
+  if not found then
+    raise exception 'Order not found';
+  end if;
+  if o.payment_status = 'refunded' then
+    return o.status;
+  end if;
+  update public.orders set payment_status = 'paid' where id = o.id;
+  if o.status = 'placed' and exists (select 1 from public.custom_requests c where c.order_id = o.id) then
+    update public.orders set
+      status = 'accepted',
+      pickup_address = coalesce(
+        (select a.address from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), ''),
+      pickup_instructions = coalesce(
+        (select a.instructions from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), ''),
+      pickup_photo_path = coalesce(
+        (select a.photo_path from public.restaurant_addresses a where a.restaurant_id = o.restaurant_id), '')
+    where id = o.id;
+    insert into public.order_status_events (order_id, status) values (o.id, 'accepted');
+    return 'accepted';
+  end if;
+  return o.status;
 end;
 $$;
 
@@ -1473,6 +1578,8 @@ revoke all on function public.quote_custom_request(uuid, integer, text, timestam
 revoke all on function public.decline_custom_request(uuid, text) from public;
 revoke all on function public.withdraw_custom_request(uuid) from public;
 revoke all on function public.accept_custom_quote(uuid) from public;
+revoke all on function public.mark_order_paid(uuid) from public, anon, authenticated;
+grant execute on function public.mark_order_paid(uuid) to service_role;
 grant execute on function public.quote_custom_request(uuid, integer, text, timestamptz, timestamptz) to authenticated;
 grant execute on function public.decline_custom_request(uuid, text) to authenticated;
 grant execute on function public.withdraw_custom_request(uuid) to authenticated;

@@ -455,3 +455,52 @@ export async function joinAreaWaitlist(db: Db, zip: string): Promise<void> {
   // Already on the list for this ZIP is fine.
   if (error && !/duplicate key/i.test(error.message)) throw new RemoteError(error.message);
 }
+
+/* ---------- Payments (Edge Functions in supabase/functions) ---------- */
+
+/** Calls one of Manna's server functions, passing on its own message when it refuses. */
+async function callFunction<T>(db: Db, name: string, body: Record<string, unknown> = {}): Promise<T> {
+  const { data, error } = await db.functions.invoke(name, { body });
+  if (error) {
+    let message = 'Check your connection and try again.';
+    const reply = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    try {
+      const parsed = (await reply?.json?.()) as { error?: string } | undefined;
+      if (parsed?.error) message = parsed.error;
+    } catch {
+      // Not a reply from our function; keep the general message.
+    }
+    throw new RemoteError(message);
+  }
+  return data as T;
+}
+
+/** Starts the card payment for an order just placed; returns the payment sheet's client secret. */
+export async function startPayment(db: Db, orderId: string): Promise<string> {
+  const { clientSecret } = await callFunction<{ clientSecret: string }>(db, 'create-payment', { order_id: orderId });
+  return clientSecret;
+}
+
+/** Refunds a declined or cancelled order in full (nothing happens if it was never paid). */
+export async function refundOrder(db: Db, orderId: string): Promise<void> {
+  await callFunction(db, 'refund-payment', { order_id: orderId });
+}
+
+/** A link to Stripe for the cook's payouts: setup the first time, their Stripe dashboard after. */
+export async function payoutsLink(db: Db): Promise<{ url: string; ready: boolean }> {
+  return callFunction(db, 'stripe-connect');
+}
+
+/** Whether Stripe has finished setting up this cook's payouts. */
+export async function loadPayoutsReady(db: Db, userId: string): Promise<boolean> {
+  const row = unwrap(await db.from('payment_accounts').select('payouts_ready').eq('profile_id', userId).maybeSingle()) as {
+    payouts_ready: boolean;
+  } | null;
+  return row?.payouts_ready ?? false;
+}
+
+/** A link to Stripe to start Manna Pro on a plan, or to manage it once it's running. */
+export async function proBillingLink(db: Db, plan: 'monthly' | 'yearly'): Promise<string> {
+  const { url } = await callFunction<{ url: string }>(db, 'pro-billing', { plan });
+  return url;
+}

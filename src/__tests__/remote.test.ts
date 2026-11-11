@@ -6,6 +6,7 @@ import { SAMPLE_RESTAURANTS } from '@/data/sample-restaurants';
 import {
   joinAreaWaitlist,
   loadKitchensNear,
+  startPayment,
   placeOrder,
   RemoteError,
   saveMyKitchen,
@@ -15,6 +16,7 @@ import {
 } from '@/lib/remote/api';
 import { contentTypeOf, ensureUploaded, extensionOf, storagePathFromUrl, type Uploader } from '@/lib/remote/uploads';
 import { type AppState, INITIAL_STATE, reducer } from '@/state/reducer';
+import { payForOrder } from '@/lib/remote/pay';
 import { makeServerDispatch } from '@/state/server-sync';
 import type { Restaurant } from '@/types';
 
@@ -234,6 +236,28 @@ describe('remote api', () => {
     expect(ops(calls[0])).toContain('upsert');
     expect(ops(calls[1])).toEqual(['from', 'delete', 'eq', 'eq']);
     await expect(joinAreaWaitlist(db, '78701')).resolves.toBeUndefined();
+  });
+});
+
+describe('payments', () => {
+  it('passes on the payment function’s own message', async () => {
+    const refusing = {
+      functions: {
+        invoke: async () => ({
+          data: null,
+          error: { message: 'Edge Function returned a non-2xx status code', context: { json: async () => ({ error: 'This kitchen can’t take payments yet.' }) } },
+        }),
+      },
+    } as unknown as Db;
+    await expect(startPayment(refusing, 'o1')).rejects.toEqual(new RemoteError('This kitchen can’t take payments yet.'));
+    const offline = { functions: { invoke: async () => ({ data: null, error: new Error('Failed to fetch') }) } } as unknown as Db;
+    await expect(startPayment(offline, 'o1')).rejects.toEqual(new RemoteError('Check your connection and try again.'));
+  });
+
+  it('lets orders through untouched while card payments are off', async () => {
+    const { db, calls } = fakeDb(() => ({ data: null }));
+    await expect(payForOrder(db, 'o1')).resolves.toBe(true);
+    expect(calls).toHaveLength(0);
   });
 });
 

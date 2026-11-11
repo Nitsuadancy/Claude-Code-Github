@@ -18,7 +18,9 @@ import { formatCents } from '@/lib/money';
 import { MOVEMENT_FEE_TERMS } from '@/lib/pricing';
 import { formatPickup } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
+import { cardPaymentsOn } from '@/lib/payments';
 import { acceptQuote as acceptRemoteQuote } from '@/lib/remote/api';
+import { payForOrder } from '@/lib/remote/pay';
 import { supabase } from '@/lib/supabase';
 import { useServerRefresh, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -49,7 +51,9 @@ export default function CustomRequestScreen() {
       // Backend on: the server checks the price is still open and creates the order.
       try {
         const serverId = await acceptRemoteQuote(supabase, request.id);
+        const paid = await payForOrder(supabase, serverId);
         await refreshFromServer();
+        if (!paid) return;
         haptics.success();
         router.replace({ pathname: '/order/[id]', params: { id: serverId, celebrate: '1' } });
       } catch (e) {
@@ -78,7 +82,11 @@ export default function CustomRequestScreen() {
         canAcceptQuote(request, now) && totals ? (
           <View style={{ gap: spacing.sm }}>
             <GoldButton title={`Accept and order · ${formatCents(totals.totalCents)}`} onPress={() => void accept()} />
-            <Text style={styles.fine}>Payments aren’t connected yet. Accepting places the order without charging a card.</Text>
+            <Text style={styles.fine}>
+              {cardPaymentsOn
+                ? 'You pay when you accept. The kitchen already said yes, so the pickup address comes right after.'
+                : 'Payments aren’t connected yet. Accepting places the order without charging a card.'}
+            </Text>
           </View>
         ) : request.status === 'accepted' && request.orderId ? (
           <GoldButton

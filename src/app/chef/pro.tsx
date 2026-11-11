@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -6,7 +7,7 @@ import { FoundingMark } from '@/components/chef';
 import { Icon } from '@/components/icon';
 import { BackButton, Body, Eyebrow, GoldButton, Heading, Screen } from '@/components/ui';
 import { FREE_FEATURES, PRO_FEATURES } from '@/data/pro';
-import { confirmAction } from '@/lib/alert';
+import { confirmAction, notify } from '@/lib/alert';
 import * as haptics from '@/lib/haptics';
 import {
   foundingProUntil,
@@ -15,7 +16,10 @@ import {
   proStatus,
   proStatusLine,
 } from '@/lib/pro';
-import { useMyRestaurant, useStore } from '@/state/store';
+import { cardPaymentsOn } from '@/lib/payments';
+import { proBillingLink } from '@/lib/remote/api';
+import { supabase } from '@/lib/supabase';
+import { useMyRestaurant, useServerRefresh, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { ProPlan } from '@/types';
 
@@ -23,11 +27,15 @@ const day = (d: Date) => d.toLocaleDateString(undefined, { month: 'long', day: '
 
 /**
  * Manna Pro for cooks: what it adds, the two plans, and starting or
- * canceling. Billing isn't connected yet, so starting Pro turns it on
- * without a charge. Once billing is live, Pro is paid on the Manna website.
+ * canceling. Until card payments are switched on, starting Pro turns it on
+ * without a charge. Once they are, Pro is paid through Stripe on the web
+ * (checkout to start, Stripe's billing page to change or cancel), and Stripe
+ * tells the server, which turns Pro on or off.
  */
 export default function MannaPro() {
   const { dispatch } = useStore();
+  const refreshFromServer = useServerRefresh();
+  const [opening, setOpening] = useState(false);
   const restaurant = useMyRestaurant();
   const [plan, setPlan] = useState<ProPlan>('yearly');
   const [now] = useState(() => new Date());
@@ -39,12 +47,31 @@ export default function MannaPro() {
   const foundingUntil = foundingProUntil(restaurant);
   const inFoundingMonths = !!foundingUntil && now < foundingUntil;
 
+  /** Billing on: Stripe's checkout (to start) or billing page (to change, cancel or keep Pro). */
+  const openBilling = async () => {
+    if (!supabase) return;
+    setOpening(true);
+    try {
+      await WebBrowser.openBrowserAsync(await proBillingLink(supabase, plan));
+      await refreshFromServer();
+    } catch (e) {
+      notify('Couldn’t open billing', e instanceof Error ? e.message : 'Check your connection and try again.');
+    } finally {
+      setOpening(false);
+    }
+  };
+
   const start = () => {
+    if (cardPaymentsOn) return void openBilling();
     haptics.success();
     dispatch({ type: 'startPro', restaurantId: restaurant.id, plan, at: new Date().toISOString() });
   };
+  const resume = () =>
+    cardPaymentsOn ? void openBilling() : dispatch({ type: 'resumePro', restaurantId: restaurant.id });
   const cancel = () =>
-    confirmAction(
+    cardPaymentsOn
+      ? void openBilling()
+      : confirmAction(
       'Cancel Manna Pro?',
       status.until
         ? `Pro stays on until ${day(status.until)}, and you won’t be charged again. Your drops, codes and requests stay saved.`
@@ -77,7 +104,8 @@ export default function MannaPro() {
               <GoldButton
                 title="Keep Pro"
                 variant="outline"
-                onPress={() => dispatch({ type: 'resumePro', restaurantId: restaurant.id })}
+                loading={opening}
+                onPress={resume}
                 style={{ marginTop: spacing.sm }}
               />
             ) : null}
@@ -144,11 +172,13 @@ export default function MannaPro() {
             </View>
             <GoldButton
               title={inFoundingMonths ? `Keep Pro · ${PRO_PRICE_LABEL[plan]}` : `Start Pro · ${PRO_PRICE_LABEL[plan]}`}
+              loading={opening}
               onPress={start}
             />
             <Body muted style={styles.note}>
-              Billing isn’t connected yet, so this turns Pro on without a charge. Once it is, Pro is paid on the Manna
-              website. Cancel any time: Pro stays on until the end of the period you paid for.
+              {cardPaymentsOn
+                ? 'You’ll finish on Stripe’s secure checkout. Cancel any time: Pro stays on until the end of the period you paid for.'
+                : 'Billing isn’t connected yet, so this turns Pro on without a charge. Cancel any time: Pro stays on until the end of the period you paid for.'}
             </Body>
           </View>
         )}
@@ -163,7 +193,9 @@ export default function MannaPro() {
           ))}
         </View>
 
-        {subscribed ? <GoldButton title="Cancel Pro" variant="ghost" onPress={cancel} /> : null}
+        {subscribed ? (
+          <GoldButton title={cardPaymentsOn ? 'Manage or cancel Pro' : 'Cancel Pro'} variant="ghost" onPress={cancel} />
+        ) : null}
       </ScrollView>
     </Screen>
   );

@@ -9,6 +9,7 @@ import { MessageButton } from '@/components/message-button';
 import { OrderCard } from '@/components/order-card';
 import { BakeDayCard } from '@/components/bake-day-card';
 import { FirstOrders } from '@/components/first-orders';
+import { PayoutsCard } from '@/components/payouts-card';
 import { Photo } from '@/components/photo';
 import { PinnedUpdate } from '@/components/pinned-update';
 import { usePullToRefresh } from '@/components/pull-to-refresh';
@@ -172,6 +173,8 @@ export default function ChefDashboard() {
             />
           </View>
         )}
+
+        {state.user ? <PayoutsCard userId={state.user.id} /> : null}
 
         {isNew ? (
           <FirstOrders steps={steps} onStep={onStep} />

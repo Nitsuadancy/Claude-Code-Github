@@ -15,6 +15,7 @@ import type { Dispatch } from 'react';
 
 import { notify } from '@/lib/alert';
 import { userPlace } from '@/lib/location';
+import { cardPaymentsOn } from '@/lib/payments';
 import { photoUrl, type supabase as SupabaseInstance } from '@/lib/supabase';
 import * as api from '@/lib/remote/api';
 import { signPrivatePaths, supabaseUploader } from '@/lib/remote/uploads';
@@ -112,9 +113,12 @@ async function send(db: Db, action: Action, before: AppState, dispatch: Dispatch
       return null;
     case 'setOrderStatus':
       await api.setOrderStatus(db, action.orderId, action.status);
+      // A declined order's card payment goes back in full.
+      if (action.status === 'declined' && cardPaymentsOn) await api.refundOrder(db, action.orderId);
       return 'activity';
     case 'cancelOrder':
       await api.cancelOrder(db, action.orderId);
+      if (cardPaymentsOn) await api.refundOrder(db, action.orderId);
       return 'activity';
     case 'markArrived':
       await api.markArrived(db, action.orderId);

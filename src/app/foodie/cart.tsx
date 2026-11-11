@@ -34,6 +34,7 @@ import { isBakeDayKitchen } from '@/lib/ordering';
 import { availableSlots, formatSlot } from '@/lib/schedule';
 import { newId } from '@/lib/validation';
 import { placeOrder as placeRemoteOrder } from '@/lib/remote/api';
+import { CHECKOUT_PAYMENT_NOTE, payForOrder } from '@/lib/remote/pay';
 import { supabase } from '@/lib/supabase';
 import { useRestaurant, useServerRefresh, useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -161,6 +162,8 @@ export default function Cart() {
           ...(drop ? { dropId: drop.id } : {}),
           ...(codeResult?.ok && discount > 0 ? { discountCode: codeResult.code.code } : {}),
         });
+        // Card payments on: the card sheet opens; backing out calls the order off and keeps the cart.
+        if (!(await payForOrder(supabase, serverId))) return;
         await refreshFromServer();
         dispatch({ type: 'clearCart' });
         router.push({ pathname: '/order/[id]', params: { id: serverId, celebrate: '1' } });
@@ -439,7 +442,7 @@ export default function Cart() {
           onPress={() => void placeOrder()}
         />
         <Body muted style={styles.note}>
-          Payments aren’t connected yet. Placing an order sends it to the kitchen without charging a card.
+          {CHECKOUT_PAYMENT_NOTE}
         </Body>
         <Pressable onPress={() => dispatch({ type: 'clearCart' })} style={{ alignSelf: 'center' }} hitSlop={8}>
           <Text style={styles.clear}>Clear cart</Text>
