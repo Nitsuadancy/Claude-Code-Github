@@ -1,6 +1,6 @@
-import { router, useScrollToTop } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useMemo, useRef, useState } from 'react';
+import { router, useScrollToTop } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -10,19 +10,27 @@ import {
   TextInput,
   useWindowDimensions,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { CoachMarks } from '@/components/coach-marks';
-import { CollectionCard } from '@/components/collection-card';
-import { DishResult, ForYouCard, MiniKitchenCard, OrderAgainCard, TasteEntry } from '@/components/home-rows';
-import { FadeIn } from '@/components/motion';
-import { OptionSheet } from '@/components/option-sheet';
-import { HeroCarousel } from '@/components/hero-carousel';
-import { DropCard } from '@/components/drop-card';
-import { openDrops } from '@/lib/drops';
-import { featuredKitchens, hasPro } from '@/lib/pro';
-import { isOpenNow, RestaurantCard } from '@/components/restaurant-card';
-import { TAB_BAR_SPACE } from '@/components/tab-bar';
+import { CoachMarks } from "@/components/coach-marks";
+import { CollectionCard } from "@/components/collection-card";
+import {
+  DishResult,
+  ForYouCard,
+  MiniKitchenCard,
+  OrderAgainCard,
+  TasteEntry,
+} from "@/components/home-rows";
+import { FadeIn } from "@/components/motion";
+import { OptionSheet } from "@/components/option-sheet";
+import { HeroCarousel } from "@/components/hero-carousel";
+import { NoKitchensNearby } from "@/components/no-kitchens-nearby";
+import { nearbyKitchens, userPlace } from "@/lib/location";
+import { DropCard } from "@/components/drop-card";
+import { openDrops } from "@/lib/drops";
+import { featuredKitchens, hasPro } from "@/lib/pro";
+import { isOpenNow, RestaurantCard } from "@/components/restaurant-card";
+import { TAB_BAR_SPACE } from "@/components/tab-bar";
 import {
   Chip,
   Eyebrow,
@@ -31,52 +39,61 @@ import {
   SectionHeader,
   webNoOutline,
   Wordmark,
-} from '@/components/ui';
-import { CraftIcon } from '@/components/craft-icon';
-import { CATEGORIES } from '@/data/categories';
-import { DEFAULT_NEIGHBORHOOD, LAUNCH_CITY, NEIGHBORHOODS } from '@/data/neighborhoods';
-import { marketFor } from '@/data/regions';
-import { collectionKitchens, COLLECTIONS } from '@/data/collections';
-import { buildActivity, unseenCount } from '@/lib/activity';
-import { pickForYou } from '@/lib/for-you';
-import { hasDietProfile, kitchenFits } from '@/lib/diet';
-import { confirmAction, notify } from '@/lib/alert';
+} from "@/components/ui";
+import { CraftIcon } from "@/components/craft-icon";
+import { CATEGORIES } from "@/data/categories";
+import { DEFAULT_NEIGHBORHOOD } from "@/data/neighborhoods";
+import { collectionKitchens, COLLECTIONS } from "@/data/collections";
+import { buildActivity, unseenCount } from "@/lib/activity";
+import { pickForYou } from "@/lib/for-you";
+import { hasDietProfile, kitchenFits } from "@/lib/diet";
+import { confirmAction, notify } from "@/lib/alert";
 import {
   allCuisineTags,
   type BrowseFilters,
   browseRestaurants,
   DEFAULT_FILTERS,
   type SortOption,
-} from '@/lib/browse';
-import * as haptics from '@/lib/haptics';
-import { orderingLine } from '@/lib/ordering';
-import { buildReorder, recentKitchenOrders, searchDishes } from '@/lib/insights';
-import { tasteFeed } from '@/lib/taste';
-import { useAllRestaurants, useDietProfile, useStore, useFollowedAlerts, useVisibleMessages } from '@/state/store';
-import { colors, fonts, radius, spacing } from '@/theme';
-import type { Order, Restaurant } from '@/types';
-import { Icon } from '@/components/icon';
-import { EmptyState } from '@/components/empty-state';
+} from "@/lib/browse";
+import * as haptics from "@/lib/haptics";
+import { orderingLine } from "@/lib/ordering";
+import {
+  buildReorder,
+  recentKitchenOrders,
+  searchDishes,
+} from "@/lib/insights";
+import { tasteFeed } from "@/lib/taste";
+import {
+  useAllRestaurants,
+  useDietProfile,
+  useStore,
+  useFollowedAlerts,
+  useVisibleMessages,
+} from "@/state/store";
+import { colors, fonts, radius, spacing } from "@/theme";
+import type { Order, Restaurant } from "@/types";
+import { Icon } from "@/components/icon";
+import { EmptyState } from "@/components/empty-state";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'recommended', label: 'Recommended' },
-  { value: 'rating', label: 'Highest rated' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'name', label: 'Name (A–Z)' },
+  { value: "recommended", label: "Recommended" },
+  { value: "rating", label: "Highest rated" },
+  { value: "newest", label: "Newest" },
+  { value: "name", label: "Name (A–Z)" },
 ];
 
 const COACH_STEPS = [
   {
-    title: 'Explore by craving',
-    body: 'Tap a craft like Vegan or Late Night to see kitchens that specialize in it.',
+    title: "Explore by craving",
+    body: "Tap a craft like Vegan or Late Night to see kitchens that specialize in it.",
   },
   {
-    title: 'Refine your search',
-    body: 'Sort, choose cuisines, or show only top-rated kitchens and offers with the filters above the list.',
+    title: "Refine your search",
+    body: "Sort, choose cuisines, or show only top-rated kitchens and offers with the filters above the list.",
   },
   {
-    title: 'Follow every order',
-    body: 'Your cart and live order status are always one tap away in the bar below.',
+    title: "Follow every order",
+    body: "Your cart and live order status are always one tap away in the bar below.",
   },
 ];
 
@@ -91,34 +108,50 @@ function headline(now: Date, neighborhood: string): string {
 
 /** "Thursday, November 6" */
 function dateline(now: Date): string {
-  return now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  return now.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 export default function FoodieHome() {
   const { state, dispatch } = useStore();
   const list = useRef<FlatList<Restaurant>>(null);
   useScrollToTop(list);
-  const restaurants = useAllRestaurants();
+  const everywhere = useAllRestaurants();
+  // Pickup is local: the home screen shows kitchens within reach of the customer's ZIP or neighborhood.
+  const user = state.user;
+  const here = useMemo(() => userPlace(user), [user]);
+  const restaurants = useMemo(() => {
+    const near = new Set(nearbyKitchens(everywhere, here).map((k) => k.r.id));
+    return everywhere.filter((r) => near.has(r.id));
+  }, [everywhere, here]);
+  const noneNearby = !restaurants.some((r) => r.status === "live");
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [filters, setFilters] = useState<BrowseFilters>(DEFAULT_FILTERS);
-  const [sheet, setSheet] = useState<'sort' | 'cuisines' | 'neighborhood' | null>(null);
+  const [sheet, setSheet] = useState<"sort" | "cuisines" | null>(null);
   const now = new Date();
 
   const diet = useDietProfile();
   const [fitsDiet, setFitsDiet] = useState(false);
   const results = useMemo(() => {
     const list = browseRestaurants(restaurants, filters, new Date());
-    return fitsDiet && hasDietProfile(diet) ? list.filter((r) => kitchenFits(r, diet)) : list;
+    return fitsDiet && hasDietProfile(diet)
+      ? list.filter((r) => kitchenFits(r, diet))
+      : list;
   }, [restaurants, filters, fitsDiet, diet]);
   const heroKitchens = useMemo(() => {
     const ranked = browseRestaurants(restaurants, DEFAULT_FILTERS, new Date());
-    return featuredKitchens(ranked, new Date(), { isOpen: (r) => isOpenNow(r, new Date()) });
+    return featuredKitchens(ranked, new Date(), {
+      isOpen: (r) => isOpenNow(r, new Date()),
+    });
   }, [restaurants]);
   const liveDrops = useMemo(() => {
     const at = new Date();
     return restaurants
-      .filter((r) => r.status !== 'draft')
+      .filter((r) => r.status !== "draft")
       .flatMap((r) => openDrops(r, at).map((drop) => ({ drop, restaurant: r })))
       .sort((a, b) => a.drop.closesAt.localeCompare(b.drop.closesAt))
       .slice(0, 4);
@@ -127,36 +160,59 @@ export default function FoodieHome() {
     () => allCuisineTags(restaurants).map((c) => ({ value: c, label: c })),
     [restaurants],
   );
-  const update = (changes: Partial<BrowseFilters>) => setFilters((f) => ({ ...f, ...changes }));
-  const neighborhood = state.user?.neighborhood || DEFAULT_NEIGHBORHOOD;
+  const update = (changes: Partial<BrowseFilters>) =>
+    setFilters((f) => ({ ...f, ...changes }));
+  const neighborhood = here.label;
   const searching = filters.query.trim().length > 0;
   const [searchFocused, setSearchFocused] = useState(false);
   const open = (r: Restaurant) => {
-    if (filters.query.trim()) dispatch({ type: 'rememberSearch', query: filters.query });
-    router.push({ pathname: '/restaurant/[id]', params: { id: r.id } });
+    if (filters.query.trim())
+      dispatch({ type: "rememberSearch", query: filters.query });
+    router.push({ pathname: "/restaurant/[id]", params: { id: r.id } });
   };
   const popular = useMemo(
     () =>
       browseRestaurants(restaurants, DEFAULT_FILTERS, new Date())
-        .map((r) => r.menu.find((m) => m.id === r.signatureItemId)?.name.replace(/\s*\(.*\)$/, ''))
+        .map((r) =>
+          r.menu
+            .find((m) => m.id === r.signatureItemId)
+            ?.name.replace(/\s*\(.*\)$/, ""),
+        )
         .filter((n): n is string => !!n)
         .slice(0, 6),
     [restaurants],
   );
-  const userId = state.user?.id ?? '';
+  const userId = state.user?.id ?? "";
   const visibleMessages = useVisibleMessages();
   const alerts = useFollowedAlerts();
   const unseen = useMemo(
     () =>
       unseenCount(
-        buildActivity(state.orders, userId, visibleMessages, { alerts, requests: state.customRequests }),
+        buildActivity(state.orders, userId, visibleMessages, {
+          alerts,
+          requests: state.customRequests,
+        }),
         state.activitySeenAt,
       ),
-    [state.orders, userId, visibleMessages, alerts, state.customRequests, state.activitySeenAt],
+    [
+      state.orders,
+      userId,
+      visibleMessages,
+      alerts,
+      state.customRequests,
+      state.activitySeenAt,
+    ],
   );
-  const againOrders = useMemo(() => recentKitchenOrders(state.orders, userId), [state.orders, userId]);
+  const againOrders = useMemo(
+    () => recentKitchenOrders(state.orders, userId),
+    [state.orders, userId],
+  );
   const favorites = useMemo(
-    () => restaurants.filter((r) => r.status === 'live' && state.favoriteRestaurantIds.includes(r.id)),
+    () =>
+      restaurants.filter(
+        (r) =>
+          r.status === "live" && state.favoriteRestaurantIds.includes(r.id),
+      ),
     [restaurants, state.favoriteRestaurantIds],
   );
   const forYou = useMemo(
@@ -169,20 +225,31 @@ export default function FoodieHome() {
         neighborhood,
         now: new Date(),
       }),
-    [restaurants, userId, state.orders, state.favoriteRestaurantIds, diet, neighborhood],
+    [
+      restaurants,
+      userId,
+      state.orders,
+      state.favoriteRestaurantIds,
+      diet,
+      neighborhood,
+    ],
   );
   const founders = useMemo(
-    () => restaurants.filter((r) => r.status === 'live' && r.founding),
+    () => restaurants.filter((r) => r.status === "live" && r.founding),
     [restaurants],
   );
   const collections = useMemo(
     () =>
-      COLLECTIONS.map((collection) => ({ collection, count: collectionKitchens(collection, restaurants).length })).filter(
-        (c) => c.count > 0,
-      ),
+      COLLECTIONS.map((collection) => ({
+        collection,
+        count: collectionKitchens(collection, restaurants).length,
+      })).filter((c) => c.count > 0),
     [restaurants],
   );
-  const dishMatches = useMemo(() => searchDishes(restaurants, filters.query), [restaurants, filters.query]);
+  const dishMatches = useMemo(
+    () => searchDishes(restaurants, filters.query),
+    [restaurants, filters.query],
+  );
   // Recomputed each render with the current time, like the rest of home; it's a short list.
   const tasteDishes = tasteFeed(restaurants, now);
   const byId = (id: string) => restaurants.find((r) => r.id === id);
@@ -196,36 +263,63 @@ export default function FoodieHome() {
     const kitchen = byId(order.restaurantId);
     if (!kitchen) return;
     if (!isOpenNow(kitchen, new Date())) {
-      notify('Not taking orders', `${kitchen.name} isn’t taking orders right now. ${orderingLine(kitchen, new Date(), { long: true })}.`);
+      notify(
+        "Not taking orders",
+        `${kitchen.name} isn’t taking orders right now. ${orderingLine(kitchen, new Date(), { long: true })}.`,
+      );
       return;
     }
-    const { lines, missing } = buildReorder(order, kitchen, state.orders, new Date());
+    const { lines, missing } = buildReorder(
+      order,
+      kitchen,
+      state.orders,
+      new Date(),
+    );
     if (!lines.length) {
-      notify('Not available today', 'Those dishes are sold out or off the menu right now.');
+      notify(
+        "Not available today",
+        "Those dishes are sold out or off the menu right now.",
+      );
       return;
     }
     const go = () => {
       haptics.success();
-      dispatch({ type: 'replaceCart', restaurantId: kitchen.id, lines });
-      if (missing.length) notify('Almost everything', `Couldn’t add all of: ${missing.join(', ')}.`);
-      router.navigate('/foodie/cart');
+      dispatch({ type: "replaceCart", restaurantId: kitchen.id, lines });
+      if (missing.length)
+        notify(
+          "Almost everything",
+          `Couldn’t add all of: ${missing.join(", ")}.`,
+        );
+      router.navigate("/foodie/cart");
     };
     if (state.cart.lines.length && state.cart.restaurantId !== kitchen.id) {
-      confirmAction('Replace your cart?', 'Your cart has food from another kitchen.', 'Replace', go, 'Keep cart');
+      confirmAction(
+        "Replace your cart?",
+        "Your cart has food from another kitchen.",
+        "Replace",
+        go,
+        "Keep cart",
+      );
       return;
     }
     go();
   };
 
   const masthead = (
-    <View style={[styles.topRow, { paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg }]}>
+    <View
+      style={[
+        styles.topRow,
+        { paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg },
+      ]}
+    >
       <Wordmark width={92} />
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Neighborhood: ${neighborhood}, ${marketFor(neighborhood)?.city ?? LAUNCH_CITY}. Change`}
-          onPress={() => setSheet('neighborhood')}
-          style={styles.place}>
+          accessibilityLabel={`Your area: ${neighborhood}. Change`}
+          onPress={() => router.push("/location")}
+          style={styles.place}
+        >
           <Text style={styles.placeText} numberOfLines={1}>
             {neighborhood}
           </Text>
@@ -233,10 +327,11 @@ export default function FoodieHome() {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={unseen ? `Activity, ${unseen} new` : 'Activity'}
+          accessibilityLabel={unseen ? `Activity, ${unseen} new` : "Activity"}
           hitSlop={10}
-          onPress={() => router.push('/activity')}
-          style={styles.bell}>
+          onPress={() => router.push("/activity")}
+          style={styles.bell}
+        >
           <Icon name="bell-outline" size={20} color={colors.ivory} />
           {unseen > 0 ? <View style={styles.bellDot} /> : null}
         </Pressable>
@@ -244,7 +339,34 @@ export default function FoodieHome() {
     </View>
   );
 
-  const header = (
+  const header = noneNearby ? (
+    <View style={{ gap: spacing.lg }}>
+      <View style={{ marginHorizontal: -spacing.lg }}>{masthead}</View>
+      <NoKitchensNearby
+        area={here.label}
+        zip={state.user?.zip}
+        state={here.state}
+        joined={
+          !!state.user?.zip &&
+          state.areaWaitlist.some((w) => w.zip === state.user?.zip)
+        }
+        onJoin={() =>
+          state.user?.zip &&
+          dispatch({
+            type: "joinAreaWaitlist",
+            zip: state.user.zip,
+            at: new Date().toISOString(),
+          })
+        }
+        onSeeOrlando={() =>
+          dispatch({
+            type: "updateProfile",
+            changes: { zip: "32804", neighborhood: DEFAULT_NEIGHBORHOOD },
+          })
+        }
+      />
+    </View>
+  ) : (
     <View style={{ gap: spacing.xl }}>
       <View style={{ gap: spacing.lg }}>
         {heroKitchens.length ? (
@@ -253,7 +375,11 @@ export default function FoodieHome() {
               restaurants={heroKitchens}
               width={width}
               height={Math.round(Math.min(width * 1.32, 620))}
-              label={(r) => (hasPro(r, now) ? `Featured · ${orderingLine(r, now)}` : orderingLine(r, now, { long: true }))}
+              label={(r) =>
+                hasPro(r, now)
+                  ? `Featured · ${orderingLine(r, now)}`
+                  : orderingLine(r, now, { long: true })
+              }
               onOpen={open}
               overlay={masthead}
             />
@@ -275,7 +401,9 @@ export default function FoodieHome() {
             onFocus={() => setSearchFocused(true)}
             // Delay so a tap on a suggestion lands before the panel hides.
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-            onSubmitEditing={() => dispatch({ type: 'rememberSearch', query: filters.query })}
+            onSubmitEditing={() =>
+              dispatch({ type: "rememberSearch", query: filters.query })
+            }
             placeholder="Search dishes, kitchens or chefs"
             placeholderTextColor={colors.textFaint}
             selectionColor={colors.gold}
@@ -285,7 +413,11 @@ export default function FoodieHome() {
             accessibilityLabel="Search dishes, kitchens or chefs"
           />
           {filters.query ? (
-            <Pressable accessibilityLabel="Clear search" onPress={() => update({ query: '' })} hitSlop={8}>
+            <Pressable
+              accessibilityLabel="Clear search"
+              onPress={() => update({ query: "" })}
+              hitSlop={8}
+            >
               <Icon name="close-circle" size={18} color={colors.textMuted} />
             </Pressable>
           ) : (
@@ -294,14 +426,18 @@ export default function FoodieHome() {
         </View>
       </View>
 
-      {!searching && !searchFocused && !hasDietProfile(diet) && !state.dietNudgeDismissed ? (
+      {!searching &&
+      !searchFocused &&
+      !hasDietProfile(diet) &&
+      !state.dietNudgeDismissed ? (
         <FadeIn style={styles.nudge}>
           <Text style={styles.nudgeBody}>
-            Avoiding gluten or nuts?{' '}
+            Avoiding gluten or nuts?{" "}
             <Text
               accessibilityRole="link"
               style={styles.nudgeLink}
-              onPress={() => router.navigate('/foodie/profile')}>
+              onPress={() => router.navigate("/foodie/profile")}
+            >
               Set your diet and allergies
             </Text>
           </Text>
@@ -309,7 +445,8 @@ export default function FoodieHome() {
             accessibilityRole="button"
             accessibilityLabel="Dismiss"
             hitSlop={10}
-            onPress={() => dispatch({ type: 'dismissDietNudge' })}>
+            onPress={() => dispatch({ type: "dismissDietNudge" })}
+          >
             <Icon name="close" size={16} color={colors.textFaint} />
           </Pressable>
         </FadeIn>
@@ -321,13 +458,22 @@ export default function FoodieHome() {
             <View style={{ gap: spacing.sm }}>
               <View style={styles.suggestHeader}>
                 <Eyebrow>Recent</Eyebrow>
-                <Pressable accessibilityRole="button" onPress={() => dispatch({ type: 'clearSearches' })} hitSlop={8}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => dispatch({ type: "clearSearches" })}
+                  hitSlop={8}
+                >
                   <Text style={styles.clearText}>Clear</Text>
                 </Pressable>
               </View>
               <View style={styles.suggestChips}>
                 {state.recentSearches.map((q) => (
-                  <Chip key={q} label={q} icon="history" onPress={() => update({ query: q })} />
+                  <Chip
+                    key={q}
+                    label={q}
+                    icon="history"
+                    onPress={() => update({ query: q })}
+                  />
                 ))}
               </View>
             </View>
@@ -347,8 +493,12 @@ export default function FoodieHome() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: spacing.lg, paddingHorizontal: spacing.lg }}
-          style={{ marginHorizontal: -spacing.lg, marginTop: -spacing.sm }}>
+          contentContainerStyle={{
+            gap: spacing.lg,
+            paddingHorizontal: spacing.lg,
+          }}
+          style={{ marginHorizontal: -spacing.lg, marginTop: -spacing.sm }}
+        >
           {CATEGORIES.map((c) => {
             const selected = filters.category === c.id;
             return (
@@ -358,12 +508,28 @@ export default function FoodieHome() {
                 accessibilityState={{ selected }}
                 accessibilityLabel={c.label}
                 onPress={() => update({ category: selected ? null : c.id })}
-                style={styles.category}>
-                <CraftIcon name={c.icon} size={30} color={selected ? colors.gold : colors.text} />
-                <Text style={[styles.categoryLabel, selected && { color: colors.gold }]} numberOfLines={1}>
+                style={styles.category}
+              >
+                <CraftIcon
+                  name={c.icon}
+                  size={30}
+                  color={selected ? colors.gold : colors.text}
+                />
+                <Text
+                  style={[
+                    styles.categoryLabel,
+                    selected && { color: colors.gold },
+                  ]}
+                  numberOfLines={1}
+                >
                   {c.label}
                 </Text>
-                <View style={[styles.categoryRule, selected && { backgroundColor: colors.gold }]} />
+                <View
+                  style={[
+                    styles.categoryRule,
+                    selected && { backgroundColor: colors.gold },
+                  ]}
+                />
               </Pressable>
             );
           })}
@@ -375,17 +541,26 @@ export default function FoodieHome() {
           <TasteEntry
             photos={tasteDishes.map((d) => d.item.photoUri!)}
             count={tasteDishes.length}
-            onPress={() => router.push('/taste')}
+            onPress={() => router.push("/taste")}
           />
         </FadeIn>
       ) : null}
 
       {!searching && liveDrops.length ? (
         <FadeIn delay={80} style={{ gap: spacing.md }}>
-          <SectionHeader title="Drops" eyebrow="One-off menus, for a limited time" />
+          <SectionHeader
+            title="Drops"
+            eyebrow="One-off menus, for a limited time"
+          />
           <View>
             {liveDrops.map(({ drop, restaurant }) => (
-              <DropCard key={drop.id} drop={drop} restaurant={restaurant} now={now} showKitchen />
+              <DropCard
+                key={drop.id}
+                drop={drop}
+                restaurant={restaurant}
+                now={now}
+                showKitchen
+              />
             ))}
           </View>
         </FadeIn>
@@ -393,9 +568,17 @@ export default function FoodieHome() {
 
       {searching && dishMatches.length ? (
         <FadeIn style={{ gap: spacing.xs }}>
-          <SectionHeader eyebrow={`${dishMatches.length} ${dishMatches.length === 1 ? 'dish' : 'dishes'}`} title="Dishes" />
+          <SectionHeader
+            eyebrow={`${dishMatches.length} ${dishMatches.length === 1 ? "dish" : "dishes"}`}
+            title="Dishes"
+          />
           {dishMatches.map(({ item, restaurant }) => (
-            <DishResult key={`${restaurant.id}:${item.id}`} item={item} restaurant={restaurant} onPress={() => open(restaurant)} />
+            <DishResult
+              key={`${restaurant.id}:${item.id}`}
+              item={item}
+              restaurant={restaurant}
+              onPress={() => open(restaurant)}
+            />
           ))}
         </FadeIn>
       ) : null}
@@ -415,16 +598,25 @@ export default function FoodieHome() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-              style={{ marginHorizontal: -spacing.lg }}>
+              contentContainerStyle={{
+                gap: spacing.md,
+                paddingHorizontal: spacing.lg,
+              }}
+              style={{ marginHorizontal: -spacing.lg }}
+            >
               {againCards.map(({ order: o, kitchen }) => (
-                <OrderAgainCard key={o.id} order={o} restaurant={kitchen} onOpen={() => open(kitchen)} onReorder={() => reorder(o)} />
+                <OrderAgainCard
+                  key={o.id}
+                  order={o}
+                  restaurant={kitchen}
+                  onOpen={() => open(kitchen)}
+                  onReorder={() => reorder(o)}
+                />
               ))}
             </ScrollView>
           )}
         </FadeIn>
       ) : null}
-
 
       {!searching && forYou.length ? (
         <FadeIn delay={90} style={{ gap: spacing.md }}>
@@ -432,10 +624,19 @@ export default function FoodieHome() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-            style={{ marginHorizontal: -spacing.lg }}>
+            contentContainerStyle={{
+              gap: spacing.md,
+              paddingHorizontal: spacing.lg,
+            }}
+            style={{ marginHorizontal: -spacing.lg }}
+          >
             {forYou.map(({ restaurant, reason }) => (
-              <ForYouCard key={restaurant.id} restaurant={restaurant} reason={reason} onPress={() => open(restaurant)} />
+              <ForYouCard
+                key={restaurant.id}
+                restaurant={restaurant}
+                reason={reason}
+                onPress={() => open(restaurant)}
+              />
             ))}
           </ScrollView>
         </FadeIn>
@@ -447,14 +648,23 @@ export default function FoodieHome() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-            style={{ marginHorizontal: -spacing.lg }}>
+            contentContainerStyle={{
+              gap: spacing.md,
+              paddingHorizontal: spacing.lg,
+            }}
+            style={{ marginHorizontal: -spacing.lg }}
+          >
             {collections.map(({ collection, count }) => (
               <CollectionCard
                 key={collection.id}
                 collection={collection}
                 count={count}
-                onPress={() => router.push({ pathname: '/collection/[id]', params: { id: collection.id } })}
+                onPress={() =>
+                  router.push({
+                    pathname: "/collection/[id]",
+                    params: { id: collection.id },
+                  })
+                }
               />
             ))}
           </ScrollView>
@@ -463,14 +673,25 @@ export default function FoodieHome() {
 
       {!searching && founders.length ? (
         <FadeIn delay={110} style={{ gap: spacing.md }}>
-          <SectionHeader title="Founding creators" eyebrow="The first kitchens on Manna" />
+          <SectionHeader
+            title="Founding creators"
+            eyebrow="The first kitchens on Manna"
+          />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-            style={{ marginHorizontal: -spacing.lg }}>
+            contentContainerStyle={{
+              gap: spacing.md,
+              paddingHorizontal: spacing.lg,
+            }}
+            style={{ marginHorizontal: -spacing.lg }}
+          >
             {founders.map((r) => (
-              <MiniKitchenCard key={r.id} restaurant={r} onPress={() => open(r)} />
+              <MiniKitchenCard
+                key={r.id}
+                restaurant={r}
+                onPress={() => open(r)}
+              />
             ))}
           </ScrollView>
         </FadeIn>
@@ -482,53 +703,83 @@ export default function FoodieHome() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: spacing.md, paddingHorizontal: spacing.lg }}
-            style={{ marginHorizontal: -spacing.lg }}>
+            contentContainerStyle={{
+              gap: spacing.md,
+              paddingHorizontal: spacing.lg,
+            }}
+            style={{ marginHorizontal: -spacing.lg }}
+          >
             {favorites.map((r) => (
-              <MiniKitchenCard key={r.id} restaurant={r} onPress={() => open(r)} />
+              <MiniKitchenCard
+                key={r.id}
+                restaurant={r}
+                onPress={() => open(r)}
+              />
             ))}
           </ScrollView>
         </FadeIn>
       ) : null}
 
-
       <View style={{ gap: spacing.md }}>
         <SectionHeader
-          eyebrow={`${results.length} ${results.length === 1 ? 'kitchen' : 'kitchens'}`}
-          title={searching ? 'Results' : 'All kitchens'}
+          eyebrow={`${results.length} ${results.length === 1 ? "kitchen" : "kitchens"}`}
+          title={searching ? "Results" : "All kitchens"}
         />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chips}
-          style={{ marginHorizontal: -spacing.lg }}>
+          style={{ marginHorizontal: -spacing.lg }}
+        >
           <Chip
             label={
-              filters.sort === 'recommended'
-                ? 'Sort'
+              filters.sort === "recommended"
+                ? "Sort"
                 : SORT_OPTIONS.find((s) => s.value === filters.sort)!.label
             }
             icon="chevron-down"
-            selected={filters.sort !== 'recommended'}
-            onPress={() => setSheet('sort')}
+            selected={filters.sort !== "recommended"}
+            onPress={() => setSheet("sort")}
           />
-          <Chip label="Map" icon="map-marker-outline" onPress={() => router.push('/map')} />
           <Chip
-            label={filters.cuisines.length ? `Cuisines · ${filters.cuisines.length}` : 'Cuisines'}
+            label="Map"
+            icon="map-marker-outline"
+            onPress={() => router.push("/map")}
+          />
+          <Chip
+            label={
+              filters.cuisines.length
+                ? `Cuisines · ${filters.cuisines.length}`
+                : "Cuisines"
+            }
             icon="chevron-down"
             selected={filters.cuisines.length > 0}
-            onPress={() => setSheet('cuisines')}
+            onPress={() => setSheet("cuisines")}
           />
           {hasDietProfile(diet) ? (
-            <Chip label="Fits my diet" selected={fitsDiet} onPress={() => setFitsDiet((v) => !v)} />
+            <Chip
+              label="Fits my diet"
+              selected={fitsDiet}
+              onPress={() => setFitsDiet((v) => !v)}
+            />
           ) : null}
-          <Chip label="Open now" selected={filters.openNow} onPress={() => update({ openNow: !filters.openNow })} />
+          <Chip
+            label="Open now"
+            selected={filters.openNow}
+            onPress={() => update({ openNow: !filters.openNow })}
+          />
           <Chip
             label="Rated 4.5+"
             selected={filters.minRating !== null}
-            onPress={() => update({ minRating: filters.minRating === null ? 4.5 : null })}
+            onPress={() =>
+              update({ minRating: filters.minRating === null ? 4.5 : null })
+            }
           />
-          <Chip label="New" selected={filters.newOnly} onPress={() => update({ newOnly: !filters.newOnly })} />
+          <Chip
+            label="New"
+            selected={filters.newOnly}
+            onPress={() => update({ newOnly: !filters.newOnly })}
+          />
         </ScrollView>
       </View>
     </View>
@@ -542,7 +793,10 @@ export default function FoodieHome() {
         keyExtractor={(r) => r.id}
         ListHeaderComponent={header}
         ListHeaderComponentStyle={{ marginBottom: spacing.md }}
-        contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_SPACE + spacing.lg }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: TAB_BAR_SPACE + spacing.lg },
+        ]}
         ItemSeparatorComponent={() => <View style={{ height: spacing.lg }} />}
         keyboardShouldPersistTaps="handled"
         renderItem={({ item, index }) => (
@@ -553,49 +807,54 @@ export default function FoodieHome() {
               favorite={state.favoriteRestaurantIds.includes(item.id)}
               onToggleFavorite={() => {
                 haptics.tap();
-                dispatch({ type: 'toggleFavorite', restaurantId: item.id });
+                dispatch({ type: "toggleFavorite", restaurantId: item.id });
               }}
               onPress={() => open(item)}
             />
           </FadeIn>
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            {searching ? (
-              <EmptyState
-                art="plate"
-                compact
-                title={`No kitchens for “${filters.query.trim()}”`}
-                body="Check the spelling, or try a dish, a kitchen or a cook’s name."
-              />
-            ) : (
-              <EmptyState art="plate" compact title="Nothing matches yet" body="No kitchens match those filters yet." />
-            )}
-            <Pressable accessibilityRole="button" onPress={() => setFilters(DEFAULT_FILTERS)} hitSlop={8}>
-              <Text style={styles.reset}>{searching ? 'Clear search' : 'Reset filters'}</Text>
-            </Pressable>
-          </View>
+          noneNearby ? undefined : (
+            <View style={styles.empty}>
+              {searching ? (
+                <EmptyState
+                  art="plate"
+                  compact
+                  title={`No kitchens for “${filters.query.trim()}”`}
+                  body="Check the spelling, or try a dish, a kitchen or a cook’s name."
+                />
+              ) : (
+                <EmptyState
+                  art="plate"
+                  compact
+                  title="Nothing matches yet"
+                  body="No kitchens match those filters yet."
+                />
+              )}
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setFilters(DEFAULT_FILTERS)}
+                hitSlop={8}
+              >
+                <Text style={styles.reset}>
+                  {searching ? "Clear search" : "Reset filters"}
+                </Text>
+              </Pressable>
+            </View>
+          )
         }
       />
 
       <OptionSheet
-        visible={sheet === 'sort'}
+        visible={sheet === "sort"}
         title="Sort by"
         options={SORT_OPTIONS}
         selected={[filters.sort]}
-        onSelect={([sort]) => update({ sort: sort ?? 'recommended' })}
+        onSelect={([sort]) => update({ sort: sort ?? "recommended" })}
         onClose={() => setSheet(null)}
       />
       <OptionSheet
-        visible={sheet === 'neighborhood'}
-        title="Your neighborhood"
-        options={NEIGHBORHOODS.map((n) => ({ value: n, label: n }))}
-        selected={[neighborhood]}
-        onSelect={([n]) => n && dispatch({ type: 'updateProfile', changes: { neighborhood: n } })}
-        onClose={() => setSheet(null)}
-      />
-      <OptionSheet
-        visible={sheet === 'cuisines'}
+        visible={sheet === "cuisines"}
         title="Cuisines"
         multiple
         options={cuisineOptions}
@@ -606,7 +865,7 @@ export default function FoodieHome() {
       <CoachMarks
         steps={COACH_STEPS}
         visible={!state.hasSeenCoachMarks}
-        onDone={() => dispatch({ type: 'completeCoachMarks' })}
+        onDone={() => dispatch({ type: "completeCoachMarks" })}
       />
     </Screen>
   );
@@ -614,16 +873,21 @@ export default function FoodieHome() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingTop: 0 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing.sm },
+  row: { flexDirection: "row", alignItems: "center", gap: 4 },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: spacing.sm,
+  },
   place: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: 12,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(11,11,11,0.45)',
+    backgroundColor: "rgba(11,11,11,0.45)",
     marginRight: spacing.sm,
   },
   placeText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ivory },
@@ -631,15 +895,28 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(11,11,11,0.45)',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(11,11,11,0.45)",
   },
-  bellDot: { position: 'absolute', top: 6, right: 7, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.gold },
-  dateline: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted, flexShrink: 1 },
+  bellDot: {
+    position: "absolute",
+    top: 6,
+    right: 7,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: colors.gold,
+  },
+  dateline: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: colors.textMuted,
+    flexShrink: 1,
+  },
   search: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.pill,
@@ -655,13 +932,42 @@ const styles = StyleSheet.create({
     minWidth: 0,
     ...webNoOutline,
   },
-  category: { alignItems: 'center', gap: spacing.sm, minWidth: 52, paddingTop: spacing.xs },
-  categoryLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted, textAlign: 'center' },
-  categoryRule: { height: 1.5, alignSelf: 'stretch', backgroundColor: 'transparent' },
+  category: {
+    alignItems: "center",
+    gap: spacing.sm,
+    minWidth: 52,
+    paddingTop: spacing.xs,
+  },
+  categoryLabel: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: "center",
+  },
+  categoryRule: {
+    height: 1.5,
+    alignSelf: "stretch",
+    backgroundColor: "transparent",
+  },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg },
-  nudge: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: -spacing.md },
-  nudgeBody: { flex: 1, fontFamily: fonts.displayItalic, fontSize: 16, lineHeight: 22, color: colors.textMuted },
-  nudgeLink: { fontFamily: fonts.displayItalic, color: colors.gold, textDecorationLine: 'underline' },
+  nudge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: -spacing.md,
+  },
+  nudgeBody: {
+    flex: 1,
+    fontFamily: fonts.displayItalic,
+    fontSize: 16,
+    lineHeight: 22,
+    color: colors.textMuted,
+  },
+  nudgeLink: {
+    fontFamily: fonts.displayItalic,
+    color: colors.gold,
+    textDecorationLine: "underline",
+  },
   suggest: {
     gap: spacing.lg,
     padding: spacing.md,
@@ -669,9 +975,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     marginTop: -spacing.md,
   },
-  suggestHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  suggestChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  clearText: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
-  empty: { alignItems: 'center', gap: spacing.xs, paddingTop: spacing.lg, paddingBottom: spacing.xxl },
+  suggestHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  suggestChips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  clearText: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  empty: {
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
   reset: { fontFamily: fonts.semibold, color: colors.gold, fontSize: 14 },
 });

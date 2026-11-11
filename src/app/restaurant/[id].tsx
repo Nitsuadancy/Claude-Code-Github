@@ -35,7 +35,7 @@ import {
 } from '@/lib/bake-days';
 import { describeHours } from '@/lib/hours';
 import { kitchenDisclosure, kitchenKindLabel } from '@/lib/kitchen-kind';
-import { driveLabel } from '@/lib/geo';
+import { driveBetween, kitchenPlace, userPlace } from '@/lib/location';
 import { instagramUrl, visibleUpdate } from '@/lib/kitchen-style';
 import { remainingToday } from '@/lib/limits';
 import { formatCents } from '@/lib/money';
@@ -72,10 +72,9 @@ export default function RestaurantDetail() {
   const reviews = useReviews(id);
   const diet = useDietProfile();
   const cart = useAddToCart();
-  const drive =
-    restaurant && state.user?.role === 'foodie' && state.user.neighborhood && restaurant.neighborhood
-      ? driveLabel(state.user.neighborhood, restaurant.neighborhood)
-      : null;
+  const kitchenAt = restaurant ? kitchenPlace(restaurant) : undefined;
+  const youAt = userPlace(state.user);
+  const drive = restaurant && state.user?.role === 'foodie' && kitchenAt ? driveBetween(youAt, kitchenAt) : null;
   const isPreview = preview === '1';
 
   if (!restaurant) {
@@ -431,7 +430,7 @@ export default function RestaurantDetail() {
                   <Pressable accessibilityRole="button" onPress={() => router.push('/map')} hitSlop={6} style={styles.driveRow}>
                     <Icon name="map-marker-outline" size={15} color={colors.gold} />
                     <Text style={styles.driveText}>
-                      {drive} from {state.user?.neighborhood}
+                      {drive} from {youAt.label}
                     </Text>
                   </Pressable>
                 ) : null}

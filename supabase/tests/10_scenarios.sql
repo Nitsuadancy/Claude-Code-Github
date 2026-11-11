@@ -464,6 +464,23 @@ select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
 select pg_temp.expect_error($$ delete from public.drops where id = '30000000-0000-0000-0000-000000000001' $$,
   'foreign key');
 
+-- Kitchens near you, anywhere in the US ------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+update public.restaurants set area_lat = 28.58, area_lng = -81.40 where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.act_as(null);
+select pg_temp.check((select count(*) = 1 from public.nearby_kitchens(28.55, -81.38, 25)), 'kitchen found from nearby');
+select pg_temp.check((select count(*) = 0 from public.nearby_kitchens(30.27, -97.74, 25)), 'not from Austin');
+select pg_temp.expect_error($$ insert into public.area_waitlist (zip) values ('78701') $$, 'permission denied');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d');
+insert into public.area_waitlist (zip) values ('78701');
+select pg_temp.expect_error($$ insert into public.area_waitlist (zip) values ('7870') $$, 'check constraint');
+select pg_temp.check((select count(*) = 1 from public.area_waitlist), 'own area on the list');
+select pg_temp.check((select count(*) = 0 from public.area_demand()), 'only admins see demand');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select count(*) = 0 from public.area_waitlist), 'other people''s areas are private');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select zip = '78701' and people = 1 from public.area_demand()), 'admins see where people wait');
+
 -- Deleting an account --------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 insert into public.favorites (customer_id, restaurant_id) values (auth.uid(), '10000000-0000-0000-0000-000000000001');

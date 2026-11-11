@@ -80,6 +80,8 @@ export interface AppState {
   alerts: KitchenAlert[];
   /** Custom order requests between customers and Pro kitchens. */
   customRequests: CustomRequest[];
+  /** ZIPs this person asked to hear about when kitchens open there. */
+  areaWaitlist: { zip: string; at: string }[];
 }
 
 export type PersistedState = Omit<AppState, 'hydrated'>;
@@ -110,6 +112,7 @@ export const INITIAL_STATE: AppState = {
   blocks: [],
   alerts: [],
   customRequests: [],
+  areaWaitlist: [],
 };
 
 export type Action =
@@ -167,6 +170,7 @@ export type Action =
   | { type: 'cancelPro'; restaurantId: string; at: string }
   | { type: 'resumePro'; restaurantId: string }
   | { type: 'sendAlert'; alert: KitchenAlert }
+  | { type: 'joinAreaWaitlist'; zip: string; at: string }
   | { type: 'saveDrop'; restaurantId: string; drop: Drop }
   | { type: 'closeDrop'; restaurantId: string; dropId: string; at: string }
   | { type: 'deleteDrop'; restaurantId: string; dropId: string }
@@ -624,6 +628,10 @@ export function reducer(state: AppState, action: Action): AppState {
         orders: [...state.orders, order],
       };
     }
+
+    case 'joinAreaWaitlist':
+      if (!/^\d{5}$/.test(action.zip) || state.areaWaitlist.some((w) => w.zip === action.zip)) return state;
+      return { ...state, areaWaitlist: [...state.areaWaitlist, { zip: action.zip, at: action.at }] };
 
     case 'resumePro':
       return updateKitchen(state, action.restaurantId, (r) => {

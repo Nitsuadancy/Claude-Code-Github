@@ -29,6 +29,8 @@ export interface UserProfile {
   role: Role | null;
   /** Where the foodie browses from, e.g. "College Park". Empty until they choose. */
   neighborhood: string;
+  /** Home ZIP code, so the app can show kitchens nearby anywhere in the US. */
+  zip?: string;
   /** Diets the customer follows; dishes that match get a "Fits your diet" tag. */
   dietary?: DietaryTag[];
   /** Allergens the customer avoids; dishes containing them show a warning. */

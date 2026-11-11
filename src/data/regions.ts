@@ -134,9 +134,13 @@ export function rulesFor(code: string | undefined): StateRules | undefined {
   return code ? STATE_RULES[code] : undefined;
 }
 
-/** Whether kitchens in this state can publish on Manna. */
+/**
+ * Whether kitchens in this state can publish on Manna: its home-food rules
+ * are in STATE_RULES. Cities don't need to be set up first; kitchens are
+ * placed by ZIP code anywhere in an open state.
+ */
 export function isOpenState(code: string | undefined): boolean {
-  return !!rulesFor(code) && MARKETS.some((m) => m.state === code);
+  return !!rulesFor(code);
 }
 
 /** Neighborhoods kitchens in a state can list, across its markets. */

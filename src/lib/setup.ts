@@ -1,6 +1,7 @@
 import type { DocumentKind, Restaurant, UserProfile } from '@/types';
 
 import { DEFAULT_STATE, isOpenState, marketFor } from '@/data/regions';
+import { lookupZip } from '@/lib/zips';
 
 import { isValidBakeDay } from './bake-days';
 import { hoursOn } from './hours';
@@ -58,6 +59,7 @@ export function isInformationComplete(r: Restaurant | undefined): boolean {
     r.city.trim().length > 0 &&
     isOpenState(r.state ?? DEFAULT_STATE) &&
     isValidZip(r.areaCode) &&
+    lookupZip(r.areaCode)?.state === (r.state ?? DEFAULT_STATE) &&
     hasOrderingSchedule(r)
   );
 }

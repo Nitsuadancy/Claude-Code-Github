@@ -30,6 +30,8 @@ create table public.profiles (
   phone text,
   role public.user_role,
   neighborhood text not null default '',
+  -- Home ZIP, for kitchens near you anywhere in the US.
+  zip text not null default '' check (zip = '' or zip ~ '^[0-9]{5}$'),
   dietary text[] not null default '{}',
   avoid_allergens text[] not null default '{}',
   is_admin boolean not null default false,
@@ -55,6 +57,10 @@ create table public.restaurants (
   -- Two-letter state code: home-food law, labels and limits follow it.
   state text not null default 'FL' check (state ~ '^[A-Z]{2}$'),
   zip text not null default '' check (zip = '' or zip ~ '^[0-9]{5}$'),
+  -- The area's rough center (its ZIP's or neighborhood's, never the address),
+  -- to two decimals (about a kilometer). For kitchens near you.
+  area_lat numeric(5, 2) check (area_lat is null or area_lat between -90 and 90),
+  area_lng numeric(5, 2) check (area_lng is null or area_lng between -180 and 180),
   timezone text not null default 'America/New_York',
   working_days text[] not null default '{}',
   open_time time,
@@ -124,6 +130,16 @@ create table public.restaurant_addresses (
 
 -- Farmers and artisans waiting for Manna Mart. Anyone may sign up; only the
 -- Manna team can read the list.
+-- People asking to hear when kitchens open near their ZIP. Shows the team
+-- where to recruit cooks next. Only admins read the whole list.
+create table public.area_waitlist (
+  profile_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  zip text not null check (zip ~ '^[0-9]{5}$'),
+  created_at timestamptz not null default now(),
+  primary key (profile_id, zip)
+);
+create index on public.area_waitlist (zip);
+
 create table public.grower_waitlist (
   id uuid primary key default gen_random_uuid(),
   business_name text not null check (char_length(business_name) between 1 and 80),
@@ -153,6 +169,7 @@ create table public.menu_items (
   net_weight text not null default '' check (char_length(net_weight) <= 40),
   created_at timestamptz not null default now()
 );
+create index on public.restaurants (area_lat) where status = 'live';
 create index on public.menu_items (restaurant_id);
 
 -- A Pro kitchen's drop: a one-off menu with its own pickup window and order
@@ -631,6 +648,7 @@ alter table public.profiles enable row level security;
 alter table public.restaurants enable row level security;
 alter table public.restaurant_addresses enable row level security;
 alter table public.grower_waitlist enable row level security;
+alter table public.area_waitlist enable row level security;
 alter table public.menu_items enable row level security;
 alter table public.restaurant_documents enable row level security;
 alter table public.orders enable row level security;
@@ -663,6 +681,13 @@ create policy "chefs create their kitchen" on public.restaurants
                          and licensed = false);
 create policy "chefs edit their kitchen" on public.restaurants
   for update using (owner_id = auth.uid() or public.is_admin());
+
+create policy "people join the list for their area" on public.area_waitlist
+  for insert with check (profile_id = auth.uid());
+create policy "people read their own areas, admins read all" on public.area_waitlist
+  for select using (profile_id = auth.uid() or public.is_admin());
+create policy "people leave the list" on public.area_waitlist
+  for delete using (profile_id = auth.uid());
 
 create policy "anyone joins the grower waitlist" on public.grower_waitlist
   for insert with check (true);
@@ -1201,6 +1226,32 @@ $$;
 -- removed; order and review records stay for the kitchens' bookkeeping,
 -- without the person's details. Removing the sign-in itself (auth.users)
 -- needs the service role, so an Edge Function calls this and then deletes it.
+-- Live kitchens within p_miles of a point, nearest first. Uses each
+-- kitchen's area center, never its address.
+create function public.nearby_kitchens(p_lat numeric, p_lng numeric, p_miles numeric default 25)
+returns table (restaurant_id uuid, miles numeric)
+language sql stable set search_path = public as $$
+  select id, round(d::numeric, 1) from (
+    select r.id,
+      3958.8 * 2 * asin(sqrt(
+        power(sin(radians(r.area_lat - p_lat) / 2), 2)
+        + cos(radians(p_lat)) * cos(radians(r.area_lat)) * power(sin(radians(r.area_lng - p_lng) / 2), 2)
+      )) as d
+    from public.restaurants r
+    where r.status = 'live' and r.area_lat is not null and r.area_lng is not null
+      -- A quick box first, so the distance math runs on a few rows.
+      and r.area_lat between p_lat - p_miles / 69.0 and p_lat + p_miles / 69.0
+  ) k
+  where d <= p_miles
+  order by d;
+$$;
+
+-- Admin: where people are waiting for kitchens, busiest ZIPs first.
+create function public.area_demand() returns table (zip text, people bigint)
+language sql stable security definer set search_path = public as $$
+  select zip, count(*) from public.area_waitlist where public.is_admin() group by zip order by count(*) desc;
+$$;
+
 -- Custom orders -------------------------------------------------------------
 -- The kitchen answers a request with a price and a pickup window on the day
 -- the customer asked for. It can send a new price until the customer decides.
@@ -1305,6 +1356,7 @@ begin
     raise exception 'Sign in first' using errcode = '42501';
   end if;
   delete from public.favorites where customer_id = me;
+  delete from public.area_waitlist where profile_id = me;
   delete from public.custom_requests where customer_id = me and status <> 'accepted';
   update public.custom_requests set customer_name = 'Former customer', details = 'Removed with the account.'
     where customer_id = me;
@@ -1328,7 +1380,7 @@ begin
   update public.reviews set customer_name = 'Former customer', text = '' where customer_id = me;
   update public.orders set customer_note = '', customer_name = 'Former customer' where customer_id = me;
   update public.profiles
-    set name = '', email = null, phone = null, neighborhood = '', dietary = '{}',
+    set name = '', email = null, phone = null, neighborhood = '', zip = '', dietary = '{}',
         avoid_allergens = '{}', deleted_at = now()
     where id = me;
 end;
@@ -1385,6 +1437,10 @@ revoke select on public.discount_codes from anon;
 grant insert (restaurant_id, customer_name, occasion, details, servings, needed_by, budget_cents)
   on public.custom_requests to authenticated;
 grant insert (restaurant_id, body) on public.kitchen_alerts to authenticated;
+grant insert (zip), delete on public.area_waitlist to authenticated;
+grant execute on function public.nearby_kitchens(numeric, numeric, numeric) to anon, authenticated;
+revoke all on function public.area_demand() from public;
+grant execute on function public.area_demand() to authenticated;
 
 -- Live updates for the order screen and the chat, where Supabase Realtime is available.
 do $$

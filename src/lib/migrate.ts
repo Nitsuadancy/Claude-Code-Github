@@ -87,6 +87,7 @@ export function normalizePersisted(saved: Partial<PersistedState> | null): Parti
     blocks: saved.blocks ?? [],
     alerts: saved.alerts ?? [],
     customRequests: saved.customRequests ?? [],
+    areaWaitlist: saved.areaWaitlist ?? [],
   };
   // Only touch sections that were saved, so a missing one keeps the app's default instead of becoming undefined.
   if (saved.user) out.user = normalizeUser(saved.user);

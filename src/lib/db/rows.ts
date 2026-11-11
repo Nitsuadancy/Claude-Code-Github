@@ -14,6 +14,8 @@ export interface ProfileRow {
   phone: string | null;
   role: 'foodie' | 'chef' | null;
   neighborhood: string;
+  /** Home ZIP, for kitchens near you. */
+  zip: string;
   dietary: string[];
   avoid_allergens: string[];
   is_admin: boolean;
@@ -38,6 +40,9 @@ export interface RestaurantRow {
   state: string;
   zip: string;
   timezone: string;
+  /** The area's rough center (the ZIP's or neighborhood's, never the address), to two decimals. */
+  area_lat: number | null;
+  area_lng: number | null;
   working_days: string[];
   /** "HH:MM:SS" */
   open_time: string | null;

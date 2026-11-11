@@ -5,6 +5,11 @@
  */
 import { DEFAULT_ACCENT, isAccentId } from '@/data/accents';
 import { DEFAULT_STATE, marketFor } from '@/data/regions';
+import { kitchenPlace } from '@/lib/location';
+import { timezoneFor } from '@/lib/timezones';
+import { lookupZip } from '@/lib/zips';
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 import { isCategoryId } from '@/data/categories';
 import { ALLERGENS, DIETARY_TAGS } from '@/lib/dietary';
 import { WEEKDAYS } from '@/lib/hours';
@@ -61,6 +66,7 @@ export function profileFromRow(row: ProfileRow): UserProfile {
     phone: row.phone ?? '',
     role: row.role,
     neighborhood: row.neighborhood,
+    ...(row.zip ? { zip: row.zip } : {}),
     dietary: dietaryTags(row.dietary),
     avoidAllergens: allergens(row.avoid_allergens),
   };
@@ -73,6 +79,7 @@ export function profileUpdate(changes: Partial<Omit<UserProfile, 'id'>>): Partia
   if (changes.email !== undefined) row.email = changes.email.trim() || null;
   if (changes.role !== undefined) row.role = changes.role;
   if (changes.neighborhood !== undefined) row.neighborhood = changes.neighborhood;
+  if (changes.zip !== undefined) row.zip = changes.zip;
   if (changes.dietary !== undefined) row.dietary = changes.dietary;
   if (changes.avoidAllergens !== undefined) row.avoid_allergens = changes.avoidAllergens;
   return row;
@@ -239,7 +246,10 @@ export function restaurantUpdate(
     city: r.city.trim(),
     state: r.state ?? DEFAULT_STATE,
     // Bake-day cutoffs run on the market's clock.
-    ...(marketFor(r.neighborhood, r.state) ? { timezone: marketFor(r.neighborhood, r.state)!.timezone } : {}),
+    // The kitchen's time zone, for deadlines worked out on the server.
+    timezone: marketFor(r.neighborhood, r.state)?.timezone ?? timezoneFor(r.state, lookupZip(r.areaCode)?.lng),
+    // Its area's rough center (the ZIP's, never the address), for "kitchens near you".
+    ...(kitchenPlace(r) ? { area_lat: round2(kitchenPlace(r)!.lat), area_lng: round2(kitchenPlace(r)!.lng) } : {}),
     zip: r.areaCode.trim(),
     working_days: r.workingDays,
     open_time: r.openTime || null,
