@@ -31,6 +31,8 @@ export const supabase: SupabaseClient | null = isBackendConfigured
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
+        // Google sign-in returns to the app with a one-time code (src/lib/remote/social.ts).
+        flowType: 'pkce',
       },
     })
   : null;

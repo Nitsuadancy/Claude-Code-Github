@@ -45,15 +45,15 @@ Turning it all on is in [GO_LIVE.md](GO_LIVE.md).
 | Feature | Demo (no `.env`) | Backend on |
 |---|---|---|
 | Phone sign-in | Any 6-digit code is accepted | SMS code via Supabase Auth + Twilio |
-| Google / Facebook / Apple sign-in | Hidden | Not built yet |
+| Google / Apple sign-in | Hidden | Through Supabase, when `EXPO_PUBLIC_SIGN_IN_WITH` is set |
 | Kitchens | Six sample kitchens | Live kitchens within 25 miles of the person's ZIP (`nearby_kitchens`) |
 | Payments | Order is placed without charging | Stripe payment sheet; refunds on decline or cancel (needs the Stripe key too) |
 | Cook payouts | Not shown | Stripe Connect Express, from the dashboard's payouts card |
 | Documents / photos | Local file paths | Uploaded to storage buckets (`public-photos`, private `order-photos` and `documents`) |
-| Document review | Skipped; publishing is instant | Submitted for review; an admin runs `approve_restaurant` |
+| Document review | Skipped; publishing is instant | Submitted for review; the team approves or sends back in Manna team tools |
 | Orders and chat | Same phone only | Shared, with Realtime updates |
 | Push notifications | None | New orders, status changes, messages, oven updates, quotes, alerts |
-| Help with an order | Saved on the phone; the sheet says so | `order_issues` table (support inbox still to build) |
+| Help with an order | Saved on the phone; the sheet says so | `order_issues`, with a push to the team and Help requests in the team tools |
 | Manna Pro billing | "Start Pro" turns it on without a charge | Stripe Checkout and billing portal on the web; the webhook sets the plan |
 | Alerts, drops, codes, custom requests | Kept on the phone | Their tables, checked by the database |
 | Drive times on the map | Estimated from ZIP centers | Same estimate |

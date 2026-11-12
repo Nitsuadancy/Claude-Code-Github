@@ -15,6 +15,7 @@ setup and a week of testing with Stripe's test mode before real money moves.
 | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `.env` and EAS environment variables | Real sign-in, shared kitchens, orders and chat, live updates, uploads, push |
 | `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `.env` and EAS | Card checkout, the cook's "Set up payouts" card and Stripe billing for Pro |
 | `EXPO_PUBLIC_APPLE_MERCHANT_ID` (optional) | `.env`, EAS and `app.json` | Apple Pay in the card sheet |
+| `EXPO_PUBLIC_SIGN_IN_WITH` (optional) | `.env` and EAS | "Continue with Apple" and "Continue with Google" next to phone sign-in |
 | `extra.eas.projectId` | `app.json` (written by `eas init`) | Push notifications |
 | `app_settings.payments_required` | Database | Kitchens only see paid orders, and only kitchens with payouts set up can take orders |
 | `launched_states` + `STATE_RULES[..].launched` | Database and `src/data/regions.ts` | Which states kitchens can open in (Florida today) |
@@ -48,20 +49,32 @@ Then, in the Supabase dashboard:
 
 - **Authentication → Sign In / Providers → Phone:** turn it on and connect Twilio.
 - **Authentication → Rate limits:** keep SMS limits on (they stop people from running up the Twilio bill).
+- **Authentication → URL Configuration → Redirect URLs:** add `manna://auth-callback` (Google sign-in returns there).
+- **Sign in with Apple and Google (optional; phone sign-in works without them):**
+  - **Apple:** in Authentication → Providers → Apple, turn it on and add the app's bundle id
+    (`ios.bundleIdentifier` in `app.json`) under Client IDs. The app already asks for the
+    capability; EAS turns it on for the bundle id at the first build.
+  - **Google:** in Google Cloud, create an OAuth client of type *Web application* with the redirect
+    URL Supabase shows on its Google provider page. Paste the client id and secret into
+    Authentication → Providers → Google.
+  - Then set `EXPO_PUBLIC_SIGN_IN_WITH=apple,google` in `.env` and EAS. On iPhone, Google only
+    shows when Apple is on too (Apple's rule 4.8).
 - **Make yourself an admin.** Sign in to the app once with your phone, copy your user id from
   **Authentication → Users**, then in the **SQL editor** run:
   `update profiles set is_admin = true where id = '<your user id>';`
 
-To approve a kitchen, check its documents in **Storage → documents**, then run this in the SQL
-editor. The first line makes the editor act as you, since approving is limited to admins:
+Once you're an admin, **Profile → Manna team tools** in the app is where the team works:
 
-```sql
-select set_config('request.jwt.claim.sub', '<your user id>', true);
-select approve_restaurant('<kitchen id>');
-```
+- **Kitchens to review:** open each document, approve or reject it, then open the kitchen or send it
+  back with a note the cook sees. Opening checks that the cook confirmed their food law and the state
+  is launched, gives the kitchen its invite code and credits the cook who invited them.
+- **Help requests:** "Need help with this order?" from customers, oldest first, with a button to
+  text the customer. Refunds happen in the Stripe dashboard.
+- **Reports:** reported chat messages and reviews, to remove or clear. Apple expects reports to be
+  looked at within a day.
+- **Where people are waiting:** waitlist ZIPs and cooks waiting for their state to launch.
 
-Run both lines together. Approval checks that the cook confirmed their food law and that the
-kitchen's state is launched, gives the kitchen its invite code and credits the cook who invited them.
+Admins get a push for each new kitchen, help request and report (step 5).
 
 ## 2. The app
 
@@ -226,8 +239,5 @@ real $5 order end to end.
 
 ## Still to build or decide after launch
 
-- Google and Apple sign-in (Apple's is required if Google's is offered)
-- An admin screen for approving kitchens, reported messages and help requests (SQL and Supabase Studio until then)
-- The support inbox for "Need help with this order?" (`order_issues` is ready)
 - The lock-screen Live Activity ([LIVE_ACTIVITY.md](LIVE_ACTIVITY.md))
 - Sales tax as a marketplace facilitator (ask the accountant; Stripe Tax can collect it)

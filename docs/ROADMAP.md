@@ -67,7 +67,7 @@ Without this, a chef and a customer on different phones can't see each other.
 
 - [ ] Create the Supabase, Stripe, Twilio and EAS accounts and follow [GO_LIVE.md](GO_LIVE.md)
 - [x] Phone sign-in with real text-message codes (built; needs the Supabase project and Twilio, see [GO_LIVE.md](GO_LIVE.md))
-- [ ] Google and Apple sign-in. Apple's App Store rules require Apple sign-in if Google sign-in is offered.
+- [x] Google and Apple sign-in, off until set up (`EXPO_PUBLIC_SIGN_IN_WITH`). On iPhone, Google only shows alongside Apple, as Apple's rules require
 - [x] Database tables for profiles, restaurants, menu items, documents and orders, with row-level security (`supabase/`, tested in CI)
 - [x] Server functions: pricing, daily limits, opening hours, order status, reviews, kitchen approval
 - [x] The app runs against the backend when `.env` is filled in: sign-in, kitchens near your ZIP, orders, chat, reviews, Pro tools, uploads (off until configured)
@@ -75,7 +75,7 @@ Without this, a chef and a customer on different phones can't see each other.
 - [x] Photos are resized (longest side 1600px, JPEG) when picked, before upload. Smaller sizes can come from Supabase image transformations if lists feel slow
 - [x] Live order updates, so the chef's dashboard updates the moment an order is placed
 - [x] Edge Function that removes the sign-in when someone deletes their account
-- [ ] Support inbox for "Need help with this order?" (the `order_issues` table is ready): email or text the team on each new request, and a simple admin view to reply and resolve
+- [x] Support inbox for "Need help with this order?": a push to the team on each new request, and Help requests in the team tools to text the customer and mark it handled
 - [ ] Link previews: a kitchen link shared in iMessage or Instagram shows its photo and name (needs the website)
 
 ## Phase 2: Getting paid
@@ -87,12 +87,12 @@ Without this, a chef and a customer on different phones can't see each other.
 
 ## Phase 3: Trust and safety (required before public launch)
 
-- [ ] Admin review queue: approve chefs only after checking their food handler card and ID
+- [x] Admin review queue: approve kitchens only after checking their food handler card and ID, or send them back with a note
 - [x] Allergen fields on menu items, shown clearly to customers
 - [x] Report a review (App Store guideline 1.2), with `remove_review()` for the team
 - [x] Report a problem with an order ("Need help with this order?")
 - [x] Report and block in order chat
-- [ ] Admin view for reported messages and help requests
+- [x] Admin view for reported messages, reviews and help requests
 - [ ] Attorney review of the Terms of Service and Privacy Policy (drafts in the app), plus a chef agreement (see [COMPANY_SETUP.md](COMPANY_SETUP.md))
 
 ## Phase 4: Notifications

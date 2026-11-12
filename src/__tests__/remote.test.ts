@@ -313,3 +313,16 @@ describe('server sync', () => {
     expect(shown).toEqual(['That didn’t go through: Can’t move an order from placed to ready']);
   });
 });
+
+describe('signing in again', () => {
+  it('keeps the profile for the same account, and starts fresh for another one', () => {
+    const signedIn: AppState = {
+      ...INITIAL_STATE,
+      hydrated: true,
+      user: { id: 'apple-1', name: 'Ada', email: 'a@x.co', phone: '', role: 'foodie', neighborhood: '' },
+    };
+    expect(reducer(signedIn, { type: 'signIn', userId: 'apple-1', phone: '' }).user?.name).toBe('Ada');
+    const other = reducer(signedIn, { type: 'signIn', userId: 'google-2', phone: '', name: 'Bo', email: 'b@x.co' });
+    expect(other.user).toMatchObject({ id: 'google-2', name: 'Bo', email: 'b@x.co' });
+  });
+});

@@ -31,7 +31,9 @@ the device. The real backend (Supabase and Stripe) is built and switches on when
 
 Built and waiting for accounts: text-message sign-in, shared data with live
 updates, card payments with cook payouts, Manna Pro billing and push notifications.
-Not built yet: Google and Apple sign-in, delivery and admin screens. See
+It also has Apple and Google sign-in (off until set up) and tools for the Manna
+team to review kitchens, answer help requests and handle reports. Not built yet:
+delivery. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for the plan.
 
 ## Run it

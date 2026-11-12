@@ -13,6 +13,7 @@ import {
 } from '@/lib/admin';
 import { loadHelpRequests } from '@/lib/remote/admin';
 import type { Db } from '@/lib/remote/api';
+import { codeFromRedirect, parseProviders, signInProviders } from '@/lib/sign-in-options';
 
 const kitchen = (over: Partial<AdminKitchen> = {}): AdminKitchen => ({
   id: 'k1',
@@ -107,5 +108,20 @@ describe('reports and help', () => {
     expect(await loadHelpRequests(db)).toEqual([
       expect.objectContaining({ customerName: 'Ada', customerPhone: '+14075550100', kitchenName: 'Susie’s', totalCents: 2450, orderStatus: 'ready' }),
     ]);
+  });
+});
+
+describe('sign-in options', () => {
+  it('shows Apple only on iPhone, and Google there only alongside Apple', () => {
+    expect(parseProviders(' Google, apple ,facebook')).toEqual(['apple', 'google']);
+    expect(signInProviders(['apple', 'google'], 'ios', true)).toEqual(['apple', 'google']);
+    expect(signInProviders(['google'], 'ios', true)).toEqual([]);
+    expect(signInProviders(['apple', 'google'], 'android', true)).toEqual(['google']);
+    expect(signInProviders(['apple', 'google'], 'ios', false)).toEqual([]);
+  });
+
+  it('reads the one-time code Google sign-in returns with', () => {
+    expect(codeFromRedirect('manna://auth-callback?code=abc%2D123&state=x')).toBe('abc-123');
+    expect(codeFromRedirect('manna://auth-callback#error=access_denied')).toBeNull();
   });
 });

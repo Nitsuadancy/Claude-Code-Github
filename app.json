@@ -16,7 +16,8 @@
       },
       "config": {
         "usesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -77,7 +78,8 @@
           "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#D4B26E"
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,

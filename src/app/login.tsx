@@ -23,8 +23,10 @@ import {
 } from '@/components/ui';
 import { resetTo } from '@/lib/navigation';
 import { digitsOnly, formatUsPhone, isValidUsPhone, newId } from '@/lib/validation';
-import { sendCode as remoteSendCode, verifyCode as remoteVerifyCode } from '@/lib/remote/api';
-import { supabase } from '@/lib/supabase';
+import { saveProfile, sendCode as remoteSendCode, verifyCode as remoteVerifyCode } from '@/lib/remote/api';
+import { signInWithApple, signInWithGoogle, type SocialSignIn } from '@/lib/remote/social';
+import { parseProviders, signInProviders, type SocialProvider } from '@/lib/sign-in-options';
+import { isBackendConfigured, supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
 import { colors, fonts, radius, spacing } from '@/theme';
 
@@ -42,6 +44,26 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const e164 = `+1${digitsOnly(phone)}`;
+  const providers = signInProviders(parseProviders(process.env.EXPO_PUBLIC_SIGN_IN_WITH), Platform.OS, isBackendConfigured);
+
+  const social = async (provider: SocialProvider) => {
+    if (!supabase) return;
+    setError(null);
+    setBusy(true);
+    let who: SocialSignIn | null = null;
+    try {
+      who = provider === 'apple' ? await signInWithApple(supabase) : await signInWithGoogle(supabase);
+      // Apple shares the name only the first time; keep it on the profile.
+      if (who?.name) await saveProfile(supabase, who.userId, { name: who.name }).catch(() => undefined);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'That didn’t work. Try again or use your phone number.');
+    } finally {
+      setBusy(false);
+    }
+    if (!who) return;
+    dispatch({ type: 'signIn', userId: who.userId, phone: '', name: who.name, email: who.email });
+    resetTo('/');
+  };
 
   const sendCode = async () => {
     if (!isValidUsPhone(phone)) {
@@ -132,6 +154,22 @@ export default function Login() {
               {error ? <Text style={styles.error}>{error}</Text> : null}
               <GoldButton title="Send code" chevron loading={busy} onPress={() => void sendCode()} />
 
+              {providers.length ? (
+                <View style={{ gap: spacing.sm }}>
+                  <Text style={styles.or}>or</Text>
+                  {providers.map((p) => (
+                    <GoldButton
+                      key={p}
+                      title={p === 'apple' ? 'Continue with Apple' : 'Continue with Google'}
+                      icon={p}
+                      variant="outline"
+                      disabled={busy}
+                      onPress={() => void social(p)}
+                    />
+                  ))}
+                </View>
+              ) : null}
+
               <Body muted style={styles.legal}>
                 By continuing you agree to Manna’s{' '}
                 <Text accessibilityRole="link" style={styles.legalLink} onPress={() => router.push('/legal/terms')}>
@@ -189,6 +227,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  or: { fontFamily: fonts.medium, fontSize: 13, color: colors.textMuted, textAlign: 'center' },
   legalLink: { color: colors.text, textDecorationLine: 'underline' },
   hero: { paddingBottom: spacing.xl },
   brand: { alignItems: 'center', justifyContent: 'center', paddingTop: spacing.md },

@@ -137,7 +137,7 @@ export type Action =
   | { type: 'joinGrowerWaitlist'; application: GrowerApplication }
   | { type: 'completeCoachMarks' }
   | { type: 'chooseRole'; role: Role }
-  | { type: 'signIn'; userId: string; phone: string }
+  | { type: 'signIn'; userId: string; phone: string; name?: string; email?: string }
   | { type: 'updateProfile'; changes: Partial<Omit<UserProfile, 'id'>> }
   | { type: 'signOut' }
   | { type: 'deleteAccount' }
@@ -234,8 +234,8 @@ export function reducer(state: AppState, action: Action): AppState {
         : { ...state, pendingRole: action.role };
 
     case 'signIn': {
-      // Signing in again with the same number keeps the existing profile.
-      if (state.user && state.user.phone === action.phone) {
+      // Signing in again as the same person (same account, or the same number in the demo) keeps the profile.
+      if (state.user && (state.user.id === action.userId || (!!action.phone && state.user.phone === action.phone))) {
         return { ...state, user: { ...state.user, role: state.pendingRole ?? state.user.role } };
       }
       return {
@@ -244,8 +244,8 @@ export function reducer(state: AppState, action: Action): AppState {
         user: {
           id: action.userId,
           phone: action.phone,
-          name: '',
-          email: '',
+          name: action.name ?? '',
+          email: action.email ?? '',
           role: state.pendingRole,
           neighborhood: '',
         },
