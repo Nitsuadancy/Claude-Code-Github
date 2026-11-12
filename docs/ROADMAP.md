@@ -72,7 +72,7 @@ Without this, a chef and a customer on different phones can't see each other.
 - [x] Server functions: pricing, daily limits, opening hours, order status, reviews, kitchen approval
 - [x] The app runs against the backend when `.env` is filled in: sign-in, kitchens near your ZIP, orders, chat, reviews, Pro tools, uploads (off until configured)
 - [x] Photo and document uploads to storage buckets with access rules
-- [ ] Resize photos into thumb, card and full sizes on upload, like the demo photos
+- [x] Photos are resized (longest side 1600px, JPEG) when picked, before upload. Smaller sizes can come from Supabase image transformations if lists feel slow
 - [x] Live order updates, so the chef's dashboard updates the moment an order is placed
 - [x] Edge Function that removes the sign-in when someone deletes their account
 - [ ] Support inbox for "Need help with this order?" (the `order_issues` table is ready): email or text the team on each new request, and a simple admin view to reply and resolve

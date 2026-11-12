@@ -44,7 +44,7 @@ Deno.serve(
     const current = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 10 });
     const live = current.data.find((s) => ['active', 'trialing', 'past_due', 'unpaid'].includes(s.status));
     if (live) {
-      const portal = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: `${SITE_URL}/pro/done` });
+      const portal = await stripe.billingPortal.sessions.create({ customer: customerId, return_url: `${SITE_URL}/return/pro-done` });
       return json({ url: portal.url });
     }
 
@@ -59,8 +59,8 @@ Deno.serve(
         ...(trialEnd ? { trial_end: trialEnd } : {}),
       },
       payment_method_collection: 'always',
-      success_url: `${SITE_URL}/pro/done`,
-      cancel_url: `${SITE_URL}/pro/cancel`,
+      success_url: `${SITE_URL}/return/pro-done`,
+      cancel_url: `${SITE_URL}/return/pro-cancel`,
     });
     return json({ url: session.url });
   }),

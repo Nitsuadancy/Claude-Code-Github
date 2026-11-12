@@ -41,8 +41,8 @@ Deno.serve(
     const link = await stripe.accountLinks.create({
       account: accountId,
       type: 'account_onboarding',
-      refresh_url: `${SITE_URL}/payouts/refresh`,
-      return_url: `${SITE_URL}/payouts/done`,
+      refresh_url: `${SITE_URL}/return/payouts-refresh`,
+      return_url: `${SITE_URL}/return/payouts-done`,
     });
     return json({ url: link.url, ready: false });
   }),

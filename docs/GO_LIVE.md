@@ -31,7 +31,7 @@ which only the server functions can read.
 - **Expo / EAS** (builds and push).
 - **Apple Developer** (needs the D-U-N-S number) and **Google Play Console**.
 - **Firebase** (free; Android push goes through it).
-- **A website** on the company domain with four short pages Stripe sends people back to (step 4).
+- **A website** on the company domain. The app's web build works as one, and includes the pages Stripe sends people back to (step 4).
 
 ## 1. Database
 
@@ -147,9 +147,11 @@ so they check their own secrets instead of a sign-in.
 | `notify` | Database webhooks | Push notifications |
 | `delete-account` | App, when someone deletes their account | Cancels Pro and removes the sign-in |
 
-**The website pages.** Stripe sends people back to `SITE_URL` + `/payouts/done`, `/payouts/refresh`,
-`/pro/done` and `/pro/cancel`. Each can be one line: "All set. Go back to the Manna app." (For
-`/payouts/refresh`: "That link expired. Go back to Manna and tap Set up payouts again.")
+**The website pages.** Stripe sends people back to `SITE_URL/return/payouts-done`,
+`/return/payouts-refresh`, `/return/pro-done` and `/return/pro-cancel`. These pages are part of the
+app's web build (`src/app/return/[step].tsx`), so if the website is the Manna web build
+(`npm run build:web`, hosted at `SITE_URL`) there's nothing to make. Otherwise, make four one-line
+pages at those paths: "All set. Go back to the Manna app."
 
 ## 5. Push notifications
 
