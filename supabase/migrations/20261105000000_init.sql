@@ -119,6 +119,8 @@ create table public.restaurants (
   referral_code text unique check (referral_code is null or referral_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$'),
   referred_by_code text check (referred_by_code is null or referred_by_code ~ '^[A-Z]{2,6}-[A-Z0-9]{4}$'),
   fee_credit_until timestamptz,
+  -- The Manna team's note when it sends a kitchen back to fix something.
+  review_note text not null default '' check (char_length(review_note) <= 500),
   created_at timestamptz not null default now()
 );
 
@@ -677,6 +679,24 @@ $$;
 -- Runs as the caller (not SECURITY DEFINER) so it can tell a direct edit from
 -- the app (role "authenticated") apart from the trusted functions below,
 -- which run as the database owner.
+-- A cook replacing a document (a clearer photo of a rejected ID, say) puts it
+-- back in the team's queue.
+create function public.reset_replaced_document() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if current_user in ('authenticated', 'anon') and not public.is_admin()
+     and (new.storage_path is distinct from old.storage_path or new.file_name is distinct from old.file_name) then
+    new.review_status := 'pending';
+    new.reviewed_by := null;
+    new.reviewed_at := null;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger reset_replaced_document before update on public.restaurant_documents
+  for each row execute function public.reset_replaced_document();
+
 create function public.guard_restaurant_update() returns trigger
 language plpgsql set search_path = public as $$
 begin
@@ -695,6 +715,7 @@ begin
      or new.pro_canceled_at is distinct from old.pro_canceled_at
      or new.referral_code is distinct from old.referral_code
      or new.fee_credit_until is distinct from old.fee_credit_until
+     or new.review_note is distinct from old.review_note
      or new.owner_id is distinct from old.owner_id then
     raise exception 'Only the Manna team can change that' using errcode = '42501';
   end if;
@@ -1274,7 +1295,7 @@ begin
   end if;
   select * into opening from public.restaurants where id = p_restaurant_id for update;
   update public.restaurants set
-    verified = true, status = 'live', live_since = coalesce(live_since, now()),
+    verified = true, status = 'live', live_since = coalesce(live_since, now()), review_note = '',
     referral_code = coalesce(
       referral_code,
       coalesce(nullif(left(regexp_replace(upper(name), '[^A-Z]', '', 'g'), 6), ''), 'COOK')
@@ -1321,6 +1342,58 @@ language sql stable security definer set search_path = public as $$
   group by o.restaurant_id, ol.menu_item_id
   having count(distinct o.id) >= 3
   order by o.restaurant_id, sum(ol.quantity) desc, ol.menu_item_id;
+$$;
+
+-- Admin: approve or reject one of a cook's documents after looking at it.
+create function public.review_document(p_document_id uuid, p_approved boolean) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  rid uuid;
+begin
+  if not public.is_admin() then
+    raise exception 'Only the Manna team can review documents' using errcode = '42501';
+  end if;
+  update public.restaurant_documents
+    set review_status = case when p_approved then 'approved' else 'rejected' end,
+        reviewed_by = auth.uid(), reviewed_at = now()
+    where id = p_document_id
+    returning restaurant_id into rid;
+  if not found then
+    raise exception 'Document not found';
+  end if;
+  perform public.refresh_licensed(rid);
+end;
+$$;
+
+-- Admin: send a kitchen back to its cook with a note saying what to fix.
+-- The cook sees the note, fixes it and submits again.
+create function public.send_back_restaurant(p_restaurant_id uuid, p_note text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Only the Manna team can do that' using errcode = '42501';
+  end if;
+  if char_length(btrim(coalesce(p_note, ''))) < 5 then
+    raise exception 'Tell the cook what to fix';
+  end if;
+  update public.restaurants set status = 'draft', review_note = left(btrim(p_note), 500)
+    where id = p_restaurant_id and status = 'pending_review';
+  if not found then
+    raise exception 'This kitchen isn''t waiting for review';
+  end if;
+end;
+$$;
+
+-- Admin: a reported message or review was looked at and is fine.
+create function public.dismiss_reports(p_message_id uuid, p_review_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Only the Manna team can do that' using errcode = '42501';
+  end if;
+  delete from public.message_reports where message_id = p_message_id;
+  delete from public.review_reports where review_id = p_review_id;
+end;
 $$;
 
 -- Admin: take down a review that breaks the rules, and take it out of the rating.
@@ -1609,6 +1682,12 @@ revoke all on function public.register_push_token(text, text) from public;
 revoke all on function public.unregister_push_token(text) from public;
 grant execute on function public.register_push_token(text, text) to authenticated;
 grant execute on function public.unregister_push_token(text) to authenticated;
+revoke all on function public.review_document(uuid, boolean) from public;
+revoke all on function public.send_back_restaurant(uuid, text) from public;
+revoke all on function public.dismiss_reports(uuid, uuid) from public;
+grant execute on function public.review_document(uuid, boolean) to authenticated;
+grant execute on function public.send_back_restaurant(uuid, text) to authenticated;
+grant execute on function public.dismiss_reports(uuid, uuid) to authenticated;
 revoke all on function public.delete_my_account() from public;
 grant execute on function public.delete_my_account() to authenticated;
 revoke all on function public.quote_custom_request(uuid, integer, text, timestamptz, timestamptz) from public;

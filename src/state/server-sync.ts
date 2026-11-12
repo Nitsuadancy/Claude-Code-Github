@@ -105,7 +105,7 @@ async function send(db: Db, action: Action, before: AppState, dispatch: Dispatch
       if (!myKitchen) return null;
       await api.saveMyKitchen(db, userId, myKitchen, upload);
       await api.submitForReview(db, myKitchen.id);
-      dispatch({ type: 'saveRestaurant', restaurant: { ...myKitchen, underReview: true } });
+      dispatch({ type: 'saveRestaurant', restaurant: { ...myKitchen, underReview: true, reviewNote: undefined } });
       notify('Sent for review', 'Our team checks your documents, usually within a day. We’ll let you know when your kitchen is live.');
       return 'everything';
     }

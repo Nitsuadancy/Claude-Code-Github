@@ -77,6 +77,7 @@ export function profileFromRow(row: ProfileRow): UserProfile {
     role: row.role,
     neighborhood: row.neighborhood,
     ...(row.zip ? { zip: row.zip } : {}),
+    ...(row.is_admin ? { isAdmin: true } : {}),
     dietary: dietaryTags(row.dietary),
     avoidAllergens: allergens(row.avoid_allergens),
   };
@@ -241,6 +242,7 @@ export function restaurantFromRow(row: RestaurantRow, photoUrl: PhotoUrl, extras
     // The app has two states; a kitchen under review or suspended isn't live.
     status: row.status === 'live' ? 'live' : 'draft',
     ...(row.status === 'pending_review' ? { underReview: true } : {}),
+    ...(row.status === 'draft' && row.review_note ? { reviewNote: row.review_note } : {}),
   };
 }
 

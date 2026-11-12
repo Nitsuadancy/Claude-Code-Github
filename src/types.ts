@@ -35,6 +35,8 @@ export interface UserProfile {
   dietary?: DietaryTag[];
   /** Allergens the customer avoids; dishes containing them show a warning. */
   avoidAllergens?: Allergen[];
+  /** On the Manna team: sees the team tools. Set only in the database. */
+  isAdmin?: boolean;
 }
 
 export type DietaryTag = 'vegan' | 'vegetarian' | 'gluten-free' | 'dairy-free' | 'halal' | 'spicy';
@@ -240,6 +242,8 @@ export interface Restaurant {
   feeCreditUntil?: string;
   /** Sent to the Manna team and waiting for approval (only when the backend is on). */
   underReview?: boolean;
+  /** The Manna team sent the kitchen back with this note; the cook fixes it and submits again. */
+  reviewNote?: string;
   /**
    * The Manna team approved a food permit or license (commercial kitchen,
    * food truck, catering, a home-kitchen permit). Optional: kitchens without

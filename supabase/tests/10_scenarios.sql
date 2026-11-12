@@ -65,6 +65,30 @@ insert into public.restaurant_addresses (restaurant_id, address)
   values ('10000000-0000-0000-0000-000000000001', '12 Elm St, Orlando');
 update public.restaurants set status = 'pending_review';
 
+-- The team can send a kitchen back with a note ---------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_error($$ select public.send_back_restaurant('10000000-0000-0000-0000-000000000001', 'Blurry ID photo') $$,
+  'only the manna team');
+select pg_temp.expect_error($$ select public.review_document((select id from public.restaurant_documents limit 1), true) $$,
+  'only the manna team');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect_error($$ select public.send_back_restaurant('10000000-0000-0000-0000-000000000001', 'no') $$, 'what to fix');
+select public.review_document((select id from public.restaurant_documents where kind = 'government-id'), false);
+select pg_temp.check((select review_status = 'rejected' and reviewed_by is not null from public.restaurant_documents
+  where kind = 'government-id'), 'the team rejects a document');
+select public.send_back_restaurant('10000000-0000-0000-0000-000000000001', 'Your ID photo is blurry. Please upload a clearer one.');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select status = 'draft' and review_note like 'Your ID photo%' from public.restaurants),
+  'the cook sees why it came back');
+select pg_temp.expect_error($$ update public.restaurants set review_note = '' $$, 'only the manna team');
+update public.restaurant_documents set storage_path = 'docs/id-clear.pdf', file_name = 'id-clear.pdf' where kind = 'government-id';
+select pg_temp.check((select review_status = 'pending' and reviewed_by is null from public.restaurant_documents
+  where kind = 'government-id'), 'a replaced document goes back to the queue');
+update public.restaurants set status = 'pending_review';
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect_error($$ select public.send_back_restaurant('10000000-0000-0000-0000-000000000002', 'Not waiting at all') $$,
+  'isn''t waiting');
+
 -- Not visible to customers until approved ------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check((select count(*) = 0 from public.restaurants), 'pending kitchen hidden from customers');
@@ -88,7 +112,7 @@ update public.restaurant_documents set review_status = 'approved', reviewed_by =
   where kind <> 'home-kitchen-permit';
 select public.approve_restaurant('10000000-0000-0000-0000-000000000001');
 select pg_temp.check((select verified and not licensed from public.restaurants), 'verified, not licensed without a permit');
-select pg_temp.check((select live_since is not null from public.restaurants), 'live_since set on approval');
+select pg_temp.check((select live_since is not null and review_note = '' from public.restaurants), 'live_since set and note cleared on approval');
 update public.restaurant_documents set review_status = 'approved', reviewed_by = auth.uid(), reviewed_at = now()
   where kind = 'home-kitchen-permit';
 select public.refresh_licensed('10000000-0000-0000-0000-000000000001');

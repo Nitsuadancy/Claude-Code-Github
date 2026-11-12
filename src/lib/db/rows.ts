@@ -81,6 +81,7 @@ export interface RestaurantRow {
   referral_code: string | null;
   referred_by_code: string | null;
   fee_credit_until: string | null;
+  review_note?: string;
   created_at: string;
 }
 

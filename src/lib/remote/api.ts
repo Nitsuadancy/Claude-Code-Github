@@ -221,6 +221,27 @@ export async function saveMyKitchen(db: Db, userId: string, r: Restaurant, uploa
   unwrap(await db.from('restaurant_addresses').upsert(addressRow(r, pickupPhotoPath)));
 
   for (const d of r.drops ?? []) await saveDrop(db, r.id, d);
+  if (r.documents) await saveDocuments(db, userId, r.id, r.documents, upload);
+}
+
+/**
+ * Uploads new verification documents to the private bucket and records them
+ * for the team's review. A replaced document goes back in the queue (the
+ * database resets its review); one the cook removed is deleted.
+ */
+async function saveDocuments(db: Db, userId: string, restaurantId: string, docs: Restaurant['documents'], upload: Uploader) {
+  for (const d of docs) {
+    const path = await ensureUploaded(upload, d.uri, 'documents', `${userId}/documents`);
+    if (!path || path === d.uri) continue; // Already on the server.
+    unwrap(
+      await db
+        .from('restaurant_documents')
+        .upsert({ restaurant_id: restaurantId, kind: d.kind, storage_path: path, file_name: d.fileName }, { onConflict: 'restaurant_id,kind' }),
+    );
+  }
+  const kinds = docs.map((d) => d.kind);
+  const removed = db.from('restaurant_documents').delete().eq('restaurant_id', restaurantId);
+  unwrap(await (kinds.length ? removed.not('kind', 'in', `(${kinds.join(',')})`) : removed));
 }
 
 /** Sends a finished kitchen to the Manna team; it goes live once they approve it. */
@@ -230,23 +251,6 @@ export async function submitForReview(db: Db, restaurantId: string): Promise<voi
 
 export async function setAcceptingOrders(db: Db, restaurantId: string, accepting: boolean): Promise<void> {
   unwrap(await db.from('restaurants').update({ accepting_orders: accepting }).eq('id', restaurantId));
-}
-
-/** Uploads a verification document to the private bucket and records it for review. */
-export async function addDocument(
-  db: Db,
-  userId: string,
-  restaurantId: string,
-  kind: RestaurantDocumentRow['kind'],
-  fileName: string,
-  localUri: string,
-  upload: Uploader,
-): Promise<void> {
-  const path = await ensureUploaded(upload, localUri, 'documents', `${userId}/documents`);
-  if (!path) throw new RemoteError('That file couldn’t be uploaded.');
-  unwrap(
-    await db.from('restaurant_documents').insert({ restaurant_id: restaurantId, kind, storage_path: path, file_name: fileName }),
-  );
 }
 
 /* ---------- Drops and codes (Pro) ---------- */

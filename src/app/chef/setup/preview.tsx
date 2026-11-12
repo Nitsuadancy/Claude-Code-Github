@@ -10,7 +10,7 @@ import { LAW_ATTESTATION } from '@/lib/kitchen-kind';
 import { KITCHEN_FEE_TERMS } from '@/lib/pricing';
 import { completedSteps, isReadyToOpen, SETUP_STEPS } from '@/lib/setup';
 import { useMyRestaurant, useStore } from '@/state/store';
-import { colors, fonts, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
 import { Icon } from '@/components/icon';
 
 /** What opening costs, said before the cook opens (the terms promise this). */
@@ -57,6 +57,13 @@ export default function Preview() {
           <GoldButton title="Go to dashboard" chevron onPress={() => resetTo('/chef/dashboard')} />
         ) : (
           <View style={{ gap: spacing.sm }}>
+            {restaurant.reviewNote && !restaurant.underReview ? (
+              <View style={styles.sentBack}>
+                <Text style={styles.sentBackTitle}>The Manna team needs a change</Text>
+                <Text style={styles.sentBackNote}>“{restaurant.reviewNote}”</Text>
+                <Text style={styles.remaining}>Fix it, then send your kitchen again.</Text>
+              </View>
+            ) : null}
             {restaurant.underReview ? (
               <Text style={styles.remaining}>
                 Sent to the Manna team. We check your documents, usually within a day, and your kitchen opens once
@@ -66,7 +73,7 @@ export default function Preview() {
             {ready ? null : <Text style={styles.remaining}>{remaining}</Text>}
             <Text style={styles.remaining}>{OPENING_TERMS}</Text>
             <GoldButton
-              title={restaurant.underReview ? 'Waiting for review' : 'Open my kitchen'}
+              title={restaurant.underReview ? 'Waiting for review' : restaurant.reviewNote ? 'Send again' : 'Open my kitchen'}
               chevron={!restaurant.underReview}
               disabled={!!restaurant.underReview || !ready}
               onPress={publish}
@@ -177,6 +184,9 @@ export default function Preview() {
 }
 
 const styles = StyleSheet.create({
+  sentBack: { gap: 4, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.gold },
+  sentBackTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ivory },
+  sentBackNote: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.text, fontStyle: 'italic' },
   attest: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingVertical: spacing.sm },
   check: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 36 },
   checkText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },

@@ -99,6 +99,12 @@ export function AccountSettings({ showIdentity = true }: { showIdentity?: boolea
         />
       </View>
 
+      {user.isAdmin ? (
+        <View style={styles.list}>
+          <Row icon="shield-lock-outline" label="Manna team tools" onPress={() => router.push('/admin')} />
+        </View>
+      ) : null}
+
       <View style={styles.list}>
         <Row
           icon="lifebuoy"

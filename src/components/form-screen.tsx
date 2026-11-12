@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { ReactElement, ReactNode } from 'react';
+import { KeyboardAvoidingView, Platform, type RefreshControlProps, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/theme';
 
@@ -12,11 +12,13 @@ export function FormScreen({
   children,
   footer,
   onBack,
+  refreshControl,
 }: {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
   onBack?: () => void;
+  refreshControl?: ReactElement<RefreshControlProps>;
 }) {
   return (
     <Screen>
@@ -28,7 +30,7 @@ export function FormScreen({
           </Text>
           <View style={{ width: 44 }} />
         </View>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" refreshControl={refreshControl}>
           {children}
         </ScrollView>
         {footer ? <View style={styles.footer}>{footer}</View> : null}
