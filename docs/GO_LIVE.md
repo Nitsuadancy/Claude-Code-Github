@@ -134,7 +134,8 @@ npx supabase secrets set \
   STRIPE_PRICE_YEARLY=price_... \
   SITE_URL=https://yourdomain.com \
   NOTIFY_WEBHOOK_SECRET=<a long random string> \
-  EXPO_ACCESS_TOKEN=<optional: an Expo access token with push security turned on>
+  EXPO_ACCESS_TOKEN=<optional: an Expo access token with push security turned on> \
+  TWILIO_ACCOUNT_SID=<optional> TWILIO_AUTH_TOKEN=<optional> TWILIO_FROM_NUMBER=<optional: +1...>
 ```
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided to the functions automatically.
@@ -188,7 +189,9 @@ pages at those paths: "All set. Go back to the Manna app."
    | `message_reports` | Insert |
    | `review_reports` | Insert |
 
-Who hears about what is in `supabase/functions/_shared/notifications.ts` (and its tests). The app
+Who hears about what is in `supabase/functions/_shared/notifications.ts` (and its tests). With the
+optional `TWILIO_*` secrets set, a cook whose phone can't get push is texted about new orders and
+"I'm here" instead (standard Twilio message rates). The app
 asks permission after a customer's first order or custom request, and when a cook opens their live
 dashboard. Never at first launch.
 

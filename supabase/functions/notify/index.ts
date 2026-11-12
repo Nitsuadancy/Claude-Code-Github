@@ -11,7 +11,7 @@
  */
 import { admin, env } from '../_shared/clients.ts';
 import { json } from '../_shared/http.ts';
-import { chunk, notesFor, type Change, type Context, type Note } from '../_shared/notifications.ts';
+import { chunk, notesFor, smsBody, textsWhenNoPush, type Change, type Context, type Note } from '../_shared/notifications.ts';
 
 const EXPO_PUSH = 'https://exp.host/--/api/v2/push/send';
 
@@ -63,12 +63,33 @@ async function recipients(note: Note): Promise<string[]> {
 
 type Ticket = { status: 'ok' | 'error'; details?: { error?: string } };
 
-async function send(notes: Note[]): Promise<number> {
+/**
+ * Text-message fallback for a cook whose phone can't get push (Twilio, the
+ * same account that sends sign-in codes). Off unless the TWILIO_* secrets are set.
+ */
+async function text(profileId: string, body: string) {
+  const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const auth = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from = Deno.env.get('TWILIO_FROM_NUMBER');
+  if (!sid || !auth || !from) return;
+  const { data } = await admin.from('profiles').select('phone').eq('id', profileId).maybeSingle();
+  if (!data?.phone) return;
+  const to = data.phone.startsWith('+') ? data.phone : `+${data.phone}`;
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: { Authorization: `Basic ${btoa(`${sid}:${auth}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ To: to, From: from, Body: body }),
+  });
+  if (!res.ok) console.error('Twilio', res.status, await res.text());
+}
+
+async function send(notes: Note[], ctx: Context): Promise<number> {
   const messages: { to: string; title: string; body: string; data: { url: string }; sound: 'default'; channelId: string }[] = [];
   for (const note of notes) {
     const ids = await recipients(note);
     if (ids.length === 0) continue;
     const { data: tokens } = await admin.from('push_tokens').select('token').in('profile_id', ids);
+    if (!tokens?.length && typeof note.to === 'string' && textsWhenNoPush(note, ctx)) await text(note.to, smsBody(note));
     for (const { token } of tokens ?? []) {
       messages.push({ to: token, title: note.title, body: note.body, data: { url: note.url }, sound: 'default', channelId: 'orders' });
     }
@@ -98,7 +119,7 @@ Deno.serve(async (req) => {
     const change = (await req.json()) as Change;
     const ctx = await contextFor(change);
     if (!ctx) return json({ sent: 0 });
-    return json({ sent: await send(notesFor(change, ctx)) });
+    return json({ sent: await send(notesFor(change, ctx), ctx) });
   } catch (e) {
     console.error(e);
     return json({ error: 'Not sent' }, 500);

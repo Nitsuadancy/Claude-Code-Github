@@ -101,7 +101,7 @@ Pickup only for launch (see Launch decisions). Delivery can come back as an opti
 
 - [x] Push notifications for new orders (chef), status changes (customer), new order messages (both), oven updates, custom orders and alerts (built; switch on with [GO_LIVE.md](GO_LIVE.md))
 - [ ] Lock-screen order status on iPhone (Live Activity). What it shows is built and tested; switching it on needs the first iPhone development build. Steps in [LIVE_ACTIVITY.md](LIVE_ACTIVITY.md)
-- [ ] Text-message fallback for chefs who turn push off
+- [x] Text-message fallback for chefs who turn push off (new orders and "I'm here", through Twilio)
 
 ## Phase 5: Launch
 

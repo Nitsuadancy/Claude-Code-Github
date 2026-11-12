@@ -203,6 +203,18 @@ export function notesFor(change: Change, ctx: Context): Note[] {
   }
 }
 
+/** Notes a cook can't miss: sent as a text message when the cook's phone has no push. */
+const URGENT_FOR_KITCHEN = new Set(['New order', 'Custom order confirmed']);
+
+export function textsWhenNoPush(note: Note, ctx: Context): boolean {
+  return note.to === ctx.kitchen.ownerId && (URGENT_FOR_KITCHEN.has(note.title) || note.title.endsWith(' is here'));
+}
+
+/** The text message: short, and marked as from Manna. */
+export function smsBody(note: Note): string {
+  return short(`Manna: ${note.title}. ${note.body}`, 160);
+}
+
 /** Expo's push service takes up to 100 messages a request. */
 export function chunk<T>(items: T[], size = 100): T[][] {
   const out: T[][] = [];

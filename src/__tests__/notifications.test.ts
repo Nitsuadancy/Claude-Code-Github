@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { chunk, notesFor, type Change, type Context } from '../../supabase/functions/_shared/notifications';
+import { chunk, notesFor, smsBody, textsWhenNoPush, type Change, type Context } from '../../supabase/functions/_shared/notifications';
 
 const ctx: Context = { paymentsRequired: false, kitchen: { id: 'k1', name: 'Susie’s Sweets', ownerId: 'cook' } };
 const order = { id: 'o1', customer_id: 'ada', customer_name: 'Ada', restaurant_id: 'k1', status: 'placed', payment_status: 'unpaid', arrived_at: null };
@@ -85,6 +85,16 @@ describe('messages, updates, alerts and custom requests', () => {
     expect(notesFor(help, withOrder)[0]).toMatchObject({ to: { team: true }, body: 'Ada needs help with an order from Susie’s Sweets: “Still waiting”' });
     const report: Change = { type: 'INSERT', table: 'review_reports', record: { review_id: 'r1' }, old_record: null };
     expect(notesFor(report, ctx)[0]).toMatchObject({ title: 'Review reported', url: '/admin/reports' });
+  });
+
+  it('texts a cook without push only about orders they can’t miss', () => {
+    const [newOrder] = notesFor({ type: 'INSERT', table: 'orders', record: order, old_record: null }, ctx);
+    expect(textsWhenNoPush(newOrder, ctx)).toBe(true);
+    expect(smsBody(newOrder)).toBe('Manna: New order. Ada placed an order. Accept it in Manna.');
+    const [here] = notesFor(update({ status: 'ready' }, { status: 'ready', arrived_at: '2026-11-12T18:00:00Z' }), ctx);
+    expect(textsWhenNoPush(here, ctx)).toBe(true);
+    const [ready] = notesFor(update({ status: 'preparing' }, { status: 'ready' }), ctx);
+    expect(textsWhenNoPush(ready, ctx)).toBe(false);
   });
 
   it('sends to Expo in batches of 100', () => {
