@@ -168,6 +168,10 @@ so they check their own secrets instead of a sign-in.
    | `order_updates` | Insert |
    | `kitchen_alerts` | Insert |
    | `custom_requests` | Insert, Update |
+   | `restaurants` | Update |
+   | `order_issues` | Insert |
+   | `message_reports` | Insert |
+   | `review_reports` | Insert |
 
 Who hears about what is in `supabase/functions/_shared/notifications.ts` (and its tests). The app
 asks permission after a customer's first order or custom request, and when a cook opens their live

@@ -1,7 +1,8 @@
 /**
  * Push notifications. Supabase's database webhooks call this for new and
- * changed rows in orders, order_messages, order_updates, kitchen_alerts and
- * custom_requests (setup in docs/GO_LIVE.md). It works out who should hear
+ * changed rows in orders, order_messages, order_updates, kitchen_alerts,
+ * custom_requests, restaurants, order_issues, message_reports and
+ * review_reports (setup in docs/GO_LIVE.md). It works out who should hear
  * about the change (_shared/notifications.ts), finds their phones and sends
  * through Expo's push service. Phones that no longer exist are forgotten.
  *
@@ -17,12 +18,21 @@ const EXPO_PUSH = 'https://exp.host/--/api/v2/push/send';
 async function contextFor(change: Change): Promise<Context | null> {
   const row = change.record ?? {};
   let order: Context['order'];
-  let restaurantId = row.restaurant_id as string | undefined;
-  if (change.table === 'order_messages' || change.table === 'order_updates') {
+  let restaurantId = (change.table === 'restaurants' ? row.id : row.restaurant_id) as string | undefined;
+  let orderId = row.order_id as string | undefined;
+  if (change.table === 'message_reports') {
+    const { data } = await admin.from('order_messages').select('order_id').eq('id', row.message_id as string).maybeSingle();
+    orderId = data?.order_id;
+  }
+  if (change.table === 'review_reports') {
+    const { data } = await admin.from('reviews').select('restaurant_id').eq('id', row.review_id as string).maybeSingle();
+    restaurantId = data?.restaurant_id;
+  }
+  if (orderId && ['order_messages', 'order_updates', 'order_issues', 'message_reports'].includes(change.table)) {
     const { data } = await admin
       .from('orders')
       .select('id, customer_id, customer_name, restaurant_id')
-      .eq('id', row.order_id as string)
+      .eq('id', orderId)
       .maybeSingle();
     if (!data) return null;
     order = { id: data.id, customerId: data.customer_id, customerName: data.customer_name };
@@ -43,6 +53,10 @@ async function contextFor(change: Change): Promise<Context | null> {
 
 async function recipients(note: Note): Promise<string[]> {
   if (typeof note.to === 'string') return note.to ? [note.to] : [];
+  if ('team' in note.to) {
+    const { data } = await admin.from('profiles').select('id').eq('is_admin', true);
+    return (data ?? []).map((p) => p.id as string);
+  }
   const { data } = await admin.from('favorites').select('customer_id').eq('restaurant_id', note.to.followersOf);
   return (data ?? []).map((f) => f.customer_id as string);
 }

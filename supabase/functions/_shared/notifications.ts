@@ -21,13 +21,13 @@ export interface Context {
   paymentsRequired: boolean;
   /** The kitchen the change is about. */
   kitchen: { id: string; name: string; ownerId: string };
-  /** The order, for chat messages and oven updates. */
+  /** The order, for chat messages, oven updates and help requests. */
   order?: { id: string; customerId: string; customerName: string };
 }
 
 export interface Note {
-  /** A profile id, or everyone who saved the kitchen. */
-  to: string | { followersOf: string };
+  /** A profile id, everyone who saved the kitchen, or the Manna team. */
+  to: string | { followersOf: string } | { team: true };
   title: string;
   body: string;
   /** The screen a tap opens. */
@@ -128,6 +128,25 @@ function requestNotes(change: Change, ctx: Context): Note[] {
   }
 }
 
+const TEAM = { team: true } as const;
+
+function kitchenReviewNotes(change: Change, ctx: Context): Note[] {
+  const r = change.record!;
+  const old = change.old_record ?? {};
+  if (change.type !== 'UPDATE' || r.status === old.status) return [];
+  const name = str(r.name) || 'A kitchen';
+  if (r.status === 'pending_review') {
+    return [{ to: TEAM, title: 'Kitchen to review', body: `${name} in ${str(r.city)}, ${str(r.state)} is ready for review.`, url: `/admin/kitchen/${str(r.id)}` }];
+  }
+  if (r.status === 'live' && old.status === 'pending_review') {
+    return [{ to: ctx.kitchen.ownerId, title: 'You’re live on Manna!', body: `${name} is open for orders. Share your link to bring your first customers.`, url: '/chef/dashboard' }];
+  }
+  if (r.status === 'draft' && old.status === 'pending_review' && str(r.review_note)) {
+    return [{ to: ctx.kitchen.ownerId, title: 'Your kitchen needs a change', body: short(str(r.review_note)), url: '/chef/setup/preview' }];
+  }
+  return [];
+}
+
 export function notesFor(change: Change, ctx: Context): Note[] {
   if (!change.record || change.type === 'DELETE') return [];
   const r = change.record;
@@ -161,6 +180,24 @@ export function notesFor(change: Change, ctx: Context): Note[] {
       return [{ to: { followersOf: ctx.kitchen.id }, title: ctx.kitchen.name, body: short(str(r.body), 140), url: `/restaurant/${ctx.kitchen.id}` }];
     case 'custom_requests':
       return requestNotes(change, ctx);
+    case 'restaurants':
+      return kitchenReviewNotes(change, ctx);
+    case 'order_issues':
+      if (change.type !== 'INSERT') return [];
+      return [
+        {
+          to: TEAM,
+          title: 'Help request',
+          body: short(`${ctx.order?.customerName || 'A customer'} needs help with an order from ${ctx.kitchen.name}${str(r.note) ? `: “${str(r.note)}”` : '.'}`),
+          url: '/admin/help',
+        },
+      ];
+    case 'message_reports':
+      if (change.type !== 'INSERT') return [];
+      return [{ to: TEAM, title: 'Message reported', body: `A chat message about an order from ${ctx.kitchen.name} was reported.`, url: '/admin/reports' }];
+    case 'review_reports':
+      if (change.type !== 'INSERT') return [];
+      return [{ to: TEAM, title: 'Review reported', body: `A review of ${ctx.kitchen.name} was reported.`, url: '/admin/reports' }];
     default:
       return [];
   }

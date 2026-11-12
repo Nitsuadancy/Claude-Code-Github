@@ -71,6 +71,22 @@ describe('messages, updates, alerts and custom requests', () => {
     expect(to(change('open'))).toEqual([]);
   });
 
+  it('tells the team what needs them, and the cook how review went', () => {
+    const k = { id: 'k1', name: 'Susie’s Sweets', city: 'Orlando', state: 'FL', status: 'draft', review_note: '' };
+    const move = (from: object, to: object): Change => ({ type: 'UPDATE', table: 'restaurants', old_record: { ...k, ...from }, record: { ...k, ...to } });
+    expect(notesFor(move({}, { status: 'pending_review' }), ctx)[0]).toMatchObject({ to: { team: true }, url: '/admin/kitchen/k1' });
+    expect(to(move({ status: 'pending_review' }, { status: 'live' }))).toEqual(['cook: You’re live on Manna!']);
+    expect(notesFor(move({ status: 'pending_review' }, { status: 'draft', review_note: 'Blurry ID' }), ctx)[0]).toMatchObject({
+      to: 'cook',
+      body: 'Blurry ID',
+    });
+    expect(to(move({ status: 'live' }, { status: 'live', name: 'New name' }))).toEqual([]);
+    const help: Change = { type: 'INSERT', table: 'order_issues', record: { order_id: 'o1', kind: 'late', note: 'Still waiting' }, old_record: null };
+    expect(notesFor(help, withOrder)[0]).toMatchObject({ to: { team: true }, body: 'Ada needs help with an order from Susie’s Sweets: “Still waiting”' });
+    const report: Change = { type: 'INSERT', table: 'review_reports', record: { review_id: 'r1' }, old_record: null };
+    expect(notesFor(report, ctx)[0]).toMatchObject({ title: 'Review reported', url: '/admin/reports' });
+  });
+
   it('sends to Expo in batches of 100', () => {
     expect(chunk(Array.from({ length: 250 }, (_, i) => i)).map((b) => b.length)).toEqual([100, 100, 50]);
   });
